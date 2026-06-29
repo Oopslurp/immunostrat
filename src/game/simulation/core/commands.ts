@@ -1,12 +1,15 @@
+import { balanceValues } from "../../data/balance";
 import { missionDefinitions } from "../../data/missions";
-import { unitDefinitions } from "../../data/units";
+import { unitDefinitions, type UnitTypeId } from "../../data/units";
 import type { EntityId, Vector2 } from "../../types/shared";
+import { isImmuneUnit } from "../entities";
 import { createInitialState } from "./createInitialState";
 import type { GameState } from "./GameState";
 import { cloneState } from "./cloneState";
 
 export type GameCommand =
   | { type: "produceMacrophage" }
+  | { type: "produceNeutrophil" }
   | { type: "selectEntity"; entityId: EntityId | null }
   | { type: "selectEntities"; entityIds: EntityId[] }
   | { type: "orderMove"; position: Vector2 }
@@ -22,14 +25,18 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
   }
 
   if (command.type === "produceMacrophage") {
-    return produceMacrophage(state);
+    return produceImmuneUnit(state, "macrophage");
+  }
+
+  if (command.type === "produceNeutrophil") {
+    return produceImmuneUnit(state, "neutrophil");
   }
 
   if (command.type === "selectEntity") {
     const next = cloneState(state);
     const entity = command.entityId ? next.entities[command.entityId] : null;
     next.selectedEntityIds =
-      entity?.kind === "macrophage" && command.entityId ? [command.entityId] : [];
+      entity && isImmuneUnit(entity) && command.entityId ? [command.entityId] : [];
 
     return next;
   }
@@ -37,7 +44,11 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
   if (command.type === "selectEntities") {
     const next = cloneState(state);
     next.selectedEntityIds = command.entityIds.filter(
-      (entityId) => next.entities[entityId]?.kind === "macrophage",
+      (entityId) => {
+        const entity = next.entities[entityId];
+
+        return entity ? isImmuneUnit(entity) : false;
+      },
     );
 
     return next;
@@ -49,7 +60,7 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
     for (const entityId of next.selectedEntityIds) {
       const selected = next.entities[entityId];
 
-      if (selected?.kind === "macrophage") {
+      if (selected && isImmuneUnit(selected)) {
         selected.targetPosition = { ...command.position };
         selected.idleTargetPosition = null;
       }
@@ -61,24 +72,42 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
   return state;
 }
 
-function produceMacrophage(state: GameState): GameState {
-  const definition = unitDefinitions.macrophage;
+function produceImmuneUnit(state: GameState, unitTypeId: UnitTypeId): GameState {
+  const definition = unitDefinitions[unitTypeId];
 
-  if (state.resources.atp < definition.atpCost) {
+  if (
+    state.resources.atp < definition.atpCost ||
+    state.resources.cytokines < definition.cytokineCost
+  ) {
+    return state;
+  }
+
+  if (
+    unitTypeId === "neutrophil" &&
+    state.productionCooldowns.neutrophilMs > 0
+  ) {
     return state;
   }
 
   const mission = missionDefinitions[state.missionId];
   const next = cloneState(state);
-  const id = `macrophage-${next.nextEntityNumber}`;
+  const id = `${unitTypeId}-${next.nextEntityNumber}`;
 
   next.nextEntityNumber += 1;
   next.resources.atp = Math.max(0, next.resources.atp - definition.atpCost);
+  next.resources.cytokines = Math.max(
+    0,
+    next.resources.cytokines - definition.cytokineCost,
+  );
   next.entities[id] = {
     id,
-    kind: "macrophage",
-    unitTypeId: "macrophage",
-    position: { ...mission.map.macrophageSpawn },
+    kind: unitTypeId,
+    unitTypeId,
+    position: {
+      ...(unitTypeId === "neutrophil"
+        ? definition.spawnPosition
+        : mission.map.macrophageSpawn),
+    },
     targetPosition: null,
     idleTargetPosition: null,
     nextIdleRetargetMs: state.elapsedMs + 1200,
@@ -92,6 +121,16 @@ function produceMacrophage(state: GameState): GameState {
     attackCooldownMs: definition.attackCooldownMs,
     attackCooldownRemainingMs: 0,
   };
+
+  if (unitTypeId === "neutrophil") {
+    next.productionCooldowns.neutrophilMs =
+      balanceValues.neutrophilProductionCooldownMs;
+    next.inflammation.value = Math.min(
+      balanceValues.inflammation.maxValue,
+      next.inflammation.value + balanceValues.inflammation.neutrophilSpawnIncrease,
+    );
+  }
+
   next.selectedEntityIds = [id];
 
   return next;

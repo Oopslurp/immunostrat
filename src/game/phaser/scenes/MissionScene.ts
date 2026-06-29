@@ -6,7 +6,7 @@ import { Simulation } from "../../simulation/core/Simulation";
 import type { GameCommand } from "../../simulation/core/commands";
 import type { GameState } from "../../simulation/core/GameState";
 import { distanceSquared } from "../../types/shared";
-import { isBacterium, isMacrophage } from "../../simulation/entities";
+import { isBacterium, isImmuneUnit, isNeutrophil } from "../../simulation/entities";
 
 export class MissionScene extends Phaser.Scene {
   private simulation = new Simulation();
@@ -33,7 +33,7 @@ export class MissionScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.DESTROY, () => this.cleanupBridge());
 
     this.add
-      .text(map.width / 2, 42, "Immunostrat - Wound Defense V1", {
+      .text(map.width / 2, 42, "Immunostrat - Wound Defense V2", {
         color: "#f5fbff",
         fontFamily: "monospace",
         fontSize: "24px",
@@ -44,7 +44,7 @@ export class MissionScene extends Phaser.Scene {
       .text(
         map.width / 2,
         72,
-        "Left click a macrophage to select. Click the tissue map to move.",
+        "Drag to select immune units. Click the tissue map to move.",
         {
           color: "#a8c0cc",
           fontFamily: "monospace",
@@ -157,15 +157,15 @@ export class MissionScene extends Phaser.Scene {
     this.dragCurrent = null;
 
     if (isAreaSelection) {
-      const selectedIds = this.findMacrophagesInRect(state, dragStart, position);
+      const selectedIds = this.findImmuneUnitsInRect(state, dragStart, position);
       this.handleCommand({ type: "selectEntities", entityIds: selectedIds });
       return;
     }
 
-    const clickedMacrophageId = this.findMacrophageAtPosition(state, position);
+    const clickedImmuneUnitId = this.findImmuneUnitAtPosition(state, position);
 
-    if (clickedMacrophageId) {
-      this.handleCommand({ type: "selectEntity", entityId: clickedMacrophageId });
+    if (clickedImmuneUnitId) {
+      this.handleCommand({ type: "selectEntity", entityId: clickedImmuneUnitId });
       return;
     }
 
@@ -174,13 +174,13 @@ export class MissionScene extends Phaser.Scene {
     }
   }
 
-  private findMacrophageAtPosition(
+  private findImmuneUnitAtPosition(
     state: GameState,
     position: { x: number; y: number },
   ): string | null {
     for (const entity of Object.values(state.entities)) {
       if (
-        isMacrophage(entity) &&
+        isImmuneUnit(entity) &&
         distanceSquared(entity.position, position) <= entity.radius * entity.radius
       ) {
         return entity.id;
@@ -190,7 +190,7 @@ export class MissionScene extends Phaser.Scene {
     return null;
   }
 
-  private findMacrophagesInRect(
+  private findImmuneUnitsInRect(
     state: GameState,
     start: { x: number; y: number },
     end: { x: number; y: number },
@@ -203,7 +203,7 @@ export class MissionScene extends Phaser.Scene {
     return Object.values(state.entities)
       .filter(
         (entity) =>
-          isMacrophage(entity) &&
+          isImmuneUnit(entity) &&
           entity.position.x >= minX &&
           entity.position.x <= maxX &&
           entity.position.y >= minY &&
@@ -221,6 +221,7 @@ export class MissionScene extends Phaser.Scene {
 
     graphics.clear();
     this.drawMap(graphics, state);
+    this.drawInflammatoryZones(graphics, state);
     this.drawEntities(graphics, state);
     this.drawEffects(graphics, state);
     this.drawSelectionRectangle(graphics);
@@ -292,8 +293,8 @@ export class MissionScene extends Phaser.Scene {
 
   private drawEntities(graphics: Phaser.GameObjects.Graphics, state: GameState) {
     for (const entity of Object.values(state.entities)) {
-      if (isMacrophage(entity)) {
-        graphics.fillStyle(0x62d3c8, 0.95);
+      if (isImmuneUnit(entity)) {
+        graphics.fillStyle(isNeutrophil(entity) ? 0xffc76b : 0x62d3c8, 0.95);
         graphics.fillCircle(entity.position.x, entity.position.y, entity.radius);
         graphics.lineStyle(3, 0xf5fbff, 0.22);
         graphics.strokeCircle(entity.position.x, entity.position.y, entity.radius + 4);
@@ -324,6 +325,20 @@ export class MissionScene extends Phaser.Scene {
         graphics.strokeEllipse(entity.position.x, entity.position.y, entity.radius * 2.4, entity.radius * 1.8);
         this.drawHealthBar(graphics, entity.position.x, entity.position.y - 24, entity.health, entity.maxHealth);
       }
+    }
+  }
+
+  private drawInflammatoryZones(
+    graphics: Phaser.GameObjects.Graphics,
+    state: GameState,
+  ) {
+    for (const zone of state.inflammatoryZones) {
+      const alpha = Phaser.Math.Clamp(zone.intensity, 0.08, 0.42);
+
+      graphics.fillStyle(0xff7f33, alpha * 0.45);
+      graphics.fillCircle(zone.position.x, zone.position.y, zone.radius);
+      graphics.lineStyle(2, 0xffc76b, alpha);
+      graphics.strokeCircle(zone.position.x, zone.position.y, zone.radius);
     }
   }
 
@@ -390,6 +405,9 @@ export class MissionScene extends Phaser.Scene {
       tissueHealth: state.tissue.health,
       tissueMaxHealth: state.tissue.maxHealth,
       atp: state.resources.atp,
+      cytokines: state.resources.cytokines,
+      inflammation: state.inflammation.value,
+      neutrophilCooldownMs: state.productionCooldowns.neutrophilMs,
       currentWave: Math.min(
         state.waves.currentWaveIndex + 1,
         mission.waves.length,

@@ -2,14 +2,14 @@ import { balanceValues } from "../../data/balance";
 import { missionDefinitions } from "../../data/missions";
 import { distance, moveToward, type Vector2 } from "../../types/shared";
 import type { GameState } from "../core/GameState";
-import { isBacterium, isMacrophage, type MacrophageEntity } from "../entities";
+import { isBacterium, isImmuneUnit, type ImmuneUnitEntity } from "../entities";
 
 export function applyMovementSystem(state: GameState, deltaMs: number): void {
   const mission = missionDefinitions[state.missionId];
   const maxMoveScale = deltaMs / 1000;
 
   for (const entity of Object.values(state.entities)) {
-    if (isMacrophage(entity)) {
+    if (isImmuneUnit(entity)) {
       if (entity.targetPosition) {
         entity.position = moveToward(
           entity.position,
@@ -31,10 +31,14 @@ export function applyMovementSystem(state: GameState, deltaMs: number): void {
       const target = mission.map.tissueCore;
 
       if (distance(entity.position, target) > entity.tissueAttackRange) {
+        const slowMultiplier = isInInflammatoryZone(state, entity.position)
+          ? balanceValues.inflammation.zoneBacteriaSlowMultiplier
+          : 1;
+
         entity.position = moveToward(
           entity.position,
           target,
-          entity.movementSpeed * maxMoveScale,
+          entity.movementSpeed * slowMultiplier * maxMoveScale,
         );
       }
     }
@@ -43,32 +47,35 @@ export function applyMovementSystem(state: GameState, deltaMs: number): void {
 
 function applyIdleMovement(
   state: GameState,
-  macrophage: MacrophageEntity,
+  immuneUnit: ImmuneUnitEntity,
   maxMoveScale: number,
 ): void {
   if (
-    !macrophage.idleTargetPosition ||
-    state.elapsedMs >= macrophage.nextIdleRetargetMs ||
-    distance(macrophage.position, macrophage.idleTargetPosition) <= 3
+    !immuneUnit.idleTargetPosition ||
+    state.elapsedMs >= immuneUnit.nextIdleRetargetMs ||
+    distance(immuneUnit.position, immuneUnit.idleTargetPosition) <= 3
   ) {
-    macrophage.idleTargetPosition = createIdleTarget(state, macrophage.id);
-    macrophage.nextIdleRetargetMs =
+    immuneUnit.idleTargetPosition = createIdleTarget(state, immuneUnit.id);
+    immuneUnit.nextIdleRetargetMs =
       state.elapsedMs +
       balanceValues.idleRetargetBaseMs +
-      (stableHash(macrophage.id) % balanceValues.idleRetargetSpreadMs);
+      (stableHash(immuneUnit.id) % balanceValues.idleRetargetSpreadMs);
   }
 
-  macrophage.position = moveToward(
-    macrophage.position,
-    macrophage.idleTargetPosition,
-    macrophage.idleMovementSpeed * maxMoveScale,
+  immuneUnit.position = moveToward(
+    immuneUnit.position,
+    immuneUnit.idleTargetPosition,
+    immuneUnit.idleMovementSpeed * maxMoveScale,
   );
 }
 
-function createIdleTarget(
-  state: GameState,
-  entityId: string,
-): Vector2 {
+function isInInflammatoryZone(state: GameState, position: Vector2): boolean {
+  return state.inflammatoryZones.some(
+    (zone) => distance(zone.position, position) <= zone.radius,
+  );
+}
+
+function createIdleTarget(state: GameState, entityId: string): Vector2 {
   const mission = missionDefinitions[state.missionId];
   const seed = stableHash(`${entityId}-${Math.floor(state.elapsedMs / 1000)}`);
   const angle = (seed % 360) * (Math.PI / 180);

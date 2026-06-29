@@ -19,7 +19,10 @@ describe("V1 simulation", () => {
 
     const poorState: GameState = {
       ...initial,
-      resources: { atp: unitDefinitions.macrophage.atpCost - 1 },
+      resources: {
+        ...initial.resources,
+        atp: unitDefinitions.macrophage.atpCost - 1,
+      },
     };
     const refused = applyCommand(poorState, { type: "produceMacrophage" });
 
@@ -31,7 +34,7 @@ describe("V1 simulation", () => {
     const initial = createInitialState();
     const poorState: GameState = {
       ...initial,
-      resources: { atp: 0 },
+      resources: { ...initial.resources, atp: 0 },
     };
     const refused = applyCommand(poorState, { type: "produceMacrophage" });
     const regenerated = stepSimulation(refused, 1000);
@@ -47,7 +50,10 @@ describe("V1 simulation", () => {
     const second = applyCommand(
       {
         ...first,
-        resources: { atp: first.resources.atp + unitDefinitions.macrophage.atpCost },
+        resources: {
+          ...first.resources,
+          atp: first.resources.atp + unitDefinitions.macrophage.atpCost,
+        },
       },
       { type: "produceMacrophage" },
     );

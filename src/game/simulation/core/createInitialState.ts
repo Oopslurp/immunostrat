@@ -15,6 +15,14 @@ export function createInitialState(
     },
     resources: {
       atp: balanceValues.startingAtp,
+      cytokines: balanceValues.startingCytokines,
+    },
+    inflammation: {
+      value: balanceValues.inflammation.startingValue,
+    },
+    inflammatoryZones: [],
+    productionCooldowns: {
+      neutrophilMs: 0,
     },
     waves: {
       currentWaveIndex: 0,

@@ -1,3 +1,3 @@
 # Resources
 
-Futures ressources de gameplay, comme ATP, cytokines et antigenes.
+Ressources V2 : ATP et cytokines. Les antigenes restent reserves a une version future.

@@ -3,6 +3,7 @@ import type { GameState } from "./GameState";
 import { applyCombatSystem } from "../systems/combatSystem";
 import { applyEndConditionSystem } from "../systems/endConditionSystem";
 import { applyEffectSystem } from "../systems/effectSystem";
+import { applyInflammationSystem } from "../systems/inflammationSystem";
 import { applyMovementSystem } from "../systems/movementSystem";
 import { applyResourceSystem } from "../systems/resourceSystem";
 import { applyTissueSystem } from "../systems/tissueSystem";
@@ -22,10 +23,15 @@ export function stepSimulation(state: GameState, deltaMs: number): GameState {
   applyMovementSystem(next, deltaMs);
   applyCombatSystem(next, deltaMs);
   applyTissueSystem(next, deltaMs);
+  applyInflammationSystem(next, deltaMs);
   applyEndConditionSystem(next);
 
   next.selectedEntityIds = next.selectedEntityIds.filter(
-    (entityId) => next.entities[entityId]?.kind === "macrophage",
+    (entityId) => {
+      const entity = next.entities[entityId];
+
+      return entity?.kind === "macrophage" || entity?.kind === "neutrophil";
+    },
   );
 
   return next;

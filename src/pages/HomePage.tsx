@@ -9,14 +9,14 @@ export function HomePage({ onPlay }: HomePageProps) {
   return (
     <div className="page home-layout">
       <section className="hero-copy" aria-labelledby="home-title">
-        <span className="eyebrow">Prototype jouable V1</span>
+        <span className="eyebrow">Prototype jouable V2</span>
         <h1 className="hero-title" id="home-title">
           Immunostrat
         </h1>
         <p className="hero-text">
-          Defends une plaie cutanee contre des vagues de bacteries avec des
-          macrophages. Le visuel reste volontairement simple : la priorite est
-          le gameplay et l'architecture.
+          Defends une plaie cutanee avec macrophages et neutrophiles. Gere les
+          cytokines et l'inflammation : une reponse forte aide le combat, mais
+          l'exces abime le tissu.
         </p>
         <div className="home-actions">
           <Button variant="primary" onClick={onPlay}>
@@ -26,7 +26,7 @@ export function HomePage({ onPlay }: HomePageProps) {
       </section>
 
       <Panel className="status-panel">
-        <h2>Prototype bacterien V1</h2>
+        <h2>Inflammation et neutrophiles V2</h2>
         <div className="stat-grid">
           <div className="stat-item">
             <span className="stat-label">Architecture</span>
@@ -38,7 +38,7 @@ export function HomePage({ onPlay }: HomePageProps) {
           </div>
           <div className="stat-item">
             <span className="stat-label">Gameplay</span>
-            <span className="stat-value">Macrophages vs bacteries</span>
+            <span className="stat-value">Macrophages + neutrophiles</span>
           </div>
           <div className="stat-item">
             <span className="stat-label">Science</span>

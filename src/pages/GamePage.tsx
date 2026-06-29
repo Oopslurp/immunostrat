@@ -11,28 +11,40 @@ export function GamePage() {
 
   useEffect(() => bridge.subscribeSnapshot(setSnapshot), [bridge]);
 
-  const canProduce =
+  const canProduceMacrophage =
     snapshot?.status === "running" &&
     snapshot.atp >= unitDefinitions.macrophage.atpCost;
+  const canProduceNeutrophil =
+    snapshot?.status === "running" &&
+    snapshot.atp >= unitDefinitions.neutrophil.atpCost &&
+    snapshot.cytokines >= unitDefinitions.neutrophil.cytokineCost &&
+    snapshot.neutrophilCooldownMs <= 0;
 
   return (
     <div className="page game-page">
       <header className="game-header">
         <div>
-          <span className="eyebrow">Prototype jouable V1</span>
+          <span className="eyebrow">Prototype jouable V2</span>
           <h1>Plaie cutanee infectee</h1>
           <p>
-            Produis des macrophages, deplace-les sur la carte et empeche les
-            bacteries d'endommager le tissu.
+            Produis macrophages et neutrophiles, controle les bacteries et
+            surveille l'inflammation pour eviter les degats collateraux.
           </p>
         </div>
         <div className="game-actions">
           <Button
-            disabled={!canProduce}
+            disabled={!canProduceMacrophage}
             onClick={() => bridge.dispatch({ type: "produceMacrophage" })}
             variant="primary"
           >
             Macrophage (-{unitDefinitions.macrophage.atpCost} ATP)
+          </Button>
+          <Button
+            disabled={!canProduceNeutrophil}
+            onClick={() => bridge.dispatch({ type: "produceNeutrophil" })}
+          >
+            Neutrophile (-{unitDefinitions.neutrophil.atpCost} ATP, -
+            {unitDefinitions.neutrophil.cytokineCost} CYT)
           </Button>
           <Button onClick={() => bridge.dispatch({ type: "restart" })}>
             Recommencer
@@ -67,6 +79,18 @@ export function GamePage() {
           max={balanceValues.maxAtp}
           tone="atp"
         />
+        <Gauge
+          label="Cytokines"
+          value={formatAtp(snapshot?.cytokines)}
+          max={balanceValues.maxCytokines}
+          tone="cytokines"
+        />
+        <Gauge
+          label="Inflammation"
+          value={formatAtp(snapshot?.inflammation)}
+          max={balanceValues.inflammation.maxValue}
+          tone="inflammation"
+        />
         <span className="hud-item">
           Vague: {snapshot ? Math.min(snapshot.currentWave, snapshot.totalWaves) : 0}/
           {snapshot?.totalWaves ?? 0}
@@ -79,6 +103,9 @@ export function GamePage() {
         <span className="hud-item">
           Selection: {snapshot?.selectedEntityIds.length ?? 0}
         </span>
+        <span className="hud-item">
+          Neutrophile CD: {formatCooldown(snapshot?.neutrophilCooldownMs)}
+        </span>
       </div>
     </div>
   );
@@ -88,7 +115,7 @@ type GaugeProps = {
   label: string;
   value: number;
   max: number;
-  tone: "health" | "atp";
+  tone: "health" | "atp" | "cytokines" | "inflammation";
 };
 
 function Gauge({ label, value, max, tone }: GaugeProps) {
@@ -118,4 +145,10 @@ function formatHealth(value: number | undefined): number {
 
 function formatAtp(value: number | undefined): number {
   return Math.floor(value ?? 0);
+}
+
+function formatCooldown(value: number | undefined): string {
+  const ms = Math.max(0, value ?? 0);
+
+  return ms === 0 ? "pret" : `${Math.ceil(ms / 1000)}s`;
 }

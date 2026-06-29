@@ -1,18 +1,19 @@
 import { balanceValues } from "../../data/balance";
-import { distanceSquared } from "../../types/shared";
+import { distance, distanceSquared } from "../../types/shared";
 import type { GameState } from "../core/GameState";
 import {
   isBacterium,
-  isMacrophage,
+  isImmuneUnit,
+  isNeutrophil,
   type BacteriumEntity,
-  type MacrophageEntity,
+  type ImmuneUnitEntity,
 } from "../entities";
 
 export function applyCombatSystem(state: GameState, deltaMs: number): void {
   const bacteria = Object.values(state.entities).filter(isBacterium);
 
   for (const entity of Object.values(state.entities)) {
-    if (!isMacrophage(entity)) {
+    if (!isImmuneUnit(entity)) {
       continue;
     }
 
@@ -31,8 +32,19 @@ export function applyCombatSystem(state: GameState, deltaMs: number): void {
       continue;
     }
 
-    target.health -= entity.attackDamage;
+    const damageMultiplier = getInflammationDamageMultiplier(state, entity);
+    target.health -= entity.attackDamage * damageMultiplier;
     entity.attackCooldownRemainingMs = entity.attackCooldownMs;
+
+    state.inflammation.value = Math.min(
+      balanceValues.inflammation.maxValue,
+      state.inflammation.value +
+        balanceValues.inflammation.combatIncrease +
+        (isNeutrophil(entity)
+          ? balanceValues.inflammation.neutrophilAttackIncrease
+          : 0),
+    );
+    addInflammatoryZone(state, entity, target);
     state.effects.push({
       id: `effect-${state.nextEffectNumber}`,
       kind: "attack",
@@ -47,15 +59,15 @@ export function applyCombatSystem(state: GameState, deltaMs: number): void {
 }
 
 function findNearestBacteriumInRange(
-  macrophage: MacrophageEntity,
+  immuneUnit: ImmuneUnitEntity,
   bacteria: BacteriumEntity[],
 ): BacteriumEntity | null {
   let nearest: BacteriumEntity | null = null;
   let nearestDistance = Number.POSITIVE_INFINITY;
-  const maxDistanceSquared = macrophage.attackRange * macrophage.attackRange;
+  const maxDistanceSquared = immuneUnit.attackRange * immuneUnit.attackRange;
 
   for (const bacterium of bacteria) {
-    const currentDistance = distanceSquared(macrophage.position, bacterium.position);
+    const currentDistance = distanceSquared(immuneUnit.position, bacterium.position);
 
     if (currentDistance <= maxDistanceSquared && currentDistance < nearestDistance) {
       nearest = bacterium;
@@ -64,6 +76,42 @@ function findNearestBacteriumInRange(
   }
 
   return nearest;
+}
+
+function getInflammationDamageMultiplier(
+  state: GameState,
+  immuneUnit: ImmuneUnitEntity,
+): number {
+  const usefulBonus =
+    state.inflammation.value >= balanceValues.inflammation.usefulThreshold &&
+    state.inflammation.value < balanceValues.inflammation.dangerThreshold
+      ? balanceValues.inflammation.usefulCombatBonus
+      : 1;
+  const zoneBonus = state.inflammatoryZones.some(
+    (zone) => distance(zone.position, immuneUnit.position) <= zone.radius,
+  )
+    ? 1.08
+    : 1;
+
+  return usefulBonus * zoneBonus;
+}
+
+function addInflammatoryZone(
+  state: GameState,
+  immuneUnit: ImmuneUnitEntity,
+  target: BacteriumEntity,
+): void {
+  const config = balanceValues.inflammatoryZone;
+
+  state.inflammatoryZones.push({
+    id: `zone-${state.nextEffectNumber}`,
+    position: { ...target.position },
+    radius: config.radius,
+    intensity: isNeutrophil(immuneUnit)
+      ? config.intensityOnNeutrophilAttack
+      : config.intensityOnMacrophageAttack,
+    ttlMs: config.ttlMs,
+  });
 }
 
 function removeDeadBacteria(state: GameState): void {

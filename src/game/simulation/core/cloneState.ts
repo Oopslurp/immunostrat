@@ -5,6 +5,12 @@ export function cloneState(state: GameState): GameState {
     ...state,
     tissue: { ...state.tissue },
     resources: { ...state.resources },
+    inflammation: { ...state.inflammation },
+    inflammatoryZones: state.inflammatoryZones.map((zone) => ({
+      ...zone,
+      position: { ...zone.position },
+    })),
+    productionCooldowns: { ...state.productionCooldowns },
     waves: { ...state.waves },
     entities: Object.fromEntries(
       Object.entries(state.entities).map(([id, entity]) => [
@@ -12,10 +18,12 @@ export function cloneState(state: GameState): GameState {
         {
           ...entity,
           position: { ...entity.position },
-          ...(entity.kind === "macrophage" && entity.targetPosition
+          ...((entity.kind === "macrophage" || entity.kind === "neutrophil") &&
+          entity.targetPosition
             ? { targetPosition: { ...entity.targetPosition } }
             : {}),
-          ...(entity.kind === "macrophage" && entity.idleTargetPosition
+          ...((entity.kind === "macrophage" || entity.kind === "neutrophil") &&
+          entity.idleTargetPosition
             ? { idleTargetPosition: { ...entity.idleTargetPosition } }
             : {}),
         },

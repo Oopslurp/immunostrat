@@ -1,3 +1,3 @@
 # Inflammation
 
-Futures regles d'inflammation. Rien n'est implemente en V0.
+La logique V2 d'inflammation globale et de zones locales vit dans `systems/inflammationSystem.ts`.

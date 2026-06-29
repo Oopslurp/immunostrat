@@ -7,6 +7,9 @@ export type GameSnapshot = {
   tissueHealth: number;
   tissueMaxHealth: number;
   atp: number;
+  cytokines: number;
+  inflammation: number;
+  neutrophilCooldownMs: number;
   currentWave: number;
   totalWaves: number;
   entities: GameEntity[];
