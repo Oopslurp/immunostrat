@@ -2,7 +2,11 @@ import type { PathogenTypeId } from "../data/pathogens";
 import type { UnitTypeId } from "../data/units";
 import type { EntityId, Vector2 } from "../types/shared";
 
-export type ImmuneUnitKind = "macrophage" | "neutrophil";
+export type ImmuneUnitKind =
+  | "macrophage"
+  | "neutrophil"
+  | "dendriticCell"
+  | "plasmocyte";
 
 export type ImmuneUnitEntity = {
   id: EntityId;
@@ -21,6 +25,8 @@ export type ImmuneUnitEntity = {
   attackDamage: number;
   attackCooldownMs: number;
   attackCooldownRemainingMs: number;
+  carriedAntigenValue: number;
+  carriedDebrisCount: number;
 };
 
 export type MacrophageEntity = ImmuneUnitEntity & {
@@ -31,6 +37,16 @@ export type MacrophageEntity = ImmuneUnitEntity & {
 export type NeutrophilEntity = ImmuneUnitEntity & {
   kind: "neutrophil";
   unitTypeId: "neutrophil";
+};
+
+export type DendriticCellEntity = ImmuneUnitEntity & {
+  kind: "dendriticCell";
+  unitTypeId: "dendriticCell";
+};
+
+export type PlasmocyteEntity = ImmuneUnitEntity & {
+  kind: "plasmocyte";
+  unitTypeId: "plasmocyte";
 };
 
 export type BacteriumEntity = {
@@ -59,7 +75,22 @@ export function isNeutrophil(entity: GameEntity): entity is NeutrophilEntity {
 }
 
 export function isImmuneUnit(entity: GameEntity): entity is ImmuneUnitEntity {
-  return entity.kind === "macrophage" || entity.kind === "neutrophil";
+  return (
+    entity.kind === "macrophage" ||
+    entity.kind === "neutrophil" ||
+    entity.kind === "dendriticCell" ||
+    entity.kind === "plasmocyte"
+  );
+}
+
+export function isDendriticCell(
+  entity: GameEntity,
+): entity is DendriticCellEntity {
+  return entity.kind === "dendriticCell";
+}
+
+export function isPlasmocyte(entity: GameEntity): entity is PlasmocyteEntity {
+  return entity.kind === "plasmocyte";
 }
 
 export function isBacterium(entity: GameEntity): entity is BacteriumEntity {

@@ -21,9 +21,12 @@ export function applyInflammationSystem(
     }))
     .filter((zone) => zone.ttlMs > 0 && zone.intensity > 0);
 
+  const debrisPressure =
+    state.debris.length * balanceValues.debris.inflammationPerDebrisPerSecond;
   const pressure =
     bacteriaCount * inflammation.bacteriaPerSecond +
-    neutrophilCount * inflammation.neutrophilPerSecond;
+    neutrophilCount * inflammation.neutrophilPerSecond +
+    debrisPressure;
   const decay = bacteriaCount === 0 ? inflammation.decayPerSecond : 0;
 
   state.inflammation.value = clamp(

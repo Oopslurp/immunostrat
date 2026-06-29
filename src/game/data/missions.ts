@@ -36,6 +36,7 @@ export const missionDefinitions = {
         height: 300,
       },
       tissueCore: { x: 210, y: 360 },
+      lymphNode: { x: 345, y: 520, radius: 44 },
       bacteriaEntryZone: {
         x: 1120,
         yMin: 220,
@@ -53,13 +54,13 @@ export const missionDefinitions = {
       {
         startsAtMs: 7600,
         pathogenTypeId: "basicBacterium",
-        count: 9,
+        count: 8,
         spawnIntervalMs: 620,
       },
       {
-        startsAtMs: 16500,
+        startsAtMs: 18500,
         pathogenTypeId: "toughBacterium",
-        count: 6,
+        count: 7,
         spawnIntervalMs: 820,
       },
     ] satisfies MissionWaveDefinition[],

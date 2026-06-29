@@ -297,6 +297,10 @@
   background: #ffc76b;
 }
 
+.hud-gauge-fill-antigens {
+  background: #b69cff;
+}
+
 .hud-gauge-fill-inflammation {
   background: #ff7f8f;
 }

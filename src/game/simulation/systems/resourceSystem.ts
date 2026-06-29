@@ -20,4 +20,8 @@ export function applyResourceSystem(state: GameState, deltaMs: number): void {
     0,
     state.productionCooldowns.neutrophilMs - deltaMs,
   );
+  state.productionCooldowns.massiveNeutralizationMs = Math.max(
+    0,
+    state.productionCooldowns.massiveNeutralizationMs - deltaMs,
+  );
 }

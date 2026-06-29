@@ -16,6 +16,7 @@ export function createInitialState(
     resources: {
       atp: balanceValues.startingAtp,
       cytokines: balanceValues.startingCytokines,
+      antigens: balanceValues.startingAntigens,
     },
     inflammation: {
       value: balanceValues.inflammation.startingValue,
@@ -23,7 +24,12 @@ export function createInitialState(
     inflammatoryZones: [],
     productionCooldowns: {
       neutrophilMs: 0,
+      massiveNeutralizationMs: 0,
     },
+    adaptiveResearch: {
+      bacterialAnalysisComplete: false,
+    },
+    debris: [],
     waves: {
       currentWaveIndex: 0,
       spawnedInCurrentWave: 0,
@@ -32,6 +38,7 @@ export function createInitialState(
     selectedEntityIds: [],
     nextEntityNumber: 1,
     nextEffectNumber: 1,
+    nextDebrisNumber: 1,
     effects: [],
   };
 }

@@ -1,4 +1,5 @@
 import type { GameState } from "./GameState";
+import { isImmuneUnit } from "../entities";
 
 export function cloneState(state: GameState): GameState {
   return {
@@ -11,6 +12,11 @@ export function cloneState(state: GameState): GameState {
       position: { ...zone.position },
     })),
     productionCooldowns: { ...state.productionCooldowns },
+    adaptiveResearch: { ...state.adaptiveResearch },
+    debris: state.debris.map((debris) => ({
+      ...debris,
+      position: { ...debris.position },
+    })),
     waves: { ...state.waves },
     entities: Object.fromEntries(
       Object.entries(state.entities).map(([id, entity]) => [
@@ -18,12 +24,10 @@ export function cloneState(state: GameState): GameState {
         {
           ...entity,
           position: { ...entity.position },
-          ...((entity.kind === "macrophage" || entity.kind === "neutrophil") &&
-          entity.targetPosition
+          ...(isImmuneUnit(entity) && entity.targetPosition
             ? { targetPosition: { ...entity.targetPosition } }
             : {}),
-          ...((entity.kind === "macrophage" || entity.kind === "neutrophil") &&
-          entity.idleTargetPosition
+          ...(isImmuneUnit(entity) && entity.idleTargetPosition
             ? { idleTargetPosition: { ...entity.idleTargetPosition } }
             : {}),
         },

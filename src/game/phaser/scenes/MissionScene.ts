@@ -6,7 +6,13 @@ import { Simulation } from "../../simulation/core/Simulation";
 import type { GameCommand } from "../../simulation/core/commands";
 import type { GameState } from "../../simulation/core/GameState";
 import { distanceSquared } from "../../types/shared";
-import { isBacterium, isImmuneUnit, isNeutrophil } from "../../simulation/entities";
+import {
+  isBacterium,
+  isDendriticCell,
+  isImmuneUnit,
+  isNeutrophil,
+  isPlasmocyte,
+} from "../../simulation/entities";
 
 export class MissionScene extends Phaser.Scene {
   private simulation = new Simulation();
@@ -33,7 +39,7 @@ export class MissionScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.DESTROY, () => this.cleanupBridge());
 
     this.add
-      .text(map.width / 2, 42, "Immunostrat - Wound Defense V2", {
+      .text(map.width / 2, 42, "Immunostrat - Wound Defense V3", {
         color: "#f5fbff",
         fontFamily: "monospace",
         fontSize: "24px",
@@ -222,6 +228,7 @@ export class MissionScene extends Phaser.Scene {
     graphics.clear();
     this.drawMap(graphics, state);
     this.drawInflammatoryZones(graphics, state);
+    this.drawDebris(graphics, state);
     this.drawEntities(graphics, state);
     this.drawEffects(graphics, state);
     this.drawSelectionRectangle(graphics);
@@ -289,13 +296,37 @@ export class MissionScene extends Phaser.Scene {
 
     graphics.fillStyle(0xffc76b, 0.72);
     graphics.fillCircle(mission.map.macrophageSpawn.x, mission.map.macrophageSpawn.y, 10);
+
+    graphics.fillStyle(0xb69cff, 0.22);
+    graphics.fillCircle(map.lymphNode.x, map.lymphNode.y, map.lymphNode.radius);
+    graphics.lineStyle(4, 0xb69cff, 0.65);
+    graphics.strokeCircle(map.lymphNode.x, map.lymphNode.y, map.lymphNode.radius);
   }
 
   private drawEntities(graphics: Phaser.GameObjects.Graphics, state: GameState) {
     for (const entity of Object.values(state.entities)) {
       if (isImmuneUnit(entity)) {
-        graphics.fillStyle(isNeutrophil(entity) ? 0xffc76b : 0x62d3c8, 0.95);
-        graphics.fillCircle(entity.position.x, entity.position.y, entity.radius);
+        graphics.fillStyle(getImmuneUnitColor(entity.kind), 0.95);
+        if (isDendriticCell(entity)) {
+          graphics.fillTriangle(
+            entity.position.x,
+            entity.position.y - entity.radius,
+            entity.position.x - entity.radius,
+            entity.position.y + entity.radius,
+            entity.position.x + entity.radius,
+            entity.position.y + entity.radius,
+          );
+        } else if (isPlasmocyte(entity)) {
+          graphics.fillRoundedRect(
+            entity.position.x - entity.radius,
+            entity.position.y - entity.radius,
+            entity.radius * 2,
+            entity.radius * 2,
+            8,
+          );
+        } else {
+          graphics.fillCircle(entity.position.x, entity.position.y, entity.radius);
+        }
         graphics.lineStyle(3, 0xf5fbff, 0.22);
         graphics.strokeCircle(entity.position.x, entity.position.y, entity.radius + 4);
 
@@ -316,6 +347,17 @@ export class MissionScene extends Phaser.Scene {
         }
 
         this.drawHealthBar(graphics, entity.position.x, entity.position.y - 34, entity.health, entity.maxHealth);
+
+        if (isDendriticCell(entity) && entity.carriedDebrisCount > 0) {
+          graphics.fillStyle(0xb69cff, 0.95);
+          for (let index = 0; index < entity.carriedDebrisCount; index += 1) {
+            graphics.fillCircle(
+              entity.position.x + entity.radius + index * 7,
+              entity.position.y - entity.radius,
+              4,
+            );
+          }
+        }
       }
 
       if (isBacterium(entity)) {
@@ -325,6 +367,22 @@ export class MissionScene extends Phaser.Scene {
         graphics.strokeEllipse(entity.position.x, entity.position.y, entity.radius * 2.4, entity.radius * 1.8);
         this.drawHealthBar(graphics, entity.position.x, entity.position.y - 24, entity.health, entity.maxHealth);
       }
+    }
+  }
+
+  private drawDebris(graphics: Phaser.GameObjects.Graphics, state: GameState) {
+    for (const debris of state.debris) {
+      graphics.fillStyle(0xb69cff, 0.9);
+      graphics.fillTriangle(
+        debris.position.x,
+        debris.position.y - 8,
+        debris.position.x - 8,
+        debris.position.y + 7,
+        debris.position.x + 8,
+        debris.position.y + 7,
+      );
+      graphics.lineStyle(1, 0xf5fbff, 0.3);
+      graphics.strokeCircle(debris.position.x, debris.position.y, 10);
     }
   }
 
@@ -361,14 +419,16 @@ export class MissionScene extends Phaser.Scene {
   private drawEffects(graphics: Phaser.GameObjects.Graphics, state: GameState) {
     for (const effect of state.effects) {
       const maxTtl =
-        effect.kind === "attack"
+        effect.kind === "attack" || effect.kind === "antibody"
           ? balanceValues.attackEffectTtlMs
-          : balanceValues.tissueDamageEffectTtlMs;
+          : effect.kind === "adaptive"
+            ? balanceValues.attackEffectTtlMs * 2
+            : balanceValues.tissueDamageEffectTtlMs;
       const alpha = Phaser.Math.Clamp(effect.ttlMs / maxTtl, 0, 1) * 0.75;
 
       graphics.lineStyle(
         effect.kind === "attack" ? 4 : 5,
-        effect.kind === "attack" ? 0xffc76b : 0xff7f8f,
+        getEffectColor(effect.kind),
         alpha,
       );
       graphics.strokeCircle(effect.position.x, effect.position.y, effect.radius);
@@ -406,18 +466,52 @@ export class MissionScene extends Phaser.Scene {
       tissueMaxHealth: state.tissue.maxHealth,
       atp: state.resources.atp,
       cytokines: state.resources.cytokines,
+      antigens: state.resources.antigens,
       inflammation: state.inflammation.value,
       neutrophilCooldownMs: state.productionCooldowns.neutrophilMs,
+      massiveNeutralizationCooldownMs:
+        state.productionCooldowns.massiveNeutralizationMs,
+      bacterialAnalysisComplete:
+        state.adaptiveResearch.bacterialAnalysisComplete,
       currentWave: Math.min(
         state.waves.currentWaveIndex + 1,
         mission.waves.length,
       ),
       totalWaves: mission.waves.length,
       entities: Object.values(state.entities),
+      debrisCount: state.debris.length,
       selectedEntityIds: state.selectedEntityIds,
     };
 
     this.bridge.publishSnapshot(snapshot);
     this.lastPublishedStatus = state.status;
   }
+}
+
+function getImmuneUnitColor(kind: string): number {
+  if (kind === "neutrophil") {
+    return 0xffc76b;
+  }
+
+  if (kind === "dendriticCell") {
+    return 0xb69cff;
+  }
+
+  if (kind === "plasmocyte") {
+    return 0xf7f0d8;
+  }
+
+  return 0x62d3c8;
+}
+
+function getEffectColor(kind: string): number {
+  if (kind === "antibody" || kind === "adaptive") {
+    return 0xb69cff;
+  }
+
+  if (kind === "attack") {
+    return 0xffc76b;
+  }
+
+  return 0xff7f8f;
 }

@@ -10,6 +10,10 @@ import { cloneState } from "./cloneState";
 export type GameCommand =
   | { type: "produceMacrophage" }
   | { type: "produceNeutrophil" }
+  | { type: "produceDendriticCell" }
+  | { type: "producePlasmocyte" }
+  | { type: "researchBacterialAnalysis" }
+  | { type: "useMassiveNeutralization" }
   | { type: "selectEntity"; entityId: EntityId | null }
   | { type: "selectEntities"; entityIds: EntityId[] }
   | { type: "orderMove"; position: Vector2 }
@@ -30,6 +34,22 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
 
   if (command.type === "produceNeutrophil") {
     return produceImmuneUnit(state, "neutrophil");
+  }
+
+  if (command.type === "produceDendriticCell") {
+    return produceImmuneUnit(state, "dendriticCell");
+  }
+
+  if (command.type === "producePlasmocyte") {
+    return producePlasmocyte(state);
+  }
+
+  if (command.type === "researchBacterialAnalysis") {
+    return researchBacterialAnalysis(state);
+  }
+
+  if (command.type === "useMassiveNeutralization") {
+    return useMassiveNeutralization(state);
   }
 
   if (command.type === "selectEntity") {
@@ -89,6 +109,10 @@ function produceImmuneUnit(state: GameState, unitTypeId: UnitTypeId): GameState 
     return state;
   }
 
+  if (unitTypeId === "plasmocyte") {
+    return producePlasmocyte(state);
+  }
+
   const mission = missionDefinitions[state.missionId];
   const next = cloneState(state);
   const id = `${unitTypeId}-${next.nextEntityNumber}`;
@@ -120,6 +144,8 @@ function produceImmuneUnit(state: GameState, unitTypeId: UnitTypeId): GameState 
     attackDamage: definition.attackDamage,
     attackCooldownMs: definition.attackCooldownMs,
     attackCooldownRemainingMs: 0,
+    carriedAntigenValue: 0,
+    carriedDebrisCount: 0,
   };
 
   if (unitTypeId === "neutrophil") {
@@ -132,6 +158,120 @@ function produceImmuneUnit(state: GameState, unitTypeId: UnitTypeId): GameState 
   }
 
   next.selectedEntityIds = [id];
+
+  return next;
+}
+
+function producePlasmocyte(state: GameState): GameState {
+  const definition = unitDefinitions.plasmocyte;
+  const adaptive = balanceValues.adaptive;
+
+  if (
+    !state.adaptiveResearch.bacterialAnalysisComplete ||
+    state.resources.atp < definition.atpCost ||
+    state.resources.cytokines < definition.cytokineCost ||
+    state.resources.antigens < adaptive.plasmocyteAntigenCost
+  ) {
+    return state;
+  }
+
+  const next = cloneState(state);
+  const id = `plasmocyte-${next.nextEntityNumber}`;
+
+  next.nextEntityNumber += 1;
+  next.resources.atp = Math.max(0, next.resources.atp - definition.atpCost);
+  next.resources.cytokines = Math.max(
+    0,
+    next.resources.cytokines - definition.cytokineCost,
+  );
+  next.resources.antigens = Math.max(
+    0,
+    next.resources.antigens - adaptive.plasmocyteAntigenCost,
+  );
+  next.entities[id] = {
+    id,
+    kind: "plasmocyte",
+    unitTypeId: "plasmocyte",
+    position: { ...definition.spawnPosition },
+    targetPosition: null,
+    idleTargetPosition: null,
+    nextIdleRetargetMs: state.elapsedMs + balanceValues.idleRetargetBaseMs,
+    health: definition.maxHealth,
+    maxHealth: definition.maxHealth,
+    radius: definition.radius,
+    movementSpeed: definition.movementSpeed,
+    idleMovementSpeed: definition.idleMovementSpeed,
+    attackRange: definition.attackRange,
+    attackDamage: definition.attackDamage,
+    attackCooldownMs: definition.attackCooldownMs,
+    attackCooldownRemainingMs: 0,
+    carriedAntigenValue: 0,
+    carriedDebrisCount: 0,
+  };
+  next.selectedEntityIds = [id];
+
+  return next;
+}
+
+function researchBacterialAnalysis(state: GameState): GameState {
+  const cost = balanceValues.adaptive.bacterialAnalysisAntigenCost;
+
+  if (
+    state.adaptiveResearch.bacterialAnalysisComplete ||
+    state.resources.antigens < cost
+  ) {
+    return state;
+  }
+
+  const next = cloneState(state);
+  next.resources.antigens = Math.max(0, next.resources.antigens - cost);
+  next.adaptiveResearch.bacterialAnalysisComplete = true;
+
+  return next;
+}
+
+function useMassiveNeutralization(state: GameState): GameState {
+  const adaptive = balanceValues.adaptive;
+
+  if (
+    !state.adaptiveResearch.bacterialAnalysisComplete ||
+    state.productionCooldowns.massiveNeutralizationMs > 0 ||
+    state.resources.antigens < adaptive.massiveNeutralizationAntigenCost ||
+    state.resources.atp < adaptive.massiveNeutralizationAtpCost ||
+    state.resources.cytokines < adaptive.massiveNeutralizationCytokineCost
+  ) {
+    return state;
+  }
+
+  const next = cloneState(state);
+  next.resources.antigens = Math.max(
+    0,
+    next.resources.antigens - adaptive.massiveNeutralizationAntigenCost,
+  );
+  next.resources.atp = Math.max(
+    0,
+    next.resources.atp - adaptive.massiveNeutralizationAtpCost,
+  );
+  next.resources.cytokines = Math.max(
+    0,
+    next.resources.cytokines - adaptive.massiveNeutralizationCytokineCost,
+  );
+  next.productionCooldowns.massiveNeutralizationMs =
+    adaptive.massiveNeutralizationCooldownMs;
+
+  for (const entity of Object.values(next.entities)) {
+    if (entity.kind === "bacterium") {
+      entity.health -= adaptive.massiveNeutralizationDamage;
+      next.effects.push({
+        id: `effect-${next.nextEffectNumber}`,
+        kind: "adaptive",
+        position: { ...entity.position },
+        radius: entity.radius + 34,
+        ttlMs: balanceValues.attackEffectTtlMs * 2,
+      });
+      next.nextEffectNumber += 1;
+    }
+  }
 
   return next;
 }

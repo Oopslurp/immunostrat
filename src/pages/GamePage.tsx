@@ -19,16 +19,38 @@ export function GamePage() {
     snapshot.atp >= unitDefinitions.neutrophil.atpCost &&
     snapshot.cytokines >= unitDefinitions.neutrophil.cytokineCost &&
     snapshot.neutrophilCooldownMs <= 0;
+  const canProduceDendritic =
+    snapshot?.status === "running" &&
+    snapshot.atp >= unitDefinitions.dendriticCell.atpCost &&
+    snapshot.cytokines >= unitDefinitions.dendriticCell.cytokineCost;
+  const canResearch =
+    snapshot?.status === "running" &&
+    !snapshot.bacterialAnalysisComplete &&
+    snapshot.antigens >= balanceValues.adaptive.bacterialAnalysisAntigenCost;
+  const canProducePlasmocyte =
+    snapshot?.status === "running" &&
+    snapshot.bacterialAnalysisComplete &&
+    snapshot.atp >= unitDefinitions.plasmocyte.atpCost &&
+    snapshot.cytokines >= unitDefinitions.plasmocyte.cytokineCost &&
+    snapshot.antigens >= balanceValues.adaptive.plasmocyteAntigenCost;
+  const canUseAdaptive =
+    snapshot?.status === "running" &&
+    snapshot.bacterialAnalysisComplete &&
+    snapshot.massiveNeutralizationCooldownMs <= 0 &&
+    snapshot.antigens >= balanceValues.adaptive.massiveNeutralizationAntigenCost &&
+    snapshot.atp >= balanceValues.adaptive.massiveNeutralizationAtpCost &&
+    snapshot.cytokines >= balanceValues.adaptive.massiveNeutralizationCytokineCost;
 
   return (
     <div className="page game-page">
       <header className="game-header">
         <div>
-          <span className="eyebrow">Prototype jouable V2</span>
+          <span className="eyebrow">Prototype jouable V3</span>
           <h1>Plaie cutanee infectee</h1>
           <p>
             Produis macrophages et neutrophiles, controle les bacteries et
-            surveille l'inflammation pour eviter les degats collateraux.
+            collecte les debris avec des cellules dendritiques pour debloquer
+            une reponse adaptative.
           </p>
         </div>
         <div className="game-actions">
@@ -45,6 +67,31 @@ export function GamePage() {
           >
             Neutrophile (-{unitDefinitions.neutrophil.atpCost} ATP, -
             {unitDefinitions.neutrophil.cytokineCost} CYT)
+          </Button>
+          <Button
+            disabled={!canProduceDendritic}
+            onClick={() => bridge.dispatch({ type: "produceDendriticCell" })}
+          >
+            Dendritique (-{unitDefinitions.dendriticCell.atpCost} ATP, -
+            {unitDefinitions.dendriticCell.cytokineCost} CYT)
+          </Button>
+          <Button
+            disabled={!canResearch}
+            onClick={() => bridge.dispatch({ type: "researchBacterialAnalysis" })}
+          >
+            Analyse bacterienne (-{balanceValues.adaptive.bacterialAnalysisAntigenCost} AG)
+          </Button>
+          <Button
+            disabled={!canProducePlasmocyte}
+            onClick={() => bridge.dispatch({ type: "producePlasmocyte" })}
+          >
+            Plasmocyte (-{balanceValues.adaptive.plasmocyteAntigenCost} AG)
+          </Button>
+          <Button
+            disabled={!canUseAdaptive}
+            onClick={() => bridge.dispatch({ type: "useMassiveNeutralization" })}
+          >
+            Neutralisation massive
           </Button>
           <Button onClick={() => bridge.dispatch({ type: "restart" })}>
             Recommencer
@@ -86,6 +133,12 @@ export function GamePage() {
           tone="cytokines"
         />
         <Gauge
+          label="Antigenes"
+          value={formatAtp(snapshot?.antigens)}
+          max={balanceValues.maxAntigens}
+          tone="antigens"
+        />
+        <Gauge
           label="Inflammation"
           value={formatAtp(snapshot?.inflammation)}
           max={balanceValues.inflammation.maxValue}
@@ -104,7 +157,16 @@ export function GamePage() {
           Selection: {snapshot?.selectedEntityIds.length ?? 0}
         </span>
         <span className="hud-item">
+          Debris: {snapshot?.debrisCount ?? 0}
+        </span>
+        <span className="hud-item">
+          Analyse: {snapshot?.bacterialAnalysisComplete ? "complete" : "non"}
+        </span>
+        <span className="hud-item">
           Neutrophile CD: {formatCooldown(snapshot?.neutrophilCooldownMs)}
+        </span>
+        <span className="hud-item">
+          Adaptatif CD: {formatCooldown(snapshot?.massiveNeutralizationCooldownMs)}
         </span>
       </div>
     </div>
@@ -115,7 +177,7 @@ type GaugeProps = {
   label: string;
   value: number;
   max: number;
-  tone: "health" | "atp" | "cytokines" | "inflammation";
+  tone: "health" | "atp" | "cytokines" | "antigens" | "inflammation";
 };
 
 function Gauge({ label, value, max, tone }: GaugeProps) {

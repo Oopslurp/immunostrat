@@ -8,11 +8,15 @@ export type GameSnapshot = {
   tissueMaxHealth: number;
   atp: number;
   cytokines: number;
+  antigens: number;
   inflammation: number;
   neutrophilCooldownMs: number;
+  massiveNeutralizationCooldownMs: number;
+  bacterialAnalysisComplete: boolean;
   currentWave: number;
   totalWaves: number;
   entities: GameEntity[];
+  debrisCount: number;
   selectedEntityIds: GameState["selectedEntityIds"];
 };
 

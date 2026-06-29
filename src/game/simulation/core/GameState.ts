@@ -5,6 +5,7 @@ import type { GameEntity } from "../entities";
 export type GameResources = {
   atp: number;
   cytokines: number;
+  antigens: number;
 };
 
 export type TissueState = {
@@ -31,11 +32,23 @@ export type InflammatoryZone = {
 
 export type ProductionCooldowns = {
   neutrophilMs: number;
+  massiveNeutralizationMs: number;
+};
+
+export type AdaptiveResearchState = {
+  bacterialAnalysisComplete: boolean;
+};
+
+export type PathogenDebris = {
+  id: string;
+  position: Vector2;
+  antigenValue: number;
+  ttlMs: number;
 };
 
 export type CombatEffect = {
   id: string;
-  kind: "attack" | "tissueDamage";
+  kind: "attack" | "tissueDamage" | "antibody" | "adaptive";
   position: Vector2;
   radius: number;
   ttlMs: number;
@@ -50,10 +63,13 @@ export type GameState = {
   inflammation: InflammationState;
   inflammatoryZones: InflammatoryZone[];
   productionCooldowns: ProductionCooldowns;
+  adaptiveResearch: AdaptiveResearchState;
+  debris: PathogenDebris[];
   waves: WaveState;
   entities: Record<EntityId, GameEntity>;
   selectedEntityIds: EntityId[];
   nextEntityNumber: number;
   nextEffectNumber: number;
+  nextDebrisNumber: number;
   effects: CombatEffect[];
 };

@@ -186,6 +186,8 @@ describe("V1 simulation", () => {
           attackDamage: macrophageDefinition.attackDamage,
           attackCooldownMs: macrophageDefinition.attackCooldownMs,
           attackCooldownRemainingMs: 0,
+          carriedAntigenValue: 0,
+          carriedDebrisCount: 0,
         },
         "bacterium-test": {
           id: "bacterium-test",

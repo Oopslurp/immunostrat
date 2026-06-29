@@ -1,6 +1,7 @@
 import { cloneState } from "./cloneState";
 import type { GameState } from "./GameState";
 import { applyCombatSystem } from "../systems/combatSystem";
+import { applyDebrisSystem } from "../systems/debrisSystem";
 import { applyEndConditionSystem } from "../systems/endConditionSystem";
 import { applyEffectSystem } from "../systems/effectSystem";
 import { applyInflammationSystem } from "../systems/inflammationSystem";
@@ -22,6 +23,7 @@ export function stepSimulation(state: GameState, deltaMs: number): GameState {
   applyWaveSystem(next);
   applyMovementSystem(next, deltaMs);
   applyCombatSystem(next, deltaMs);
+  applyDebrisSystem(next, deltaMs);
   applyTissueSystem(next, deltaMs);
   applyInflammationSystem(next, deltaMs);
   applyEndConditionSystem(next);
@@ -30,7 +32,12 @@ export function stepSimulation(state: GameState, deltaMs: number): GameState {
     (entityId) => {
       const entity = next.entities[entityId];
 
-      return entity?.kind === "macrophage" || entity?.kind === "neutrophil";
+      return (
+        entity?.kind === "macrophage" ||
+        entity?.kind === "neutrophil" ||
+        entity?.kind === "dendriticCell" ||
+        entity?.kind === "plasmocyte"
+      );
     },
   );
 

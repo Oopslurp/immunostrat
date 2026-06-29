@@ -35,6 +35,7 @@ describe("V2 cytokines, inflammation and neutrophils", () => {
       resources: {
         atp: unitDefinitions.neutrophil.atpCost,
         cytokines: unitDefinitions.neutrophil.cytokineCost - 1,
+        antigens: 0,
       },
     };
     const refused = applyCommand(initial, { type: "produceNeutrophil" });
@@ -48,7 +49,7 @@ describe("V2 cytokines, inflammation and neutrophils", () => {
   it("regenerates cytokines faster while bacteria are present", () => {
     const initial: GameState = {
       ...createInitialState(),
-      resources: { atp: 100, cytokines: 0 },
+      resources: { atp: 100, cytokines: 0, antigens: 0 },
       entities: {
         "bacterium-test": {
           id: "bacterium-test",
@@ -105,6 +106,8 @@ describe("V2 cytokines, inflammation and neutrophils", () => {
           attackDamage: macrophage.attackDamage,
           attackCooldownMs: macrophage.attackCooldownMs,
           attackCooldownRemainingMs: 0,
+          carriedAntigenValue: 0,
+          carriedDebrisCount: 0,
         },
         "bacterium-test": {
           id: "bacterium-test",

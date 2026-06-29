@@ -5,6 +5,7 @@ import {
   isBacterium,
   isImmuneUnit,
   isNeutrophil,
+  isPlasmocyte,
   type BacteriumEntity,
   type ImmuneUnitEntity,
 } from "../entities";
@@ -14,6 +15,10 @@ export function applyCombatSystem(state: GameState, deltaMs: number): void {
 
   for (const entity of Object.values(state.entities)) {
     if (!isImmuneUnit(entity)) {
+      continue;
+    }
+
+    if (entity.attackDamage <= 0 || entity.attackRange <= 0) {
       continue;
     }
 
@@ -47,7 +52,7 @@ export function applyCombatSystem(state: GameState, deltaMs: number): void {
     addInflammatoryZone(state, entity, target);
     state.effects.push({
       id: `effect-${state.nextEffectNumber}`,
-      kind: "attack",
+      kind: isPlasmocyte(entity) ? "antibody" : "attack",
       position: { ...target.position },
       radius: target.radius + balanceValues.attackEffectRadiusBonus,
       ttlMs: balanceValues.attackEffectTtlMs,
@@ -55,7 +60,6 @@ export function applyCombatSystem(state: GameState, deltaMs: number): void {
     state.nextEffectNumber += 1;
   }
 
-  removeDeadBacteria(state);
 }
 
 function findNearestBacteriumInRange(
@@ -112,12 +116,4 @@ function addInflammatoryZone(
       : config.intensityOnMacrophageAttack,
     ttlMs: config.ttlMs,
   });
-}
-
-function removeDeadBacteria(state: GameState): void {
-  for (const [id, entity] of Object.entries(state.entities)) {
-    if (isBacterium(entity) && entity.health <= 0) {
-      delete state.entities[id];
-    }
-  }
 }

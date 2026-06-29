@@ -2,7 +2,7 @@
 
 Immunostrat est un prototype web de strategie 2D inspire du systeme immunitaire.
 
-La V2 ajoute cytokines, inflammation, zones inflammatoires et neutrophiles au prototype V1.
+La V3 ajoute debris pathogenes, antigenes, cellule dendritique, ganglion, recherche adaptative, plasmocytes et anticorps simples au prototype V2.
 
 ## Stack
 
@@ -63,11 +63,22 @@ npm run dev -- --port 5175
 - inflammation utile a niveau moyen, dangereuse a niveau eleve ;
 - degats collateraux au tissu si l'inflammation devient excessive.
 
+## Gameplay V3
+
+- debris pathogenes apres mort bacterienne ;
+- ressource antigenes obtenue via analyse ;
+- cellule dendritique pour collecter les debris ;
+- ganglion comme centre d'analyse ;
+- recherche `Analyse bacterienne` ;
+- plasmocytes debloques apres recherche ;
+- attaques anticorps simples ;
+- capacite speciale `Neutralisation massive`.
+
 ## Qualite
 
 - `npm run test` teste la simulation pure avec Vitest.
 - `npm run build` verifie TypeScript et genere le build Vite.
 
-## Hors scope V2
+## Hors scope V3
 
-Pas d'antigenes, cellule dendritique, plasmocytes, anticorps, medicaments, virus, cellules infectees, carte globale, mode infini, assets externes, pixel art final ou polish visuel avance.
+Pas de medicaments, virus, cellules infectees, cellules NK, lymphocytes T, carte globale, mode infini, champignons, parasites, cellules cancereuses, factions pathogenes jouables, arbre technologique complet, pixel art final ou polish visuel avance.
