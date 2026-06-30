@@ -1,9 +1,16 @@
 import { balanceValues } from "../../data/balance";
+import { pathogenDefinitions } from "../../data/pathogens";
 import type { GameState } from "../core/GameState";
 import { isBacterium } from "../entities";
 
 export function applyResourceSystem(state: GameState, deltaMs: number): void {
-  const bacteriaCount = Object.values(state.entities).filter(isBacterium).length;
+  const bacteriaPressure = Object.values(state.entities)
+    .filter(isBacterium)
+    .reduce((pressure, bacterium) => {
+      const definition = pathogenDefinitions[bacterium.pathogenTypeId];
+
+      return pressure + (bacterium.inflammationPressureMultiplier ?? definition.inflammationPressureMultiplier);
+    }, 0);
 
   state.resources.atp = Math.min(
     balanceValues.maxAtp,
@@ -13,7 +20,7 @@ export function applyResourceSystem(state: GameState, deltaMs: number): void {
     balanceValues.maxCytokines,
     state.resources.cytokines +
       (balanceValues.passiveCytokinesPerSecond +
-        bacteriaCount * balanceValues.cytokinesPerBacteriumPerSecond) *
+        bacteriaPressure * balanceValues.cytokinesPerBacteriumPerSecond) *
         (deltaMs / 1000),
   );
   state.productionCooldowns.neutrophilMs = Math.max(

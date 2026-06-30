@@ -1,4 +1,5 @@
 import { balanceValues } from "../../data/balance";
+import { pathogenDefinitions } from "../../data/pathogens";
 import { missionDefinitions } from "../../data/missions";
 import { distance } from "../../types/shared";
 import type { GameState } from "../core/GameState";
@@ -9,7 +10,13 @@ export function applyInflammationSystem(
   deltaMs: number,
 ): void {
   const seconds = deltaMs / 1000;
-  const bacteriaCount = Object.values(state.entities).filter(isBacterium).length;
+  const bacteriaPressure = Object.values(state.entities)
+    .filter(isBacterium)
+    .reduce((pressure, bacterium) => {
+      const definition = pathogenDefinitions[bacterium.pathogenTypeId];
+
+      return pressure + (bacterium.inflammationPressureMultiplier ?? definition.inflammationPressureMultiplier);
+    }, 0);
   const neutrophilCount = Object.values(state.entities).filter(isNeutrophil).length;
   const inflammation = balanceValues.inflammation;
 
@@ -23,11 +30,16 @@ export function applyInflammationSystem(
 
   const debrisPressure =
     state.debris.length * balanceValues.debris.inflammationPerDebrisPerSecond;
+  const biofilmPressure = state.biofilmZones.reduce(
+    (pressure, zone) => pressure + zone.inflammationPerSecond,
+    0,
+  );
   const pressure =
-    bacteriaCount * inflammation.bacteriaPerSecond +
+    bacteriaPressure * inflammation.bacteriaPerSecond +
     neutrophilCount * inflammation.neutrophilPerSecond +
-    debrisPressure;
-  const decay = bacteriaCount === 0 ? inflammation.decayPerSecond : 0;
+    debrisPressure +
+    biofilmPressure;
+  const decay = bacteriaPressure === 0 ? inflammation.decayPerSecond : 0;
 
   state.inflammation.value = clamp(
     state.inflammation.value + (pressure - decay) * seconds,

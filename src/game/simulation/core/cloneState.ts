@@ -11,6 +11,10 @@ export function cloneState(state: GameState): GameState {
       ...zone,
       position: { ...zone.position },
     })),
+    biofilmZones: state.biofilmZones.map((zone) => ({
+      ...zone,
+      position: { ...zone.position },
+    })),
     productionCooldowns: { ...state.productionCooldowns },
     adaptiveResearch: { ...state.adaptiveResearch },
     debris: state.debris.map((debris) => ({

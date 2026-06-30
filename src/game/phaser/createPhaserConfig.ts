@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { balanceValues } from "../data/balance";
 import { missionDefinitions } from "../data/missions";
 import { BootScene } from "./scenes/BootScene";
 import type { GameBridge } from "./GameBridge";
@@ -15,8 +16,8 @@ export function createPhaserConfig(
   return {
     type: Phaser.AUTO,
     parent,
-    width: map.width,
-    height: map.height,
+    width: Math.min(map.width, balanceValues.camera.viewportWidth),
+    height: Math.min(map.height, balanceValues.camera.viewportHeight),
     backgroundColor: "#101820",
     scene: [
       new BootScene(),

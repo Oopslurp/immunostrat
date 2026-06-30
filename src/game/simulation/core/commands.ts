@@ -2,7 +2,7 @@ import { balanceValues } from "../../data/balance";
 import { missionDefinitions } from "../../data/missions";
 import { unitDefinitions, type UnitTypeId } from "../../data/units";
 import type { EntityId, Vector2 } from "../../types/shared";
-import { isImmuneUnit } from "../entities";
+import { isDendriticCell, isImmuneUnit } from "../entities";
 import { createInitialState } from "./createInitialState";
 import type { GameState } from "./GameState";
 import { cloneState } from "./cloneState";
@@ -17,6 +17,9 @@ export type GameCommand =
   | { type: "selectEntity"; entityId: EntityId | null }
   | { type: "selectEntities"; entityIds: EntityId[] }
   | { type: "orderMove"; position: Vector2 }
+  | { type: "orderAttack"; targetEntityId: EntityId }
+  | { type: "orderCollectDebris"; debrisId: string }
+  | { type: "orderReturnToLymphNode" }
   | { type: "restart" };
 
 export function applyCommand(state: GameState, command: GameCommand): GameState {
@@ -76,12 +79,79 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
 
   if (command.type === "orderMove") {
     const next = cloneState(state);
+    const selectedIds = next.selectedEntityIds.filter((entityId) => {
+      const selected = next.entities[entityId];
+
+      return selected ? isImmuneUnit(selected) : false;
+    });
+
+    selectedIds.forEach((entityId, index) => {
+      const selected = next.entities[entityId];
+
+      if (selected && isImmuneUnit(selected)) {
+        selected.targetPosition = getFormationPosition(
+          command.position,
+          index,
+          selectedIds.length,
+        );
+        selected.idleTargetPosition = null;
+      }
+    });
+
+    return next;
+  }
+
+  if (command.type === "orderAttack") {
+    const next = cloneState(state);
+    const target = next.entities[command.targetEntityId];
+
+    if (!target || target.kind !== "bacterium") {
+      return next;
+    }
 
     for (const entityId of next.selectedEntityIds) {
       const selected = next.entities[entityId];
 
-      if (selected && isImmuneUnit(selected)) {
-        selected.targetPosition = { ...command.position };
+      if (selected && isImmuneUnit(selected) && selected.attackDamage > 0) {
+        selected.targetPosition = { ...target.position };
+        selected.idleTargetPosition = null;
+      }
+    }
+
+    return next;
+  }
+
+  if (command.type === "orderCollectDebris") {
+    const next = cloneState(state);
+    const debris = next.debris.find((candidate) => candidate.id === command.debrisId);
+    const dendritic = next.selectedEntityIds
+      .map((entityId) => next.entities[entityId])
+      .find((entity) => entity && isDendriticCell(entity));
+
+    if (debris && dendritic && isDendriticCell(dendritic)) {
+      dendritic.targetPosition = { ...debris.position };
+      dendritic.idleTargetPosition = null;
+    }
+
+    return next;
+  }
+
+  if (command.type === "orderReturnToLymphNode") {
+    const next = cloneState(state);
+    const mission = missionDefinitions[next.missionId];
+
+    for (const entityId of next.selectedEntityIds) {
+      const selected = next.entities[entityId];
+
+      if (
+        selected &&
+        isDendriticCell(selected) &&
+        selected.carriedDebrisCount > 0
+      ) {
+        selected.targetPosition = {
+          x: mission.map.lymphNode.x,
+          y: mission.map.lymphNode.y,
+        };
         selected.idleTargetPosition = null;
       }
     }
@@ -90,6 +160,27 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
   }
 
   return state;
+}
+
+function getFormationPosition(
+  center: Vector2,
+  index: number,
+  total: number,
+): Vector2 {
+  if (total <= 1) {
+    return { ...center };
+  }
+
+  const spacing = balanceValues.groupFormationSpacing;
+  const columns = Math.ceil(Math.sqrt(total));
+  const row = Math.floor(index / columns);
+  const column = index % columns;
+  const rows = Math.ceil(total / columns);
+
+  return {
+    x: center.x + (column - (columns - 1) / 2) * spacing,
+    y: center.y + (row - (rows - 1) / 2) * spacing,
+  };
 }
 
 function produceImmuneUnit(state: GameState, unitTypeId: UnitTypeId): GameState {
@@ -144,6 +235,8 @@ function produceImmuneUnit(state: GameState, unitTypeId: UnitTypeId): GameState 
     attackDamage: definition.attackDamage,
     attackCooldownMs: definition.attackCooldownMs,
     attackCooldownRemainingMs: 0,
+    lifeRemainingMs:
+      "lifetimeMs" in definition ? definition.lifetimeMs : undefined,
     carriedAntigenValue: 0,
     carriedDebrisCount: 0,
   };
@@ -205,6 +298,7 @@ function producePlasmocyte(state: GameState): GameState {
     attackDamage: definition.attackDamage,
     attackCooldownMs: definition.attackCooldownMs,
     attackCooldownRemainingMs: 0,
+    lifeRemainingMs: undefined,
     carriedAntigenValue: 0,
     carriedDebrisCount: 0,
   };

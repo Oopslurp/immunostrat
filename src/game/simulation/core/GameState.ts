@@ -30,6 +30,17 @@ export type InflammatoryZone = {
   ttlMs: number;
 };
 
+export type BiofilmZone = {
+  id: string;
+  sourceEntityId: EntityId;
+  pathogenTypeId: string;
+  position: Vector2;
+  radius: number;
+  damageTakenMultiplier: number;
+  immuneSlowMultiplier: number;
+  inflammationPerSecond: number;
+};
+
 export type ProductionCooldowns = {
   neutrophilMs: number;
   massiveNeutralizationMs: number;
@@ -42,13 +53,15 @@ export type AdaptiveResearchState = {
 export type PathogenDebris = {
   id: string;
   position: Vector2;
+  pathogenTypeId: string;
+  antigenProfileId: string;
   antigenValue: number;
   ttlMs: number;
 };
 
 export type CombatEffect = {
   id: string;
-  kind: "attack" | "tissueDamage" | "antibody" | "adaptive";
+  kind: "attack" | "tissueDamage" | "antibody" | "adaptive" | "phagocytosis";
   position: Vector2;
   radius: number;
   ttlMs: number;
@@ -62,6 +75,7 @@ export type GameState = {
   resources: GameResources;
   inflammation: InflammationState;
   inflammatoryZones: InflammatoryZone[];
+  biofilmZones: BiofilmZone[];
   productionCooldowns: ProductionCooldowns;
   adaptiveResearch: AdaptiveResearchState;
   debris: PathogenDebris[];

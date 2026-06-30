@@ -2,7 +2,7 @@
 
 Immunostrat est un prototype web de strategie 2D inspire du systeme immunitaire.
 
-La V3 ajoute debris pathogenes, antigenes, cellule dendritique, ganglion, recherche adaptative, plasmocytes et anticorps simples au prototype V2.
+La V4.2 ajoute des controles RTS plus propres : selection gauche, ordres au clic droit, formation de groupe et camera deplacable.
 
 ## Stack
 
@@ -74,11 +74,44 @@ npm run dev -- --port 5175
 - attaques anticorps simples ;
 - capacite speciale `Neutralisation massive`.
 
+## Gameplay V4
+
+- profils bacteriens data-driven ;
+- cocci rapides de swarm ;
+- bacilles proliferants ;
+- bacteries resistantes avec armure ;
+- colonies a biofilm ;
+- bacteries toxiques optionnelles ;
+- biofilm visible qui reduit les degats et ralentit legerement les unites immunitaires ;
+- debris avec valeur antigenique selon le profil bacterien ;
+- panneau de menaces detectees.
+
+## Patch V4.1
+
+- carte elargie et principaux points de mission mieux espaces ;
+- ganglion replace en arriere de la ligne de front ;
+- zones inflammatoires plus tactiques et moins couvrantes ;
+- macrophage recentre sur tank/nettoyage/phagocytose courte ;
+- neutrophile plus rapide, plus inflammatoire et limite dans le temps ;
+- vagues espacees pour laisser le temps de collecter des antigenes ;
+- biofilm ajuste pour rester genant sans bloquer le prototype.
+
+## Patch V4.2
+
+- clic gauche pour selectionner uniquement ;
+- clic gauche + drag pour selectionner plusieurs unites immunitaires ;
+- clic droit pour donner un ordre de mouvement en formation ;
+- clic droit sur bacterie pour envoyer les unites combattantes vers la menace ;
+- clic droit sur debris pour ordonner une collecte par cellule dendritique ;
+- clic droit sur ganglion pour rappeler les dendritiques chargees ;
+- clic droit + drag pour deplacer la camera sans donner d'ordre accidentel ;
+- camera clavier avec WASD et ZQSD.
+
 ## Qualite
 
 - `npm run test` teste la simulation pure avec Vitest.
 - `npm run build` verifie TypeScript et genere le build Vite.
 
-## Hors scope V3
+## Hors scope V4.2
 
 Pas de medicaments, virus, cellules infectees, cellules NK, lymphocytes T, carte globale, mode infini, champignons, parasites, cellules cancereuses, factions pathogenes jouables, arbre technologique complet, pixel art final ou polish visuel avance.

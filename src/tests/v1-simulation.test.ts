@@ -43,7 +43,7 @@ describe("V1 simulation", () => {
     expect(regenerated.resources.atp).toBe(1);
   });
 
-  it("selects multiple macrophages and sends them to the same target", () => {
+  it("selects multiple macrophages and sends them in formation near the same target", () => {
     const first = applyCommand(createInitialState(), {
       type: "produceMacrophage",
     });
@@ -70,7 +70,7 @@ describe("V1 simulation", () => {
     });
 
     expect(ordered.selectedEntityIds).toEqual(macrophageIds);
-    for (const entityId of macrophageIds) {
+    const targetPositions = macrophageIds.map((entityId) => {
       const entity = ordered.entities[entityId];
 
       expect(entity.kind).toBe("macrophage");
@@ -78,8 +78,20 @@ describe("V1 simulation", () => {
         throw new Error("Expected a macrophage");
       }
 
-      expect(entity.targetPosition).toEqual({ x: 520, y: 420 });
-    }
+      expect(entity.targetPosition).not.toBeNull();
+      expect(Math.abs(entity.targetPosition!.x - 520)).toBeLessThanOrEqual(
+        balanceValues.groupFormationSpacing,
+      );
+      expect(Math.abs(entity.targetPosition!.y - 420)).toBeLessThanOrEqual(
+        balanceValues.groupFormationSpacing,
+      );
+
+      return entity.targetPosition;
+    });
+
+    expect(new Set(targetPositions.map((position) => `${position?.x}:${position?.y}`)).size).toBe(
+      macrophageIds.length,
+    );
   });
 
   it("moves idle macrophages slowly when they have no command", () => {

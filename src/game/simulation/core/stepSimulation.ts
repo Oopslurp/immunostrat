@@ -1,11 +1,14 @@
 import { cloneState } from "./cloneState";
 import type { GameState } from "./GameState";
 import { applyCombatSystem } from "../systems/combatSystem";
+import { applyBiofilmSystem } from "../systems/biofilmSystem";
 import { applyDebrisSystem } from "../systems/debrisSystem";
 import { applyEndConditionSystem } from "../systems/endConditionSystem";
 import { applyEffectSystem } from "../systems/effectSystem";
 import { applyInflammationSystem } from "../systems/inflammationSystem";
+import { applyImmuneLifecycleSystem } from "../systems/immuneLifecycleSystem";
 import { applyMovementSystem } from "../systems/movementSystem";
+import { applyPathogenSystem } from "../systems/pathogenSystem";
 import { applyResourceSystem } from "../systems/resourceSystem";
 import { applyTissueSystem } from "../systems/tissueSystem";
 import { applyWaveSystem } from "../systems/waveSystem";
@@ -21,11 +24,15 @@ export function stepSimulation(state: GameState, deltaMs: number): GameState {
   applyResourceSystem(next, deltaMs);
   applyEffectSystem(next, deltaMs);
   applyWaveSystem(next);
+  applyPathogenSystem(next, deltaMs);
+  applyBiofilmSystem(next);
   applyMovementSystem(next, deltaMs);
   applyCombatSystem(next, deltaMs);
   applyDebrisSystem(next, deltaMs);
+  applyBiofilmSystem(next);
   applyTissueSystem(next, deltaMs);
   applyInflammationSystem(next, deltaMs);
+  applyImmuneLifecycleSystem(next, deltaMs);
   applyEndConditionSystem(next);
 
   next.selectedEntityIds = next.selectedEntityIds.filter(

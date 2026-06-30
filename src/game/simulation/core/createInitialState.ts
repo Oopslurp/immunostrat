@@ -22,6 +22,7 @@ export function createInitialState(
       value: balanceValues.inflammation.startingValue,
     },
     inflammatoryZones: [],
+    biofilmZones: [],
     productionCooldowns: {
       neutrophilMs: 0,
       massiveNeutralizationMs: 0,

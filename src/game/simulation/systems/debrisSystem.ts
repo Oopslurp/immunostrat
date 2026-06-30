@@ -1,8 +1,9 @@
 import { balanceValues } from "../../data/balance";
 import { missionDefinitions } from "../../data/missions";
+import { pathogenDefinitions } from "../../data/pathogens";
 import { distance } from "../../types/shared";
 import type { GameState, PathogenDebris } from "../core/GameState";
-import { isBacterium, isDendriticCell } from "../entities";
+import { isBacterium, isDendriticCell, type BacteriumEntity } from "../entities";
 
 export function applyDebrisSystem(state: GameState, deltaMs: number): void {
   decayDebris(state, deltaMs);
@@ -25,8 +26,8 @@ function convertDeadBacteriaToDebris(state: GameState): void {
       continue;
     }
 
-    if (shouldDropDebris(state, id)) {
-      state.debris.push(createDebris(state, entity.position));
+    if (shouldDropDebris(state, entity, id)) {
+      state.debris.push(createDebris(state, entity));
     }
 
     delete state.entities[id];
@@ -115,28 +116,38 @@ function findNearestDebris(
 
 function createDebris(
   state: GameState,
-  position: { x: number; y: number },
+  bacterium: BacteriumEntity,
 ): PathogenDebris {
   const id = `debris-${state.nextDebrisNumber}`;
+  const definition = pathogenDefinitions[bacterium.pathogenTypeId];
 
   state.nextDebrisNumber += 1;
 
   return {
     id,
-    position: { ...position },
-    antigenValue: balanceValues.debris.antigenValue,
+    position: { ...bacterium.position },
+    pathogenTypeId: bacterium.pathogenTypeId,
+    antigenProfileId: definition.antigenProfileId,
+    antigenValue: bacterium.antigenValue ?? definition.antigenValue,
     ttlMs: balanceValues.debris.ttlMs,
   };
 }
 
-function shouldDropDebris(state: GameState, entityId: string): boolean {
-  if (balanceValues.debris.dropChance >= 1) {
+function shouldDropDebris(
+  state: GameState,
+  bacterium: BacteriumEntity,
+  entityId: string,
+): boolean {
+  const definition = pathogenDefinitions[bacterium.pathogenTypeId];
+  const dropChance = bacterium.debrisDropChance ?? definition.debrisDropChance;
+
+  if (dropChance >= 1) {
     return true;
   }
 
   const hash = stableHash(`${entityId}-${state.elapsedMs}`);
 
-  return (hash % 1000) / 1000 <= balanceValues.debris.dropChance;
+  return (hash % 1000) / 1000 <= dropChance;
 }
 
 function stableHash(input: string): number {

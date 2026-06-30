@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { balanceValues } from "../game/data/balance";
+import { pathogenDefinitions } from "../game/data/pathogens";
 import { unitDefinitions } from "../game/data/units";
 import { GameBridge, type GameSnapshot } from "../game/phaser/GameBridge";
 import { PhaserGame } from "../game/phaser/PhaserGame";
@@ -45,12 +46,12 @@ export function GamePage() {
     <div className="page game-page">
       <header className="game-header">
         <div>
-          <span className="eyebrow">Prototype jouable V3</span>
+          <span className="eyebrow">Prototype jouable V4.2</span>
           <h1>Plaie cutanee infectee</h1>
           <p>
             Produis macrophages et neutrophiles, controle les bacteries et
             collecte les debris avec des cellules dendritiques pour debloquer
-            une reponse adaptative.
+            une reponse adaptative contre des profils bacteriens varies.
           </p>
         </div>
         <div className="game-actions">
@@ -160,6 +161,9 @@ export function GamePage() {
           Debris: {snapshot?.debrisCount ?? 0}
         </span>
         <span className="hud-item">
+          Biofilm: {snapshot?.biofilmCount ?? 0}
+        </span>
+        <span className="hud-item">
           Analyse: {snapshot?.bacterialAnalysisComplete ? "complete" : "non"}
         </span>
         <span className="hud-item">
@@ -169,6 +173,28 @@ export function GamePage() {
           Adaptatif CD: {formatCooldown(snapshot?.massiveNeutralizationCooldownMs)}
         </span>
       </div>
+
+      <aside className="threat-panel" aria-label="Menaces detectees">
+        <strong>Menaces detectees</strong>
+        {snapshot?.threatSummary.length ? (
+          snapshot.threatSummary.slice(0, 4).map((item) => {
+            const definition = pathogenDefinitions[item.pathogenTypeId];
+
+            return (
+              <span className="threat-pill" key={item.pathogenTypeId}>
+                <span
+                  className="threat-dot"
+                  style={{ backgroundColor: `#${definition.color.toString(16).padStart(6, "0")}` }}
+                />
+                {definition.displayName} x{item.count}
+                <em>{definition.archetype}</em>
+              </span>
+            );
+          })
+        ) : (
+          <span className="threat-empty">Aucune bacterie active</span>
+        )}
+      </aside>
     </div>
   );
 }

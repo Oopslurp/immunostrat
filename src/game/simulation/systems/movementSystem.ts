@@ -11,10 +11,11 @@ export function applyMovementSystem(state: GameState, deltaMs: number): void {
   for (const entity of Object.values(state.entities)) {
     if (isImmuneUnit(entity)) {
       if (entity.targetPosition) {
+        const biofilmSlowMultiplier = getBiofilmSlowMultiplier(state, entity.position);
         entity.position = moveToward(
           entity.position,
           entity.targetPosition,
-          entity.movementSpeed * maxMoveScale,
+          entity.movementSpeed * biofilmSlowMultiplier * maxMoveScale,
         );
 
         if (distance(entity.position, entity.targetPosition) <= 2) {
@@ -28,6 +29,15 @@ export function applyMovementSystem(state: GameState, deltaMs: number): void {
     }
 
     if (isBacterium(entity)) {
+      entity.immobilizedRemainingMs = Math.max(
+        0,
+        (entity.immobilizedRemainingMs ?? 0) - deltaMs,
+      );
+
+      if ((entity.immobilizedRemainingMs ?? 0) > 0) {
+        continue;
+      }
+
       const target = mission.map.tissueCore;
 
       if (distance(entity.position, target) > entity.tissueAttackRange) {
@@ -65,8 +75,20 @@ function applyIdleMovement(
   immuneUnit.position = moveToward(
     immuneUnit.position,
     immuneUnit.idleTargetPosition,
-    immuneUnit.idleMovementSpeed * maxMoveScale,
+    immuneUnit.idleMovementSpeed *
+      getBiofilmSlowMultiplier(state, immuneUnit.position) *
+      maxMoveScale,
   );
+}
+
+function getBiofilmSlowMultiplier(state: GameState, position: Vector2): number {
+  return state.biofilmZones.reduce((multiplier, zone) => {
+    if (distance(zone.position, position) > zone.radius) {
+      return multiplier;
+    }
+
+    return Math.min(multiplier, zone.immuneSlowMultiplier);
+  }, 1);
 }
 
 function isInInflammatoryZone(state: GameState, position: Vector2): boolean {

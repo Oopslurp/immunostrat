@@ -305,6 +305,54 @@
   background: #ff7f8f;
 }
 
+.threat-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  border: 1px solid rgba(245, 251, 255, 0.12);
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  color: #dbeaf0;
+  background: rgba(8, 13, 21, 0.42);
+}
+
+.threat-panel strong {
+  margin-right: 0.25rem;
+  color: #f5fbff;
+}
+
+.threat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 32px;
+  border: 1px solid rgba(245, 251, 255, 0.12);
+  border-radius: 8px;
+  padding: 0.35rem 0.55rem;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.86rem;
+}
+
+.threat-pill em {
+  color: #a8c0cc;
+  font-size: 0.78rem;
+  font-style: normal;
+}
+
+.threat-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  flex: 0 0 auto;
+  border: 1px solid rgba(245, 251, 255, 0.45);
+  border-radius: 50%;
+}
+
+.threat-empty {
+  color: #a8c0cc;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 820px) {
   .home-layout {
     grid-template-columns: 1fr;

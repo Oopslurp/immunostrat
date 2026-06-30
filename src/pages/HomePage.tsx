@@ -9,13 +9,13 @@ export function HomePage({ onPlay }: HomePageProps) {
   return (
     <div className="page home-layout">
       <section className="hero-copy" aria-labelledby="home-title">
-        <span className="eyebrow">Prototype jouable V3</span>
+        <span className="eyebrow">Prototype jouable V4.2</span>
         <h1 className="hero-title" id="home-title">
           Immunostrat
         </h1>
         <p className="hero-text">
-          Defends une plaie cutanee, collecte des debris pathogenes avec des
-          cellules dendritiques, puis debloque les plasmocytes et anticorps.
+          Defends une plaie cutanee contre des bacteries rapides, resistantes
+          ou protegees par biofilm, puis exploite les antigenes pour repondre.
         </p>
         <div className="home-actions">
           <Button variant="primary" onClick={onPlay}>
@@ -25,7 +25,7 @@ export function HomePage({ onPlay }: HomePageProps) {
       </section>
 
       <Panel className="status-panel">
-        <h2>Reponse adaptative V3</h2>
+        <h2>Controles RTS V4.2</h2>
         <div className="stat-grid">
           <div className="stat-item">
             <span className="stat-label">Architecture</span>
@@ -37,7 +37,7 @@ export function HomePage({ onPlay }: HomePageProps) {
           </div>
           <div className="stat-item">
             <span className="stat-label">Gameplay</span>
-            <span className="stat-value">Innee + adaptative</span>
+            <span className="stat-value">Swarm / tank / biofilm</span>
           </div>
           <div className="stat-item">
             <span className="stat-label">Science</span>

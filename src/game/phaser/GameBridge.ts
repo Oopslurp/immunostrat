@@ -1,6 +1,12 @@
 import type { GameCommand } from "../simulation/core/commands";
 import type { GameState } from "../simulation/core/GameState";
 import type { GameEntity } from "../simulation/entities";
+import type { PathogenTypeId } from "../data/pathogens";
+
+export type ThreatSummaryItem = {
+  pathogenTypeId: PathogenTypeId;
+  count: number;
+};
 
 export type GameSnapshot = {
   status: GameState["status"];
@@ -17,6 +23,8 @@ export type GameSnapshot = {
   totalWaves: number;
   entities: GameEntity[];
   debrisCount: number;
+  biofilmCount: number;
+  threatSummary: ThreatSummaryItem[];
   selectedEntityIds: GameState["selectedEntityIds"];
 };
 

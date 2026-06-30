@@ -25,6 +25,7 @@ export type ImmuneUnitEntity = {
   attackDamage: number;
   attackCooldownMs: number;
   attackCooldownRemainingMs: number;
+  lifeRemainingMs?: number;
   carriedAntigenValue: number;
   carriedDebrisCount: number;
 };
@@ -62,6 +63,16 @@ export type BacteriumEntity = {
   tissueAttackRange: number;
   attackCooldownMs: number;
   attackCooldownRemainingMs: number;
+  immobilizedRemainingMs?: number;
+  phagocytosedByEntityId?: EntityId;
+  phagocytosisRemainingMs?: number;
+  armor?: number;
+  antigenValue?: number;
+  debrisDropChance?: number;
+  inflammationPressureMultiplier?: number;
+  targetPriority?: number;
+  specialCooldownRemainingMs?: number;
+  spawnedChildrenCount?: number;
 };
 
 export type GameEntity = ImmuneUnitEntity | BacteriumEntity;
