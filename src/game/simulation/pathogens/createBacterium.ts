@@ -9,6 +9,10 @@ export function spawnBacterium(
   position: Vector2,
 ): BacteriumEntity {
   const definition = pathogenDefinitions[pathogenTypeId];
+
+  if (definition.pathogenClass !== "bacterium") {
+    throw new Error(`Cannot spawn non-bacterial pathogen as bacterium: ${pathogenTypeId}`);
+  }
   const id = `bacterium-${state.nextEntityNumber}`;
 
   state.nextEntityNumber += 1;

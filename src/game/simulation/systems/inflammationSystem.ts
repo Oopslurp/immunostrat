@@ -3,7 +3,7 @@ import { pathogenDefinitions } from "../../data/pathogens";
 import { missionDefinitions } from "../../data/missions";
 import { distance } from "../../types/shared";
 import type { GameState } from "../core/GameState";
-import { isBacterium, isNeutrophil } from "../entities";
+import { isBacterium, isImmuneUnit, isNeutrophil, isVirus } from "../entities";
 
 export function applyInflammationSystem(
   state: GameState,
@@ -18,6 +18,9 @@ export function applyInflammationSystem(
       return pressure + (bacterium.inflammationPressureMultiplier ?? definition.inflammationPressureMultiplier);
     }, 0);
   const neutrophilCount = Object.values(state.entities).filter(isNeutrophil).length;
+  const viralPressure =
+    Object.values(state.entities).filter(isVirus).length * 0.35 +
+    state.tissueCells.filter((cell) => cell.status === "infected").length * 0.55;
   const inflammation = balanceValues.inflammation;
 
   state.inflammatoryZones = state.inflammatoryZones
@@ -36,10 +39,14 @@ export function applyInflammationSystem(
   );
   const pressure =
     bacteriaPressure * inflammation.bacteriaPerSecond +
+    viralPressure * inflammation.bacteriaPerSecond * 0.45 +
     neutrophilCount * inflammation.neutrophilPerSecond +
     debrisPressure +
     biofilmPressure;
-  const decay = bacteriaPressure === 0 ? inflammation.decayPerSecond : 0;
+  const decay =
+    bacteriaPressure === 0 && viralPressure === 0
+      ? inflammation.decayPerSecond
+      : 0;
 
   state.inflammation.value = clamp(
     state.inflammation.value + (pressure - decay) * seconds,
@@ -48,6 +55,7 @@ export function applyInflammationSystem(
   );
 
   applyInflammationTissueDamage(state, seconds);
+  applyCriticalInflammationImmuneDamage(state, seconds);
   applyInflammatoryZoneTissueDamage(state, seconds);
 }
 
@@ -67,6 +75,27 @@ function applyInflammationTissueDamage(state: GameState, seconds: number): void 
     0,
     state.tissue.health - damagePerSecond * seconds,
   );
+}
+
+function applyCriticalInflammationImmuneDamage(
+  state: GameState,
+  seconds: number,
+): void {
+  if (state.inflammation.value < balanceValues.inflammation.criticalThreshold) {
+    return;
+  }
+
+  for (const entity of Object.values(state.entities)) {
+    if (!isImmuneUnit(entity) || isNeutrophil(entity)) {
+      continue;
+    }
+
+    entity.health = Math.max(
+      0,
+      entity.health -
+        balanceValues.combat.criticalInflammationImmuneDamagePerSecond * seconds,
+    );
+  }
 }
 
 function applyInflammatoryZoneTissueDamage(

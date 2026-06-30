@@ -1,7 +1,9 @@
 import { balanceValues } from "../../data/balance";
 import { missionDefinitions } from "../../data/missions";
+import { pathogenDefinitions } from "../../data/pathogens";
 import type { GameState } from "../core/GameState";
 import { spawnBacterium } from "../pathogens/createBacterium";
+import { spawnVirus } from "../pathogens/createVirus";
 
 export function applyWaveSystem(state: GameState): void {
   const mission = missionDefinitions[state.missionId];
@@ -35,5 +37,10 @@ export function applyWaveSystem(state: GameState): void {
       state.waves.currentWaveIndex * balanceValues.bacteriaSpawnWaveOffset) %
       yRange);
   state.waves.spawnedInCurrentWave += 1;
+  if (pathogenDefinitions[wave.pathogenTypeId].pathogenClass === "virus") {
+    spawnVirus(state, wave.pathogenTypeId, { x: entryZone.x, y });
+    return;
+  }
+
   spawnBacterium(state, wave.pathogenTypeId, { x: entryZone.x, y });
 }

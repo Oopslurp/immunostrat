@@ -2,7 +2,7 @@
 
 Immunostrat est un prototype web de strategie 2D inspire du systeme immunitaire.
 
-La V4.2 ajoute des controles RTS plus propres : selection gauche, ordres au clic droit, formation de groupe et camera deplacable.
+La V5.1 ajoute les cellules civiles du tissu, les virus libres, les cellules infectees, la propagation virale, les interferons, les cellules NK et les lymphocytes T cytotoxiques.
 
 ## Stack
 
@@ -100,18 +100,42 @@ npm run dev -- --port 5175
 
 - clic gauche pour selectionner uniquement ;
 - clic gauche + drag pour selectionner plusieurs unites immunitaires ;
-- clic droit pour donner un ordre de mouvement en formation ;
-- clic droit sur bacterie pour envoyer les unites combattantes vers la menace ;
-- clic droit sur debris pour ordonner une collecte par cellule dendritique ;
-- clic droit sur ganglion pour rappeler les dendritiques chargees ;
-- clic droit + drag pour deplacer la camera sans donner d'ordre accidentel ;
+- clic gauche sur le terrain pour donner un ordre de mouvement en formation ;
+- clic gauche sur bacterie pour envoyer les unites combattantes vers la menace ;
+- clic gauche sur debris pour ordonner une collecte par cellule dendritique ;
+- clic gauche sur ganglion pour rappeler les dendritiques chargees ;
+- clic droit + drag pour deplacer la camera ;
+- clic droit simple sans ordre d'unite ;
 - camera clavier avec WASD et ZQSD.
+
+## Gameplay V5
+
+- cellules civiles immobiles qui representent le tissu a proteger ;
+- sante du tissu influencee par cellules detruites ou infectees ;
+- virus libres data-driven ;
+- infection de cellules civiles ;
+- cellules infectees visibles qui produisent de nouveaux virus ;
+- debris viraux collectables par les cellules dendritiques ;
+- force immunitaire de depart pour agir immediatement ;
+- couts de production un peu plus accessibles ;
+- bouton `Signal antiviral` pour ralentir temporairement la propagation virale.
+
+## Patch V5.1
+
+- capacite `Interferons` avec zone de protection autour du tissu ;
+- cellules civiles protegees temporairement contre la propagation virale ;
+- production de cellules NK contre les cellules infectees ;
+- recherche `Analyse virale` avec cout en antigenes ;
+- lymphocytes T cytotoxiques debloques apres analyse virale ;
+- T cytotoxiques puissants contre cellules infectees, peu utiles contre bacteries ;
+- cellules infectees detruites qui exposent des antigenes viraux collectables ;
+- HUD et rendu Phaser mis a jour pour NK, T cytotoxiques et analyse virale.
 
 ## Qualite
 
 - `npm run test` teste la simulation pure avec Vitest.
 - `npm run build` verifie TypeScript et genere le build Vite.
 
-## Hors scope V4.2
+## Hors scope V5.1
 
-Pas de medicaments, virus, cellules infectees, cellules NK, lymphocytes T, carte globale, mode infini, champignons, parasites, cellules cancereuses, factions pathogenes jouables, arbre technologique complet, pixel art final ou polish visuel avance.
+Pas de campagne complete, carte globale, mode infini, champignons, parasites, cellules cancereuses, factions pathogenes jouables, medicaments avances, vaccination, memoire immunitaire, arbre technologique complet, pixel art final ou polish visuel avance.

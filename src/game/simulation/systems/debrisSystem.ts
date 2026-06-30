@@ -1,13 +1,20 @@
 import { balanceValues } from "../../data/balance";
 import { missionDefinitions } from "../../data/missions";
 import { pathogenDefinitions } from "../../data/pathogens";
-import { distance } from "../../types/shared";
+import { distance, stableHash } from "../../types/shared";
 import type { GameState, PathogenDebris } from "../core/GameState";
-import { isBacterium, isDendriticCell, type BacteriumEntity } from "../entities";
+import {
+  isBacterium,
+  isDendriticCell,
+  isVirus,
+  type BacteriumEntity,
+  type VirusEntity,
+} from "../entities";
 
 export function applyDebrisSystem(state: GameState, deltaMs: number): void {
   decayDebris(state, deltaMs);
   convertDeadBacteriaToDebris(state);
+  convertDeadVirusesToDebris(state);
   processDendriticCells(state);
 }
 
@@ -18,6 +25,20 @@ function decayDebris(state: GameState, deltaMs: number): void {
       ttlMs: debris.ttlMs - deltaMs,
     }))
     .filter((debris) => debris.ttlMs > 0);
+}
+
+function convertDeadVirusesToDebris(state: GameState): void {
+  for (const [id, entity] of Object.entries(state.entities)) {
+    if (!isVirus(entity) || entity.health > 0) {
+      continue;
+    }
+
+    if (shouldDropVirusDebris(state, entity, id)) {
+      state.debris.push(createVirusDebris(state, entity));
+    }
+
+    delete state.entities[id];
+  }
 }
 
 function convertDeadBacteriaToDebris(state: GameState): void {
@@ -32,6 +53,25 @@ function convertDeadBacteriaToDebris(state: GameState): void {
 
     delete state.entities[id];
   }
+}
+
+function createVirusDebris(
+  state: GameState,
+  virus: VirusEntity,
+): PathogenDebris {
+  const id = `debris-${state.nextDebrisNumber}`;
+  const definition = pathogenDefinitions[virus.pathogenTypeId];
+
+  state.nextDebrisNumber += 1;
+
+  return {
+    id,
+    position: { ...virus.position },
+    pathogenTypeId: virus.pathogenTypeId,
+    antigenProfileId: definition.antigenProfileId,
+    antigenValue: virus.antigenValue,
+    ttlMs: balanceValues.debris.ttlMs,
+  };
 }
 
 function processDendriticCells(state: GameState): void {
@@ -150,12 +190,16 @@ function shouldDropDebris(
   return (hash % 1000) / 1000 <= dropChance;
 }
 
-function stableHash(input: string): number {
-  let hash = 0;
-
-  for (let index = 0; index < input.length; index += 1) {
-    hash = (hash * 31 + input.charCodeAt(index)) >>> 0;
+function shouldDropVirusDebris(
+  state: GameState,
+  virus: VirusEntity,
+  entityId: string,
+): boolean {
+  if (virus.debrisDropChance >= 1) {
+    return true;
   }
 
-  return hash;
+  const hash = stableHash(`${entityId}-${state.elapsedMs}`);
+
+  return (hash % 1000) / 1000 <= virus.debrisDropChance;
 }

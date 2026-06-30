@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { balanceValues } from "../data/balance";
-import { missionDefinitions } from "../data/missions";
+import { missionDefinitions, type MissionId } from "../data/missions";
 import { BootScene } from "./scenes/BootScene";
 import type { GameBridge } from "./GameBridge";
 import { MissionScene } from "./scenes/MissionScene";
@@ -10,8 +10,9 @@ import { UIScene } from "./scenes/UIScene";
 export function createPhaserConfig(
   parent: HTMLElement,
   bridge: GameBridge,
+  missionId: MissionId,
 ): Phaser.Types.Core.GameConfig {
-  const map = missionDefinitions.woundBacteriaV1.map;
+  const map = missionDefinitions[missionId].map;
 
   return {
     type: Phaser.AUTO,
@@ -22,7 +23,7 @@ export function createPhaserConfig(
     scene: [
       new BootScene(),
       new PreloadScene(),
-      new MissionScene(bridge),
+      new MissionScene(bridge, missionId),
       new UIScene(),
     ],
     scale: {

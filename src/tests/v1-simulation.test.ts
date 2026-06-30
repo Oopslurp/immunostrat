@@ -10,9 +10,10 @@ import { stepSimulation } from "../game/simulation/core/stepSimulation";
 describe("V1 simulation", () => {
   it("produces a macrophage only when ATP is available", () => {
     const initial = createInitialState();
+    const initialEntityCount = Object.values(initial.entities).length;
     const produced = applyCommand(initial, { type: "produceMacrophage" });
 
-    expect(Object.values(produced.entities)).toHaveLength(1);
+    expect(Object.values(produced.entities)).toHaveLength(initialEntityCount + 1);
     expect(produced.resources.atp).toBe(
       balanceValues.startingAtp - unitDefinitions.macrophage.atpCost,
     );
@@ -26,7 +27,7 @@ describe("V1 simulation", () => {
     };
     const refused = applyCommand(poorState, { type: "produceMacrophage" });
 
-    expect(Object.values(refused.entities)).toHaveLength(0);
+    expect(Object.values(refused.entities)).toHaveLength(initialEntityCount);
     expect(refused.resources.atp).toBe(unitDefinitions.macrophage.atpCost - 1);
   });
 

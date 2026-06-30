@@ -1,12 +1,13 @@
-import type { ImmuneUnitKind } from "../simulation/entities";
+import type { ImmuneUnitKind } from "../types/immune";
 
-export type PathogenShape = "coccus" | "bacillus" | "rod" | "cluster" | "spore";
+export type PathogenShape = "coccus" | "bacillus" | "rod" | "cluster" | "spore" | "virus";
 export type PathogenSpecialBehavior =
   | "swarm"
   | "proliferator"
   | "resistant"
   | "biofilmSource"
-  | "toxic";
+  | "toxic"
+  | "viral";
 
 export type PathogenTypeId =
   | "cocciRapid"
@@ -14,6 +15,7 @@ export type PathogenTypeId =
   | "resistantBacterium"
   | "biofilmColony"
   | "toxicBacterium"
+  | "respiratoryVirus"
   | "basicBacterium"
   | "toughBacterium";
 
@@ -34,6 +36,7 @@ export type PathogenBiofilmDefinition = {
 
 export type PathogenDefinition = {
   id: string;
+  pathogenClass: "bacterium" | "virus";
   displayName: string;
   scientificHint: string;
   description: string;
@@ -64,6 +67,7 @@ export type PathogenDefinition = {
 export const pathogenDefinitions: Record<PathogenTypeId, PathogenDefinition> = {
   cocciRapid: {
     id: "cocciRapid",
+    pathogenClass: "bacterium",
     displayName: "Cocci rapides",
     scientificHint: "Staph/Strep-like",
     description: "Petites bacteries de swarm, faibles mais dangereuses en groupe.",
@@ -89,11 +93,14 @@ export const pathogenDefinitions: Record<PathogenTypeId, PathogenDefinition> = {
       macrophage: 0.95,
       neutrophil: 1.35,
       plasmocyte: 1.05,
+      nkCell: 0.45,
+      cytotoxicT: 0.28,
     },
     specialBehavior: "swarm",
   },
   proliferatingBacillus: {
     id: "proliferatingBacillus",
+    pathogenClass: "bacterium",
     displayName: "Bacilles proliferants",
     scientificHint: "E. coli-like",
     description: "Bacilles equilibres capables de creer une pression par petits groupes.",
@@ -119,6 +126,8 @@ export const pathogenDefinitions: Record<PathogenTypeId, PathogenDefinition> = {
       macrophage: 1,
       neutrophil: 1,
       plasmocyte: 1.08,
+      nkCell: 0.42,
+      cytotoxicT: 0.24,
     },
     specialBehavior: "proliferator",
     spawn: {
@@ -131,6 +140,7 @@ export const pathogenDefinitions: Record<PathogenTypeId, PathogenDefinition> = {
   },
   resistantBacterium: {
     id: "resistantBacterium",
+    pathogenClass: "bacterium",
     displayName: "Bacterie resistante",
     scientificHint: "Mycobacterium-like",
     description: "Tank lent, riche en antigenes, peu sensible aux attaques faibles.",
@@ -156,11 +166,14 @@ export const pathogenDefinitions: Record<PathogenTypeId, PathogenDefinition> = {
       macrophage: 1.12,
       neutrophil: 0.65,
       plasmocyte: 1.3,
+      nkCell: 0.32,
+      cytotoxicT: 0.2,
     },
     specialBehavior: "resistant",
   },
   biofilmColony: {
     id: "biofilmColony",
+    pathogenClass: "bacterium",
     displayName: "Colonie a biofilm",
     scientificHint: "Biofilm-like",
     description: "Colonie defensive qui protege les bacteries proches.",
@@ -186,6 +199,8 @@ export const pathogenDefinitions: Record<PathogenTypeId, PathogenDefinition> = {
       macrophage: 0.95,
       neutrophil: 0.85,
       plasmocyte: 0.9,
+      nkCell: 0.25,
+      cytotoxicT: 0.18,
     },
     specialBehavior: "biofilmSource",
     spawn: {
@@ -204,6 +219,7 @@ export const pathogenDefinitions: Record<PathogenTypeId, PathogenDefinition> = {
   },
   toxicBacterium: {
     id: "toxicBacterium",
+    pathogenClass: "bacterium",
     displayName: "Bacterie toxique",
     scientificHint: "toxin-like",
     description: "Moins nombreuse, mais augmente la pression inflammatoire et les degats tissu.",
@@ -229,11 +245,47 @@ export const pathogenDefinitions: Record<PathogenTypeId, PathogenDefinition> = {
       macrophage: 1,
       neutrophil: 1.1,
       plasmocyte: 1.05,
+      nkCell: 0.38,
+      cytotoxicT: 0.22,
     },
     specialBehavior: "toxic",
   },
+  respiratoryVirus: {
+    id: "respiratoryVirus",
+    pathogenClass: "virus",
+    displayName: "Virus libre",
+    scientificHint: "respiratory virus-like",
+    description: "Particule virale fragile qui cherche a infecter les cellules civiles.",
+    family: "virus",
+    archetype: "infection",
+    antigenProfileId: "viralCapsid",
+    maxHealth: 16,
+    radius: 8,
+    movementSpeed: 96,
+    tissueDamage: 0,
+    tissueAttackRange: 0,
+    attackCooldownMs: 1000,
+    armor: 0,
+    debrisDropChance: 0.75,
+    antigenValue: 5,
+    inflammationPressureMultiplier: 0.55,
+    targetPriority: 4,
+    color: 0x8bbcff,
+    outlineColor: 0x193b73,
+    shape: "virus",
+    shortLabel: "VIR",
+    damageMultipliers: {
+      macrophage: 0.65,
+      neutrophil: 0.45,
+      plasmocyte: 1.55,
+      nkCell: 0.9,
+      cytotoxicT: 0.7,
+    },
+    specialBehavior: "viral",
+  },
   basicBacterium: {
     id: "basicBacterium",
+    pathogenClass: "bacterium",
     displayName: "Bacterie standard",
     scientificHint: "generic wound bacterium",
     description: "Profil historique V1, conserve comme alias de bacille simple.",
@@ -259,10 +311,13 @@ export const pathogenDefinitions: Record<PathogenTypeId, PathogenDefinition> = {
       macrophage: 1,
       neutrophil: 1,
       plasmocyte: 1.08,
+      nkCell: 0.42,
+      cytotoxicT: 0.24,
     },
   },
   toughBacterium: {
     id: "toughBacterium",
+    pathogenClass: "bacterium",
     displayName: "Bacterie resistante V1",
     scientificHint: "legacy resistant bacterium",
     description: "Profil V3 conserve pour compatibilite des tests.",
@@ -288,6 +343,8 @@ export const pathogenDefinitions: Record<PathogenTypeId, PathogenDefinition> = {
       macrophage: 1.08,
       neutrophil: 0.75,
       plasmocyte: 1.2,
+      nkCell: 0.34,
+      cytotoxicT: 0.2,
     },
     specialBehavior: "resistant",
   },

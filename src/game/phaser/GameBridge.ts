@@ -18,12 +18,18 @@ export type GameSnapshot = {
   inflammation: number;
   neutrophilCooldownMs: number;
   massiveNeutralizationCooldownMs: number;
+  antiviralSignalCooldownMs: number;
+  antiviralActiveMs: number;
   bacterialAnalysisComplete: boolean;
+  viralAnalysisComplete: boolean;
   currentWave: number;
   totalWaves: number;
   entities: GameEntity[];
   debrisCount: number;
   biofilmCount: number;
+  healthyTissueCells: number;
+  infectedTissueCells: number;
+  destroyedTissueCells: number;
   threatSummary: ThreatSummaryItem[];
   selectedEntityIds: GameState["selectedEntityIds"];
 };

@@ -5,6 +5,10 @@ export function cloneState(state: GameState): GameState {
   return {
     ...state,
     tissue: { ...state.tissue },
+    tissueCells: state.tissueCells.map((cell) => ({
+      ...cell,
+      position: { ...cell.position },
+    })),
     resources: { ...state.resources },
     inflammation: { ...state.inflammation },
     inflammatoryZones: state.inflammatoryZones.map((zone) => ({
@@ -17,6 +21,10 @@ export function cloneState(state: GameState): GameState {
     })),
     productionCooldowns: { ...state.productionCooldowns },
     adaptiveResearch: { ...state.adaptiveResearch },
+    antiviral: {
+      ...state.antiviral,
+      position: state.antiviral.position ? { ...state.antiviral.position } : null,
+    },
     debris: state.debris.map((debris) => ({
       ...debris,
       position: { ...debris.position },

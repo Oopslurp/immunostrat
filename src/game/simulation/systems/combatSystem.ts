@@ -1,20 +1,26 @@
 import { balanceValues } from "../../data/balance";
 import { pathogenDefinitions } from "../../data/pathogens";
 import { distance, distanceSquared } from "../../types/shared";
-import type { GameState } from "../core/GameState";
+import type { GameState, TissueCellState } from "../core/GameState";
 import {
   isBacterium,
+  isCytotoxicT,
+  isHostilePathogen,
   isImmuneUnit,
   isMacrophage,
   isNeutrophil,
+  isNkCell,
   isPlasmocyte,
+  isVirus,
   type BacteriumEntity,
+  type GameEntity,
   type ImmuneUnitEntity,
+  type VirusEntity,
 } from "../entities";
 
 export function applyCombatSystem(state: GameState, deltaMs: number): void {
   processPhagocytosis(state, deltaMs);
-  const bacteria = Object.values(state.entities).filter(isBacterium);
+  const pathogens = Object.values(state.entities).filter(isHostilePathogen);
 
   for (const entity of Object.values(state.entities)) {
     if (!isImmuneUnit(entity)) {
@@ -34,13 +40,29 @@ export function applyCombatSystem(state: GameState, deltaMs: number): void {
       continue;
     }
 
-    const target = findNearestBacteriumInRange(entity, bacteria);
+    const infectedCellTarget = findInfectedCellTarget(state, entity);
+
+    if (infectedCellTarget) {
+      if (
+        distance(entity.position, infectedCellTarget.position) <=
+        entity.attackRange + infectedCellTarget.radius
+      ) {
+        attackInfectedCell(state, entity, infectedCellTarget);
+      } else {
+        entity.targetPosition = { ...infectedCellTarget.position };
+        entity.idleTargetPosition = null;
+      }
+
+      continue;
+    }
+
+    const target = findNearestPathogenInRange(entity, pathogens);
 
     if (!target) {
       continue;
     }
 
-    if (isMacrophage(entity) && canPhagocytose(target)) {
+    if (isBacterium(target) && isMacrophage(entity) && canPhagocytose(target)) {
       startPhagocytosis(state, entity, target);
       entity.attackCooldownRemainingMs =
         entity.attackCooldownMs + balanceValues.combat.macrophagePhagocytosisDurationMs;
@@ -69,6 +91,81 @@ export function applyCombatSystem(state: GameState, deltaMs: number): void {
     state.nextEffectNumber += 1;
   }
 
+}
+
+function findInfectedCellTarget(
+  state: GameState,
+  immuneUnit: ImmuneUnitEntity,
+): TissueCellState | null {
+  if (!isNkCell(immuneUnit) && !isCytotoxicT(immuneUnit)) {
+    return null;
+  }
+
+  let nearest: TissueCellState | null = null;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  const maxDistance =
+    immuneUnit.attackRange + balanceValues.combat.infectedCellSeekRange;
+
+  for (const cell of state.tissueCells) {
+    if (cell.status !== "infected") {
+      continue;
+    }
+
+    const currentDistance = distance(immuneUnit.position, cell.position);
+
+    if (currentDistance <= maxDistance && currentDistance < nearestDistance) {
+      nearest = cell;
+      nearestDistance = currentDistance;
+    }
+  }
+
+  return nearest;
+}
+
+function attackInfectedCell(
+  state: GameState,
+  immuneUnit: ImmuneUnitEntity,
+  cell: TissueCellState,
+): void {
+  cell.health -= immuneUnit.attackDamage;
+  immuneUnit.attackCooldownRemainingMs = immuneUnit.attackCooldownMs;
+  state.inflammation.value = Math.min(
+    balanceValues.inflammation.maxValue,
+    state.inflammation.value +
+      (isCytotoxicT(immuneUnit)
+        ? balanceValues.combat.cytotoxicTInflammationPerAttack
+        : balanceValues.combat.nkInflammationPerAttack),
+  );
+  state.effects.push({
+    id: `effect-${state.nextEffectNumber}`,
+    kind: "cytotoxic",
+    position: { ...cell.position },
+    radius: cell.radius + balanceValues.attackEffectRadiusBonus,
+    ttlMs: balanceValues.attackEffectTtlMs,
+  });
+  state.nextEffectNumber += 1;
+
+  if (cell.health > 0) {
+    return;
+  }
+
+  cell.health = 0;
+  cell.status = "destroyed";
+  cell.infectedElapsedMs = 0;
+  cell.nextVirusBurstMs = balanceValues.tissueCells.infectedVirusProductionIntervalMs;
+  state.tissue.health = Math.max(
+    0,
+    state.tissue.health - balanceValues.tissueCells.destroyedTissueDamage,
+  );
+  state.debris.push({
+    id: `debris-${state.nextDebrisNumber}`,
+    position: { ...cell.position },
+    pathogenTypeId: "respiratoryVirus",
+    antigenProfileId: pathogenDefinitions.respiratoryVirus.antigenProfileId,
+    antigenValue: balanceValues.tissueCells.infectedCellAntigenValue,
+    ttlMs: balanceValues.debris.ttlMs,
+  });
+  state.nextDebrisNumber += 1;
 }
 
 function processPhagocytosis(state: GameState, deltaMs: number): void {
@@ -139,30 +236,30 @@ function startPhagocytosis(
   state.nextEffectNumber += 1;
 }
 
-function findNearestBacteriumInRange(
+function findNearestPathogenInRange(
   immuneUnit: ImmuneUnitEntity,
-  bacteria: BacteriumEntity[],
-): BacteriumEntity | null {
-  let nearest: BacteriumEntity | null = null;
+  pathogens: Array<BacteriumEntity | VirusEntity>,
+): BacteriumEntity | VirusEntity | null {
+  let nearest: BacteriumEntity | VirusEntity | null = null;
   let nearestDistance = Number.POSITIVE_INFINITY;
   let nearestPriority = Number.NEGATIVE_INFINITY;
   const maxDistanceSquared = immuneUnit.attackRange * immuneUnit.attackRange;
 
-  for (const bacterium of bacteria) {
-    if (bacterium.phagocytosedByEntityId) {
+  for (const pathogen of pathogens) {
+    if (isBacterium(pathogen) && pathogen.phagocytosedByEntityId) {
       continue;
     }
 
-    const currentDistance = distanceSquared(immuneUnit.position, bacterium.position);
-    const definition = pathogenDefinitions[bacterium.pathogenTypeId];
-    const currentPriority = bacterium.targetPriority ?? definition.targetPriority;
+    const currentDistance = distanceSquared(immuneUnit.position, pathogen.position);
+    const definition = pathogenDefinitions[pathogen.pathogenTypeId];
+    const currentPriority = pathogen.targetPriority ?? definition.targetPriority;
 
     if (
       currentDistance <= maxDistanceSquared &&
       (currentPriority > nearestPriority ||
         (currentPriority === nearestPriority && currentDistance < nearestDistance))
     ) {
-      nearest = bacterium;
+      nearest = pathogen;
       nearestDistance = currentDistance;
       nearestPriority = currentPriority;
     }
@@ -174,7 +271,7 @@ function findNearestBacteriumInRange(
 function calculateDamage(
   state: GameState,
   immuneUnit: ImmuneUnitEntity,
-  target: BacteriumEntity,
+  target: BacteriumEntity | VirusEntity,
 ): number {
   const definition = pathogenDefinitions[target.pathogenTypeId];
   const unitMultiplier = definition.damageMultipliers[immuneUnit.kind] ?? 1;
@@ -192,10 +289,13 @@ function calculateDamage(
     inflammationMultiplier;
   const armoredDamage = Math.max(
     balanceValues.combat.minimumDamageAfterArmor,
-    rawDamage - (target.armor ?? definition.armor),
+    rawDamage - (isBacterium(target) ? target.armor ?? definition.armor : 0),
   );
 
-  return armoredDamage * getBiofilmDamageMultiplier(state, target);
+  return (
+    armoredDamage *
+    (isBacterium(target) ? getBiofilmDamageMultiplier(state, target) : 1)
+  );
 }
 
 function getBiofilmDamageMultiplier(
@@ -237,7 +337,7 @@ function getInflammationDamageMultiplier(
 function addInflammatoryZone(
   state: GameState,
   immuneUnit: ImmuneUnitEntity,
-  target: BacteriumEntity,
+  target: GameEntity,
 ): void {
   const config = balanceValues.inflammatoryZone;
 

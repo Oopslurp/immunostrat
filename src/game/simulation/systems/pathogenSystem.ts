@@ -1,6 +1,6 @@
 import { balanceValues } from "../../data/balance";
 import { pathogenDefinitions, type PathogenTypeId } from "../../data/pathogens";
-import type { Vector2 } from "../../types/shared";
+import { stableHash, type Vector2 } from "../../types/shared";
 import type { GameState } from "../core/GameState";
 import { isBacterium } from "../entities";
 import { isPathogenTypeId, spawnBacterium } from "../pathogens/createBacterium";
@@ -58,14 +58,4 @@ function createChildPosition(
     x: origin.x + Math.cos(angle) * distance,
     y: origin.y + Math.sin(angle) * distance,
   };
-}
-
-function stableHash(input: string): number {
-  let hash = 0;
-
-  for (let index = 0; index < input.length; index += 1) {
-    hash = (hash * 31 + input.charCodeAt(index)) >>> 0;
-  }
-
-  return hash;
 }

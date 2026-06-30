@@ -1,12 +1,9 @@
 import type { PathogenTypeId } from "../data/pathogens";
 import type { UnitTypeId } from "../data/units";
+import type { ImmuneUnitKind } from "../types/immune";
 import type { EntityId, Vector2 } from "../types/shared";
 
-export type ImmuneUnitKind =
-  | "macrophage"
-  | "neutrophil"
-  | "dendriticCell"
-  | "plasmocyte";
+export type { ImmuneUnitKind };
 
 export type ImmuneUnitEntity = {
   id: EntityId;
@@ -50,6 +47,16 @@ export type PlasmocyteEntity = ImmuneUnitEntity & {
   unitTypeId: "plasmocyte";
 };
 
+export type NkCellEntity = ImmuneUnitEntity & {
+  kind: "nkCell";
+  unitTypeId: "nkCell";
+};
+
+export type CytotoxicTEntity = ImmuneUnitEntity & {
+  kind: "cytotoxicT";
+  unitTypeId: "cytotoxicT";
+};
+
 export type BacteriumEntity = {
   id: EntityId;
   kind: "bacterium";
@@ -75,7 +82,23 @@ export type BacteriumEntity = {
   spawnedChildrenCount?: number;
 };
 
-export type GameEntity = ImmuneUnitEntity | BacteriumEntity;
+export type VirusEntity = {
+  id: EntityId;
+  kind: "virus";
+  pathogenTypeId: "respiratoryVirus";
+  position: Vector2;
+  health: number;
+  maxHealth: number;
+  radius: number;
+  movementSpeed: number;
+  infectionRange: number;
+  antigenValue: number;
+  debrisDropChance: number;
+  targetPriority: number;
+  lifeRemainingMs: number;
+};
+
+export type GameEntity = ImmuneUnitEntity | BacteriumEntity | VirusEntity;
 
 export function isMacrophage(entity: GameEntity): entity is MacrophageEntity {
   return entity.kind === "macrophage";
@@ -90,7 +113,9 @@ export function isImmuneUnit(entity: GameEntity): entity is ImmuneUnitEntity {
     entity.kind === "macrophage" ||
     entity.kind === "neutrophil" ||
     entity.kind === "dendriticCell" ||
-    entity.kind === "plasmocyte"
+    entity.kind === "plasmocyte" ||
+    entity.kind === "nkCell" ||
+    entity.kind === "cytotoxicT"
   );
 }
 
@@ -104,6 +129,24 @@ export function isPlasmocyte(entity: GameEntity): entity is PlasmocyteEntity {
   return entity.kind === "plasmocyte";
 }
 
+export function isNkCell(entity: GameEntity): entity is NkCellEntity {
+  return entity.kind === "nkCell";
+}
+
+export function isCytotoxicT(entity: GameEntity): entity is CytotoxicTEntity {
+  return entity.kind === "cytotoxicT";
+}
+
 export function isBacterium(entity: GameEntity): entity is BacteriumEntity {
   return entity.kind === "bacterium";
+}
+
+export function isVirus(entity: GameEntity): entity is VirusEntity {
+  return entity.kind === "virus";
+}
+
+export function isHostilePathogen(
+  entity: GameEntity,
+): entity is BacteriumEntity | VirusEntity {
+  return entity.kind === "bacterium" || entity.kind === "virus";
 }

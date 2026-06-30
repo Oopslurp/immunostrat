@@ -13,6 +13,18 @@ export type TissueState = {
   maxHealth: number;
 };
 
+export type TissueCellState = {
+  id: string;
+  position: Vector2;
+  health: number;
+  maxHealth: number;
+  radius: number;
+  status: "healthy" | "infected" | "destroyed";
+  infectedElapsedMs: number;
+  nextVirusBurstMs: number;
+  antiviralProtectedMs: number;
+};
+
 export type WaveState = {
   currentWaveIndex: number;
   spawnedInCurrentWave: number;
@@ -44,10 +56,18 @@ export type BiofilmZone = {
 export type ProductionCooldowns = {
   neutrophilMs: number;
   massiveNeutralizationMs: number;
+  antiviralSignalMs: number;
 };
 
 export type AdaptiveResearchState = {
   bacterialAnalysisComplete: boolean;
+  viralAnalysisComplete: boolean;
+};
+
+export type AntiviralState = {
+  activeMs: number;
+  position: Vector2 | null;
+  radius: number;
 };
 
 export type PathogenDebris = {
@@ -61,7 +81,15 @@ export type PathogenDebris = {
 
 export type CombatEffect = {
   id: string;
-  kind: "attack" | "tissueDamage" | "antibody" | "adaptive" | "phagocytosis";
+  kind:
+    | "attack"
+    | "tissueDamage"
+    | "antibody"
+    | "adaptive"
+    | "phagocytosis"
+    | "infection"
+    | "antiviral"
+    | "cytotoxic";
   position: Vector2;
   radius: number;
   ttlMs: number;
@@ -72,12 +100,14 @@ export type GameState = {
   elapsedMs: number;
   status: GameStatus;
   tissue: TissueState;
+  tissueCells: TissueCellState[];
   resources: GameResources;
   inflammation: InflammationState;
   inflammatoryZones: InflammatoryZone[];
   biofilmZones: BiofilmZone[];
   productionCooldowns: ProductionCooldowns;
   adaptiveResearch: AdaptiveResearchState;
+  antiviral: AntiviralState;
   debris: PathogenDebris[];
   waves: WaveState;
   entities: Record<EntityId, GameEntity>;

@@ -9,6 +9,7 @@ import { Button } from "../ui/Button";
 export function GamePage() {
   const bridge = useMemo(() => new GameBridge(), []);
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
+  const missionId = "woundBacteriaV1";
 
   useEffect(() => bridge.subscribeSnapshot(setSnapshot), [bridge]);
 
@@ -41,17 +42,35 @@ export function GamePage() {
     snapshot.antigens >= balanceValues.adaptive.massiveNeutralizationAntigenCost &&
     snapshot.atp >= balanceValues.adaptive.massiveNeutralizationAtpCost &&
     snapshot.cytokines >= balanceValues.adaptive.massiveNeutralizationCytokineCost;
+  const canUseAntiviral =
+    snapshot?.status === "running" &&
+    snapshot.antiviralSignalCooldownMs <= 0 &&
+    snapshot.cytokines >= balanceValues.antiviral.cytokineCost;
+  const canProduceNk =
+    snapshot?.status === "running" &&
+    snapshot.atp >= unitDefinitions.nkCell.atpCost &&
+    snapshot.cytokines >= unitDefinitions.nkCell.cytokineCost;
+  const canResearchViral =
+    snapshot?.status === "running" &&
+    !snapshot.viralAnalysisComplete &&
+    snapshot.antigens >= balanceValues.adaptive.viralAnalysisAntigenCost;
+  const canProduceCytotoxicT =
+    snapshot?.status === "running" &&
+    snapshot.viralAnalysisComplete &&
+    snapshot.atp >= unitDefinitions.cytotoxicT.atpCost &&
+    snapshot.cytokines >= unitDefinitions.cytotoxicT.cytokineCost &&
+    snapshot.antigens >= balanceValues.adaptive.cytotoxicTAntigenCost;
 
   return (
     <div className="page game-page">
       <header className="game-header">
         <div>
-          <span className="eyebrow">Prototype jouable V4.2</span>
+          <span className="eyebrow">Prototype jouable V5.1</span>
           <h1>Plaie cutanee infectee</h1>
           <p>
-            Produis macrophages et neutrophiles, controle les bacteries et
-            collecte les debris avec des cellules dendritiques pour debloquer
-            une reponse adaptative contre des profils bacteriens varies.
+            Produis macrophages, neutrophiles et NK, controle bacteries et virus,
+            collecte les debris avec des cellules dendritiques puis debloque la
+            reponse T cytotoxique contre les cellules infectees.
           </p>
         </div>
         <div className="game-actions">
@@ -94,6 +113,33 @@ export function GamePage() {
           >
             Neutralisation massive
           </Button>
+          <Button
+            disabled={!canUseAntiviral}
+            onClick={() => bridge.dispatch({ type: "useAntiviralSignal" })}
+          >
+            Interferons (-{balanceValues.antiviral.cytokineCost} CYT)
+          </Button>
+          <Button
+            disabled={!canProduceNk}
+            onClick={() => bridge.dispatch({ type: "produceNkCell" })}
+          >
+            Cellule NK (-{unitDefinitions.nkCell.atpCost} ATP, -
+            {unitDefinitions.nkCell.cytokineCost} CYT)
+          </Button>
+          <Button
+            disabled={!canResearchViral}
+            onClick={() => bridge.dispatch({ type: "researchViralAnalysis" })}
+          >
+            Analyse virale (-{balanceValues.adaptive.viralAnalysisAntigenCost} AG)
+          </Button>
+          <Button
+            disabled={!canProduceCytotoxicT}
+            onClick={() => bridge.dispatch({ type: "produceCytotoxicT" })}
+          >
+            T cytotoxique (-{unitDefinitions.cytotoxicT.atpCost} ATP, -
+            {unitDefinitions.cytotoxicT.cytokineCost} CYT, -
+            {balanceValues.adaptive.cytotoxicTAntigenCost} AG)
+          </Button>
           <Button onClick={() => bridge.dispatch({ type: "restart" })}>
             Recommencer
           </Button>
@@ -101,7 +147,7 @@ export function GamePage() {
       </header>
 
       <section className="game-frame" aria-label="Canvas du jeu Immunostrat">
-        <PhaserGame bridge={bridge} />
+        <PhaserGame bridge={bridge} missionId={missionId} />
         {snapshot && snapshot.status !== "running" ? (
           <div className="result-overlay">
             <div className="result-title">
@@ -114,7 +160,7 @@ export function GamePage() {
         ) : null}
       </section>
 
-      <div className="hud-strip" aria-label="Statut du jeu V1">
+      <div className="hud-strip" aria-label="Statut du jeu V5">
         <Gauge
           label="Sante du tissu"
           value={formatHealth(snapshot?.tissueHealth)}
@@ -155,7 +201,25 @@ export function GamePage() {
             .length ?? 0}
         </span>
         <span className="hud-item">
+          Virus:{" "}
+          {snapshot?.entities.filter((entity) => entity.kind === "virus").length ??
+            0}
+        </span>
+        <span className="hud-item">
+          Cellules: {snapshot?.healthyTissueCells ?? 0} saines /{" "}
+          {snapshot?.infectedTissueCells ?? 0} infectees /{" "}
+          {snapshot?.destroyedTissueCells ?? 0} detruites
+        </span>
+        <span className="hud-item">
           Selection: {snapshot?.selectedEntityIds.length ?? 0}
+        </span>
+        <span className="hud-item">
+          NK/T:{" "}
+          {snapshot?.entities.filter((entity) => entity.kind === "nkCell").length ??
+            0}
+          /
+          {snapshot?.entities.filter((entity) => entity.kind === "cytotoxicT")
+            .length ?? 0}
         </span>
         <span className="hud-item">
           Debris: {snapshot?.debrisCount ?? 0}
@@ -167,15 +231,31 @@ export function GamePage() {
           Analyse: {snapshot?.bacterialAnalysisComplete ? "complete" : "non"}
         </span>
         <span className="hud-item">
+          Analyse virale: {snapshot?.viralAnalysisComplete ? "complete" : "non"}
+        </span>
+        <span className="hud-item">
           Neutrophile CD: {formatCooldown(snapshot?.neutrophilCooldownMs)}
         </span>
         <span className="hud-item">
           Adaptatif CD: {formatCooldown(snapshot?.massiveNeutralizationCooldownMs)}
         </span>
+        <span className="hud-item">
+          Antiviral:{" "}
+          {snapshot && snapshot.antiviralActiveMs > 0
+            ? `actif ${formatCooldown(snapshot.antiviralActiveMs)}`
+            : `CD ${formatCooldown(snapshot?.antiviralSignalCooldownMs)}`}
+        </span>
       </div>
 
       <aside className="threat-panel" aria-label="Menaces detectees">
         <strong>Menaces detectees</strong>
+        {snapshot && snapshot.infectedTissueCells > 0 ? (
+          <span className="threat-pill">
+            <span className="threat-dot" style={{ backgroundColor: "#8bbcff" }} />
+            Cellule infectee detectee x{snapshot.infectedTissueCells}
+            <em>viral</em>
+          </span>
+        ) : null}
         {snapshot?.threatSummary.length ? (
           snapshot.threatSummary.slice(0, 4).map((item) => {
             const definition = pathogenDefinitions[item.pathogenTypeId];
@@ -192,7 +272,7 @@ export function GamePage() {
             );
           })
         ) : (
-          <span className="threat-empty">Aucune bacterie active</span>
+          <span className="threat-empty">Aucune menace active</span>
         )}
       </aside>
     </div>

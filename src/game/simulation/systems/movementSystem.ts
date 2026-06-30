@@ -1,6 +1,6 @@
 import { balanceValues } from "../../data/balance";
 import { missionDefinitions } from "../../data/missions";
-import { distance, moveToward, type Vector2 } from "../../types/shared";
+import { distance, moveToward, stableHash, type Vector2 } from "../../types/shared";
 import type { GameState } from "../core/GameState";
 import { isBacterium, isImmuneUnit, type ImmuneUnitEntity } from "../entities";
 
@@ -119,16 +119,6 @@ function createIdleTarget(state: GameState, entityId: string): Vector2 {
       mission.map.height - bounds.bottom,
     ),
   };
-}
-
-function stableHash(input: string): number {
-  let hash = 0;
-
-  for (let index = 0; index < input.length; index += 1) {
-    hash = (hash * 31 + input.charCodeAt(index)) >>> 0;
-  }
-
-  return hash;
 }
 
 function clamp(value: number, min: number, max: number): number {

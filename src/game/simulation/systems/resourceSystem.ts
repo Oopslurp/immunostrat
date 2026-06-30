@@ -1,7 +1,7 @@
 import { balanceValues } from "../../data/balance";
 import { pathogenDefinitions } from "../../data/pathogens";
 import type { GameState } from "../core/GameState";
-import { isBacterium } from "../entities";
+import { isBacterium, isVirus } from "../entities";
 
 export function applyResourceSystem(state: GameState, deltaMs: number): void {
   const bacteriaPressure = Object.values(state.entities)
@@ -11,6 +11,9 @@ export function applyResourceSystem(state: GameState, deltaMs: number): void {
 
       return pressure + (bacterium.inflammationPressureMultiplier ?? definition.inflammationPressureMultiplier);
     }, 0);
+  const virusPressure = Object.values(state.entities).filter(isVirus).length * 0.35;
+  const infectedPressure =
+    state.tissueCells.filter((cell) => cell.status === "infected").length * 0.45;
 
   state.resources.atp = Math.min(
     balanceValues.maxAtp,
@@ -20,7 +23,10 @@ export function applyResourceSystem(state: GameState, deltaMs: number): void {
     balanceValues.maxCytokines,
     state.resources.cytokines +
       (balanceValues.passiveCytokinesPerSecond +
-        bacteriaPressure * balanceValues.cytokinesPerBacteriumPerSecond) *
+        bacteriaPressure * balanceValues.cytokinesPerBacteriumPerSecond +
+        (virusPressure + infectedPressure) *
+          balanceValues.cytokinesPerBacteriumPerSecond *
+          0.55) *
         (deltaMs / 1000),
   );
   state.productionCooldowns.neutrophilMs = Math.max(
@@ -30,5 +36,9 @@ export function applyResourceSystem(state: GameState, deltaMs: number): void {
   state.productionCooldowns.massiveNeutralizationMs = Math.max(
     0,
     state.productionCooldowns.massiveNeutralizationMs - deltaMs,
+  );
+  state.productionCooldowns.antiviralSignalMs = Math.max(
+    0,
+    state.productionCooldowns.antiviralSignalMs - deltaMs,
   );
 }

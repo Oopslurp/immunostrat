@@ -2,12 +2,16 @@ import { applyCommand, type GameCommand } from "./commands";
 import { createInitialState } from "./createInitialState";
 import type { GameState } from "./GameState";
 import { stepSimulation } from "./stepSimulation";
+import type { MissionId } from "../../data/missions";
 
 export class Simulation {
   private state: GameState;
 
-  constructor(initialState: GameState = createInitialState()) {
-    this.state = initialState;
+  constructor(initialStateOrMissionId: GameState | MissionId = createInitialState()) {
+    this.state =
+      typeof initialStateOrMissionId === "string"
+        ? createInitialState(initialStateOrMissionId)
+        : initialStateOrMissionId;
   }
 
   getState(): GameState {

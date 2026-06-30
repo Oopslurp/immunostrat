@@ -38,3 +38,13 @@ export function moveToward(
     y: current.y + (target.y - current.y) * ratio,
   };
 }
+
+export function stableHash(input: string): number {
+  let hash = 0;
+
+  for (let index = 0; index < input.length; index += 1) {
+    hash = (hash * 31 + input.charCodeAt(index)) >>> 0;
+  }
+
+  return hash;
+}

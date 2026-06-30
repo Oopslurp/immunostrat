@@ -1,8 +1,8 @@
 import { balanceValues } from "../../data/balance";
 import { missionDefinitions } from "../../data/missions";
 import { unitDefinitions, type UnitTypeId } from "../../data/units";
-import type { EntityId, Vector2 } from "../../types/shared";
-import { isDendriticCell, isImmuneUnit } from "../entities";
+import { distance, type EntityId, type Vector2 } from "../../types/shared";
+import { isDendriticCell, isHostilePathogen, isImmuneUnit } from "../entities";
 import { createInitialState } from "./createInitialState";
 import type { GameState } from "./GameState";
 import { cloneState } from "./cloneState";
@@ -12,12 +12,17 @@ export type GameCommand =
   | { type: "produceNeutrophil" }
   | { type: "produceDendriticCell" }
   | { type: "producePlasmocyte" }
+  | { type: "produceNkCell" }
+  | { type: "produceCytotoxicT" }
   | { type: "researchBacterialAnalysis" }
+  | { type: "researchViralAnalysis" }
   | { type: "useMassiveNeutralization" }
+  | { type: "useAntiviralSignal" }
   | { type: "selectEntity"; entityId: EntityId | null }
   | { type: "selectEntities"; entityIds: EntityId[] }
   | { type: "orderMove"; position: Vector2 }
   | { type: "orderAttack"; targetEntityId: EntityId }
+  | { type: "orderAttackTissueCell"; tissueCellId: string }
   | { type: "orderCollectDebris"; debrisId: string }
   | { type: "orderReturnToLymphNode" }
   | { type: "restart" };
@@ -47,12 +52,28 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
     return producePlasmocyte(state);
   }
 
+  if (command.type === "produceNkCell") {
+    return produceImmuneUnit(state, "nkCell");
+  }
+
+  if (command.type === "produceCytotoxicT") {
+    return produceCytotoxicT(state);
+  }
+
   if (command.type === "researchBacterialAnalysis") {
     return researchBacterialAnalysis(state);
   }
 
+  if (command.type === "researchViralAnalysis") {
+    return researchViralAnalysis(state);
+  }
+
   if (command.type === "useMassiveNeutralization") {
     return useMassiveNeutralization(state);
+  }
+
+  if (command.type === "useAntiviralSignal") {
+    return useAntiviralSignal(state);
   }
 
   if (command.type === "selectEntity") {
@@ -105,7 +126,7 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
     const next = cloneState(state);
     const target = next.entities[command.targetEntityId];
 
-    if (!target || target.kind !== "bacterium") {
+    if (!target || !isHostilePathogen(target)) {
       return next;
     }
 
@@ -131,6 +152,32 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
     if (debris && dendritic && isDendriticCell(dendritic)) {
       dendritic.targetPosition = { ...debris.position };
       dendritic.idleTargetPosition = null;
+    }
+
+    return next;
+  }
+
+  if (command.type === "orderAttackTissueCell") {
+    const next = cloneState(state);
+    const cell = next.tissueCells.find(
+      (candidate) => candidate.id === command.tissueCellId,
+    );
+
+    if (!cell || cell.status !== "infected") {
+      return next;
+    }
+
+    for (const entityId of next.selectedEntityIds) {
+      const selected = next.entities[entityId];
+
+      if (
+        selected &&
+        isImmuneUnit(selected) &&
+        (selected.kind === "nkCell" || selected.kind === "cytotoxicT")
+      ) {
+        selected.targetPosition = { ...cell.position };
+        selected.idleTargetPosition = null;
+      }
     }
 
     return next;
@@ -219,7 +266,9 @@ function produceImmuneUnit(state: GameState, unitTypeId: UnitTypeId): GameState 
     kind: unitTypeId,
     unitTypeId,
     position: {
-      ...(unitTypeId === "neutrophil"
+      ...(unitTypeId === "neutrophil" ||
+      unitTypeId === "nkCell" ||
+      unitTypeId === "cytotoxicT"
         ? definition.spawnPosition
         : mission.map.macrophageSpawn),
     },
@@ -251,6 +300,33 @@ function produceImmuneUnit(state: GameState, unitTypeId: UnitTypeId): GameState 
   }
 
   next.selectedEntityIds = [id];
+
+  return next;
+}
+
+function produceCytotoxicT(state: GameState): GameState {
+  const definition = unitDefinitions.cytotoxicT;
+  const adaptive = balanceValues.adaptive;
+
+  if (
+    !state.adaptiveResearch.viralAnalysisComplete ||
+    state.resources.atp < definition.atpCost ||
+    state.resources.cytokines < definition.cytokineCost ||
+    state.resources.antigens < adaptive.cytotoxicTAntigenCost
+  ) {
+    return state;
+  }
+
+  const next = produceImmuneUnit(state, "cytotoxicT");
+
+  if (next === state) {
+    return state;
+  }
+
+  next.resources.antigens = Math.max(
+    0,
+    next.resources.antigens - adaptive.cytotoxicTAntigenCost,
+  );
 
   return next;
 }
@@ -324,6 +400,23 @@ function researchBacterialAnalysis(state: GameState): GameState {
   return next;
 }
 
+function researchViralAnalysis(state: GameState): GameState {
+  const cost = balanceValues.adaptive.viralAnalysisAntigenCost;
+
+  if (
+    state.adaptiveResearch.viralAnalysisComplete ||
+    state.resources.antigens < cost
+  ) {
+    return state;
+  }
+
+  const next = cloneState(state);
+  next.resources.antigens = Math.max(0, next.resources.antigens - cost);
+  next.adaptiveResearch.viralAnalysisComplete = true;
+
+  return next;
+}
+
 function useMassiveNeutralization(state: GameState): GameState {
   const adaptive = balanceValues.adaptive;
 
@@ -362,6 +455,52 @@ function useMassiveNeutralization(state: GameState): GameState {
         position: { ...entity.position },
         radius: entity.radius + 34,
         ttlMs: balanceValues.attackEffectTtlMs * 2,
+      });
+      next.nextEffectNumber += 1;
+    }
+  }
+
+  return next;
+}
+
+function useAntiviralSignal(state: GameState): GameState {
+  const antiviral = balanceValues.antiviral;
+  const mission = missionDefinitions[state.missionId];
+
+  if (
+    state.productionCooldowns.antiviralSignalMs > 0 ||
+    state.resources.cytokines < antiviral.cytokineCost
+  ) {
+    return state;
+  }
+
+  const next = cloneState(state);
+
+  next.resources.cytokines = Math.max(
+    0,
+    next.resources.cytokines - antiviral.cytokineCost,
+  );
+  next.antiviral.activeMs = antiviral.durationMs;
+  next.antiviral.position = { ...mission.map.tissueCore };
+  next.antiviral.radius = antiviral.radius;
+  next.productionCooldowns.antiviralSignalMs = antiviral.cooldownMs;
+  next.inflammation.value = Math.min(
+    balanceValues.inflammation.maxValue,
+    next.inflammation.value + antiviral.inflammationIncrease,
+  );
+
+  for (const cell of next.tissueCells) {
+    if (
+      (cell.status === "healthy" || cell.status === "infected") &&
+      distance(cell.position, mission.map.tissueCore) <= antiviral.radius
+    ) {
+      cell.antiviralProtectedMs = balanceValues.tissueCells.antiviralProtectionMs;
+      next.effects.push({
+        id: `effect-${next.nextEffectNumber}`,
+        kind: "antiviral",
+        position: { ...cell.position },
+        radius: cell.radius + 12,
+        ttlMs: balanceValues.attackEffectTtlMs * 3,
       });
       next.nextEffectNumber += 1;
     }

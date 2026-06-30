@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { balanceValues } from "../../data/balance";
-import { missionDefinitions } from "../../data/missions";
+import { missionDefinitions, type MissionId } from "../../data/missions";
 import { pathogenDefinitions, type PathogenTypeId } from "../../data/pathogens";
 import type { GameBridge, GameSnapshot } from "../GameBridge";
 import { Simulation } from "../../simulation/core/Simulation";
@@ -9,10 +9,14 @@ import type { GameState } from "../../simulation/core/GameState";
 import { distanceSquared } from "../../types/shared";
 import {
   isBacterium,
+  isCytotoxicT,
   isDendriticCell,
+  isHostilePathogen,
   isImmuneUnit,
+  isNkCell,
   isNeutrophil,
   isPlasmocyte,
+  isVirus,
 } from "../../simulation/entities";
 
 type CameraKeys = {
@@ -25,7 +29,7 @@ type CameraKeys = {
 };
 
 export class MissionScene extends Phaser.Scene {
-  private simulation = new Simulation();
+  private simulation: Simulation;
   private dynamicLayer?: Phaser.GameObjects.Graphics;
   private bridgeUnsubscribe?: () => void;
   private snapshotElapsedMs = 0;
@@ -37,8 +41,12 @@ export class MissionScene extends Phaser.Scene {
   private rightDragMoved = false;
   private cameraKeys?: CameraKeys;
 
-  constructor(private readonly bridge: GameBridge) {
+  constructor(
+    private readonly bridge: GameBridge,
+    private readonly missionId: MissionId,
+  ) {
     super("MissionScene");
+    this.simulation = new Simulation(missionId);
   }
 
   create() {
@@ -53,7 +61,7 @@ export class MissionScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.DESTROY, () => this.cleanupBridge());
 
     this.add
-      .text(map.width / 2, 42, "Immunostrat - Wound Defense V4.2", {
+      .text(map.width / 2, 42, "Immunostrat - Wound Defense V5.1", {
         color: "#f5fbff",
         fontFamily: "monospace",
         fontSize: "24px",
@@ -64,7 +72,7 @@ export class MissionScene extends Phaser.Scene {
       .text(
         map.width / 2,
         72,
-        "Left click/drag selects. Right click orders. Right drag or WASD/ZQSD moves camera.",
+        "Left click selects and orders. NK/T target infected cells. Right drag or WASD/ZQSD moves camera.",
         {
           color: "#a8c0cc",
           fontFamily: "monospace",
@@ -108,10 +116,6 @@ export class MissionScene extends Phaser.Scene {
       this.snapshotElapsedMs = 0;
       this.publishSnapshot(state);
     }
-  }
-
-  shutdown() {
-    this.cleanupBridge();
   }
 
   private cleanupBridge() {
@@ -188,23 +192,9 @@ export class MissionScene extends Phaser.Scene {
     const state = this.simulation.getState();
 
     if (this.rightDragStartScreen) {
-      const totalDx = pointer.x - this.rightDragStartScreen.x;
-      const totalDy = pointer.y - this.rightDragStartScreen.y;
-      const wasCameraDrag =
-        this.rightDragMoved ||
-        Math.sqrt(totalDx * totalDx + totalDy * totalDy) >=
-          balanceValues.rightClickDragThresholdPx;
-
       this.rightDragStartScreen = null;
       this.rightDragLastScreen = null;
       this.rightDragMoved = false;
-
-      if (!wasCameraDrag && state.status === "running") {
-        this.handleRightClickOrder(state, {
-          x: pointer.worldX,
-          y: pointer.worldY,
-        });
-      }
 
       return;
     }
@@ -242,10 +232,15 @@ export class MissionScene extends Phaser.Scene {
       return;
     }
 
+    if (state.selectedEntityIds.length > 0) {
+      this.handleLeftClickOrder(state, position);
+      return;
+    }
+
     this.handleCommand({ type: "selectEntity", entityId: null });
   }
 
-  private handleRightClickOrder(
+  private handleLeftClickOrder(
     state: GameState,
     position: { x: number; y: number },
   ) {
@@ -253,7 +248,7 @@ export class MissionScene extends Phaser.Scene {
       return;
     }
 
-    const targetEnemyId = this.findBacteriumAtPosition(state, position);
+    const targetEnemyId = this.findHostileAtPosition(state, position);
 
     if (targetEnemyId) {
       this.handleCommand({ type: "orderAttack", targetEntityId: targetEnemyId });
@@ -262,17 +257,51 @@ export class MissionScene extends Phaser.Scene {
 
     const targetDebrisId = this.findDebrisAtPosition(state, position);
 
-    if (targetDebrisId) {
+    if (targetDebrisId && this.hasSelectedDendriticCell(state)) {
       this.handleCommand({ type: "orderCollectDebris", debrisId: targetDebrisId });
       return;
     }
 
-    if (this.isLymphNodeAtPosition(state, position)) {
+    const targetInfectedCellId = this.findInfectedCellAtPosition(state, position);
+
+    if (targetInfectedCellId && this.hasSelectedCytotoxicResponder(state)) {
+      this.handleCommand({
+        type: "orderAttackTissueCell",
+        tissueCellId: targetInfectedCellId,
+      });
+      return;
+    }
+
+    if (this.isLymphNodeAtPosition(state, position) && this.hasLoadedDendriticCell(state)) {
       this.handleCommand({ type: "orderReturnToLymphNode" });
       return;
     }
 
     this.handleCommand({ type: "orderMove", position });
+  }
+
+  private hasSelectedDendriticCell(state: GameState): boolean {
+    return state.selectedEntityIds.some((entityId) => {
+      const entity = state.entities[entityId];
+
+      return entity ? isDendriticCell(entity) : false;
+    });
+  }
+
+  private hasLoadedDendriticCell(state: GameState): boolean {
+    return state.selectedEntityIds.some((entityId) => {
+      const entity = state.entities[entityId];
+
+      return entity ? isDendriticCell(entity) && entity.carriedDebrisCount > 0 : false;
+    });
+  }
+
+  private hasSelectedCytotoxicResponder(state: GameState): boolean {
+    return state.selectedEntityIds.some((entityId) => {
+      const entity = state.entities[entityId];
+
+      return entity ? isNkCell(entity) || isCytotoxicT(entity) : false;
+    });
   }
 
   private findImmuneUnitAtPosition(
@@ -313,13 +342,13 @@ export class MissionScene extends Phaser.Scene {
       .map((entity) => entity.id);
   }
 
-  private findBacteriumAtPosition(
+  private findHostileAtPosition(
     state: GameState,
     position: { x: number; y: number },
   ): string | null {
     for (const entity of Object.values(state.entities)) {
       if (
-        isBacterium(entity) &&
+        isHostilePathogen(entity) &&
         distanceSquared(entity.position, position) <=
           (entity.radius + 8) * (entity.radius + 8)
       ) {
@@ -337,6 +366,23 @@ export class MissionScene extends Phaser.Scene {
     for (const debris of state.debris) {
       if (distanceSquared(debris.position, position) <= 18 * 18) {
         return debris.id;
+      }
+    }
+
+    return null;
+  }
+
+  private findInfectedCellAtPosition(
+    state: GameState,
+    position: { x: number; y: number },
+  ): string | null {
+    for (const cell of state.tissueCells) {
+      if (
+        cell.status === "infected" &&
+        distanceSquared(cell.position, position) <=
+          (cell.radius + 12) * (cell.radius + 12)
+      ) {
+        return cell.id;
       }
     }
 
@@ -423,6 +469,8 @@ export class MissionScene extends Phaser.Scene {
 
     graphics.clear();
     this.drawMap(graphics, state);
+    this.drawTissueCells(graphics, state);
+    this.drawAntiviralZone(graphics, state);
     this.drawInflammatoryZones(graphics, state);
     this.drawBiofilms(graphics, state);
     this.drawDebris(graphics, state);
@@ -457,7 +505,7 @@ export class MissionScene extends Phaser.Scene {
       graphics.lineBetween(x, grid.startY, x + grid.skewX, grid.endY);
     }
 
-    graphics.fillStyle(0x62d3c8, 0.18);
+    graphics.fillStyle(0x62d3c8, 0.08);
     graphics.fillRoundedRect(
       tissueZone.x,
       tissueZone.y,
@@ -465,7 +513,7 @@ export class MissionScene extends Phaser.Scene {
       tissueZone.height,
       18,
     );
-    graphics.lineStyle(4, 0x62d3c8, 0.6);
+    graphics.lineStyle(3, 0x62d3c8, 0.28);
     graphics.strokeRoundedRect(
       tissueZone.x,
       tissueZone.y,
@@ -500,6 +548,45 @@ export class MissionScene extends Phaser.Scene {
     graphics.strokeCircle(map.lymphNode.x, map.lymphNode.y, map.lymphNode.radius);
   }
 
+  private drawTissueCells(graphics: Phaser.GameObjects.Graphics, state: GameState) {
+    for (const cell of state.tissueCells) {
+      if (cell.status === "destroyed") {
+        graphics.fillStyle(0x2d3940, 0.52);
+        graphics.fillCircle(cell.position.x, cell.position.y, cell.radius * 0.72);
+        graphics.lineStyle(2, 0x51606a, 0.42);
+        graphics.strokeCircle(cell.position.x, cell.position.y, cell.radius);
+        continue;
+      }
+
+      if (cell.status === "infected") {
+        graphics.fillStyle(0x8bbcff, 0.34);
+        graphics.fillCircle(cell.position.x, cell.position.y, cell.radius + 10);
+        graphics.fillStyle(0xb69cff, 0.94);
+      } else {
+        graphics.fillStyle(0x7ee28a, 0.84);
+      }
+
+      graphics.fillCircle(cell.position.x, cell.position.y, cell.radius);
+      if (cell.antiviralProtectedMs > 0) {
+        graphics.lineStyle(2, 0x8bbcff, 0.7);
+        graphics.strokeCircle(cell.position.x, cell.position.y, cell.radius + 8);
+      }
+      graphics.lineStyle(
+        cell.status === "infected" ? 4 : 2,
+        cell.status === "infected" ? 0x8bbcff : 0xd9ffe0,
+        cell.status === "infected" ? 0.82 : 0.44,
+      );
+      graphics.strokeCircle(cell.position.x, cell.position.y, cell.radius + 3);
+      this.drawHealthBar(
+        graphics,
+        cell.position.x,
+        cell.position.y - cell.radius - 12,
+        cell.health,
+        cell.maxHealth,
+      );
+    }
+  }
+
   private drawEntities(graphics: Phaser.GameObjects.Graphics, state: GameState) {
     for (const entity of Object.values(state.entities)) {
       if (isImmuneUnit(entity)) {
@@ -520,6 +607,38 @@ export class MissionScene extends Phaser.Scene {
             entity.radius * 2,
             entity.radius * 2,
             8,
+          );
+        } else if (isNkCell(entity)) {
+          graphics.fillTriangle(
+            entity.position.x,
+            entity.position.y - entity.radius,
+            entity.position.x - entity.radius,
+            entity.position.y,
+            entity.position.x,
+            entity.position.y + entity.radius,
+          );
+          graphics.fillTriangle(
+            entity.position.x,
+            entity.position.y - entity.radius,
+            entity.position.x + entity.radius,
+            entity.position.y,
+            entity.position.x,
+            entity.position.y + entity.radius,
+          );
+        } else if (isCytotoxicT(entity)) {
+          graphics.fillCircle(entity.position.x, entity.position.y, entity.radius);
+          graphics.fillStyle(0x071217, 0.8);
+          graphics.fillRect(
+            entity.position.x - entity.radius * 0.7,
+            entity.position.y - 2,
+            entity.radius * 1.4,
+            4,
+          );
+          graphics.fillRect(
+            entity.position.x - 2,
+            entity.position.y - entity.radius * 0.7,
+            4,
+            entity.radius * 1.4,
           );
         } else {
           graphics.fillCircle(entity.position.x, entity.position.y, entity.radius);
@@ -591,6 +710,34 @@ export class MissionScene extends Phaser.Scene {
           graphics.strokeCircle(entity.position.x, entity.position.y, entity.radius + 9);
         }
       }
+
+      if (isVirus(entity)) {
+        const definition = pathogenDefinitions[entity.pathogenTypeId];
+
+        graphics.fillStyle(definition.color, 0.95);
+        drawPathogenShape(
+          graphics,
+          entity.position.x,
+          entity.position.y,
+          entity.radius,
+          definition.shape,
+        );
+        graphics.lineStyle(2, definition.outlineColor, 0.68);
+        strokePathogenShape(
+          graphics,
+          entity.position.x,
+          entity.position.y,
+          entity.radius,
+          definition.shape,
+        );
+        this.drawHealthBar(
+          graphics,
+          entity.position.x,
+          entity.position.y - 20,
+          entity.health,
+          entity.maxHealth,
+        );
+      }
     }
   }
 
@@ -622,6 +769,34 @@ export class MissionScene extends Phaser.Scene {
       graphics.lineStyle(2, 0xffc76b, alpha);
       graphics.strokeCircle(zone.position.x, zone.position.y, zone.radius);
     }
+  }
+
+  private drawAntiviralZone(
+    graphics: Phaser.GameObjects.Graphics,
+    state: GameState,
+  ) {
+    if (!state.antiviral.position || state.antiviral.activeMs <= 0) {
+      return;
+    }
+
+    const ratio = Phaser.Math.Clamp(
+      state.antiviral.activeMs / balanceValues.antiviral.durationMs,
+      0,
+      1,
+    );
+
+    graphics.fillStyle(0x8bbcff, 0.08 + ratio * 0.08);
+    graphics.fillCircle(
+      state.antiviral.position.x,
+      state.antiviral.position.y,
+      state.antiviral.radius,
+    );
+    graphics.lineStyle(3, 0x8bbcff, 0.3 + ratio * 0.35);
+    graphics.strokeCircle(
+      state.antiviral.position.x,
+      state.antiviral.position.y,
+      state.antiviral.radius,
+    );
   }
 
   private drawBiofilms(graphics: Phaser.GameObjects.Graphics, state: GameState) {
@@ -708,8 +883,11 @@ export class MissionScene extends Phaser.Scene {
       neutrophilCooldownMs: state.productionCooldowns.neutrophilMs,
       massiveNeutralizationCooldownMs:
         state.productionCooldowns.massiveNeutralizationMs,
+      antiviralSignalCooldownMs: state.productionCooldowns.antiviralSignalMs,
+      antiviralActiveMs: state.antiviral.activeMs,
       bacterialAnalysisComplete:
         state.adaptiveResearch.bacterialAnalysisComplete,
+      viralAnalysisComplete: state.adaptiveResearch.viralAnalysisComplete,
       currentWave: Math.min(
         state.waves.currentWaveIndex + 1,
         mission.waves.length,
@@ -718,6 +896,15 @@ export class MissionScene extends Phaser.Scene {
       entities: Object.values(state.entities),
       debrisCount: state.debris.length,
       biofilmCount: state.biofilmZones.length,
+      healthyTissueCells: state.tissueCells.filter(
+        (cell) => cell.status === "healthy",
+      ).length,
+      infectedTissueCells: state.tissueCells.filter(
+        (cell) => cell.status === "infected",
+      ).length,
+      destroyedTissueCells: state.tissueCells.filter(
+        (cell) => cell.status === "destroyed",
+      ).length,
       threatSummary: getThreatSummary(state),
       selectedEntityIds: state.selectedEntityIds,
     };
@@ -751,6 +938,15 @@ function drawPathogenShape(
     return;
   }
 
+  if (shape === "virus") {
+    graphics.fillCircle(x, y, radius);
+    graphics.fillTriangle(x, y - radius * 1.7, x - radius * 0.45, y - radius * 0.65, x + radius * 0.45, y - radius * 0.65);
+    graphics.fillTriangle(x, y + radius * 1.7, x - radius * 0.45, y + radius * 0.65, x + radius * 0.45, y + radius * 0.65);
+    graphics.fillTriangle(x - radius * 1.7, y, x - radius * 0.65, y - radius * 0.45, x - radius * 0.65, y + radius * 0.45);
+    graphics.fillTriangle(x + radius * 1.7, y, x + radius * 0.65, y - radius * 0.45, x + radius * 0.65, y + radius * 0.45);
+    return;
+  }
+
   graphics.fillEllipse(x, y, radius * 2.35, radius * (shape === "rod" ? 1.25 : 1.55));
 }
 
@@ -771,6 +967,11 @@ function strokePathogenShape(
     return;
   }
 
+  if (shape === "virus") {
+    graphics.strokeCircle(x, y, radius * 1.25);
+    return;
+  }
+
   graphics.strokeEllipse(x, y, radius * 2.5, radius * (shape === "rod" ? 1.38 : 1.75));
 }
 
@@ -778,7 +979,7 @@ function getThreatSummary(state: GameState): GameSnapshot["threatSummary"] {
   const counts = new Map<PathogenTypeId, number>();
 
   for (const entity of Object.values(state.entities)) {
-    if (isBacterium(entity)) {
+    if (isHostilePathogen(entity)) {
       counts.set(entity.pathogenTypeId, (counts.get(entity.pathogenTypeId) ?? 0) + 1);
     }
   }
@@ -806,6 +1007,14 @@ function getImmuneUnitColor(kind: string): number {
     return 0xf7f0d8;
   }
 
+  if (kind === "nkCell") {
+    return 0x5fd3ff;
+  }
+
+  if (kind === "cytotoxicT") {
+    return 0xf06cd6;
+  }
+
   return 0x62d3c8;
 }
 
@@ -816,6 +1025,14 @@ function getEffectColor(kind: string): number {
 
   if (kind === "phagocytosis") {
     return 0x62d3c8;
+  }
+
+  if (kind === "infection" || kind === "antiviral") {
+    return 0x8bbcff;
+  }
+
+  if (kind === "cytotoxic") {
+    return 0xf06cd6;
   }
 
   if (kind === "attack") {
