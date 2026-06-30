@@ -34,6 +34,10 @@ export function stepSimulation(state: GameState, deltaMs: number): GameState {
   applyBiofilmSystem(next);
   applyTissueSystem(next, deltaMs);
   applyInflammationSystem(next, deltaMs);
+  next.missionStats.peakInflammation = Math.max(
+    next.missionStats.peakInflammation,
+    next.inflammation.value,
+  );
   applyImmuneLifecycleSystem(next, deltaMs);
   applyEndConditionSystem(next);
 

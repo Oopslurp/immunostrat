@@ -8,6 +8,12 @@ export type GameResources = {
   antigens: number;
 };
 
+export type MissionRuntimeStats = {
+  producedUnits: Partial<Record<string, number>>;
+  usedAbilities: Partial<Record<string, number>>;
+  peakInflammation: number;
+};
+
 export type TissueState = {
   health: number;
   maxHealth: number;
@@ -102,6 +108,7 @@ export type GameState = {
   tissue: TissueState;
   tissueCells: TissueCellState[];
   resources: GameResources;
+  missionStats: MissionRuntimeStats;
   inflammation: InflammationState;
   inflammatoryZones: InflammatoryZone[];
   biofilmZones: BiofilmZone[];

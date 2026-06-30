@@ -27,12 +27,12 @@ export function AppShell({ children, currentRoute, onNavigate }: AppShellProps) 
           </button>
           <button
             className={`nav-button ${
-              currentRoute === routes.game ? "nav-button-active" : ""
+              currentRoute === routes.campaign ? "nav-button-active" : ""
             }`}
             type="button"
-            onClick={() => onNavigate(routes.game)}
+            onClick={() => onNavigate(routes.campaign)}
           >
-            Jouer
+            Campagne
           </button>
         </nav>
       </header>

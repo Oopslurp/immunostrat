@@ -8,7 +8,7 @@ import { stepSimulation } from "../game/simulation/core/stepSimulation";
 
 describe("V2 cytokines, inflammation and neutrophils", () => {
   it("produces a neutrophil with ATP, cytokines, cooldown and inflammation cost", () => {
-    const initial = createInitialState();
+    const initial = createInitialState("inflammatoryReactionV2");
     const initialNeutrophilCount = Object.values(initial.entities).filter(
       (entity) => entity.kind === "neutrophil",
     ).length;
@@ -19,10 +19,10 @@ describe("V2 cytokines, inflammation and neutrophils", () => {
 
     expect(neutrophils).toHaveLength(initialNeutrophilCount + 1);
     expect(produced.resources.atp).toBe(
-      balanceValues.startingAtp - unitDefinitions.neutrophil.atpCost,
+      initial.resources.atp - unitDefinitions.neutrophil.atpCost,
     );
     expect(produced.resources.cytokines).toBe(
-      balanceValues.startingCytokines - unitDefinitions.neutrophil.cytokineCost,
+      initial.resources.cytokines - unitDefinitions.neutrophil.cytokineCost,
     );
     expect(produced.productionCooldowns.neutrophilMs).toBe(
       balanceValues.neutrophilProductionCooldownMs,

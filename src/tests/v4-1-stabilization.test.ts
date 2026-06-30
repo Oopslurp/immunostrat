@@ -85,7 +85,7 @@ describe("V4.1 stabilization", () => {
   });
 
   it("neutrophils are aggressive but short-lived", () => {
-    const produced = applyCommand(createInitialState(), {
+    const produced = applyCommand(createInitialState("inflammatoryReactionV2"), {
       type: "produceNeutrophil",
     });
     const neutrophil = Object.values(produced.entities).find(

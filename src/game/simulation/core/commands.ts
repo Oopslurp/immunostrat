@@ -231,7 +231,12 @@ function getFormationPosition(
 }
 
 function produceImmuneUnit(state: GameState, unitTypeId: UnitTypeId): GameState {
+  const mission = missionDefinitions[state.missionId];
   const definition = unitDefinitions[unitTypeId];
+
+  if (!mission.unlockedUnits.includes(unitTypeId)) {
+    return state;
+  }
 
   if (
     state.resources.atp < definition.atpCost ||
@@ -251,7 +256,6 @@ function produceImmuneUnit(state: GameState, unitTypeId: UnitTypeId): GameState 
     return producePlasmocyte(state);
   }
 
-  const mission = missionDefinitions[state.missionId];
   const next = cloneState(state);
   const id = `${unitTypeId}-${next.nextEntityNumber}`;
 
@@ -299,6 +303,8 @@ function produceImmuneUnit(state: GameState, unitTypeId: UnitTypeId): GameState 
     );
   }
 
+  next.missionStats.producedUnits[unitTypeId] =
+    (next.missionStats.producedUnits[unitTypeId] ?? 0) + 1;
   next.selectedEntityIds = [id];
 
   return next;
@@ -309,6 +315,7 @@ function produceCytotoxicT(state: GameState): GameState {
   const adaptive = balanceValues.adaptive;
 
   if (
+    !missionDefinitions[state.missionId].unlockedUnits.includes("cytotoxicT") ||
     !state.adaptiveResearch.viralAnalysisComplete ||
     state.resources.atp < definition.atpCost ||
     state.resources.cytokines < definition.cytokineCost ||
@@ -336,6 +343,7 @@ function producePlasmocyte(state: GameState): GameState {
   const adaptive = balanceValues.adaptive;
 
   if (
+    !missionDefinitions[state.missionId].unlockedUnits.includes("plasmocyte") ||
     !state.adaptiveResearch.bacterialAnalysisComplete ||
     state.resources.atp < definition.atpCost ||
     state.resources.cytokines < definition.cytokineCost ||
@@ -387,6 +395,7 @@ function researchBacterialAnalysis(state: GameState): GameState {
   const cost = balanceValues.adaptive.bacterialAnalysisAntigenCost;
 
   if (
+    !missionDefinitions[state.missionId].unlockedResearch.includes("bacterialAnalysis") ||
     state.adaptiveResearch.bacterialAnalysisComplete ||
     state.resources.antigens < cost
   ) {
@@ -404,6 +413,7 @@ function researchViralAnalysis(state: GameState): GameState {
   const cost = balanceValues.adaptive.viralAnalysisAntigenCost;
 
   if (
+    !missionDefinitions[state.missionId].unlockedResearch.includes("viralAnalysis") ||
     state.adaptiveResearch.viralAnalysisComplete ||
     state.resources.antigens < cost
   ) {
@@ -421,6 +431,9 @@ function useMassiveNeutralization(state: GameState): GameState {
   const adaptive = balanceValues.adaptive;
 
   if (
+    !missionDefinitions[state.missionId].unlockedAbilities.includes(
+      "massiveNeutralization",
+    ) ||
     !state.adaptiveResearch.bacterialAnalysisComplete ||
     state.productionCooldowns.massiveNeutralizationMs > 0 ||
     state.resources.antigens < adaptive.massiveNeutralizationAntigenCost ||
@@ -445,6 +458,8 @@ function useMassiveNeutralization(state: GameState): GameState {
   );
   next.productionCooldowns.massiveNeutralizationMs =
     adaptive.massiveNeutralizationCooldownMs;
+  next.missionStats.usedAbilities.massiveNeutralization =
+    (next.missionStats.usedAbilities.massiveNeutralization ?? 0) + 1;
 
   for (const entity of Object.values(next.entities)) {
     if (entity.kind === "bacterium") {
@@ -468,6 +483,7 @@ function useAntiviralSignal(state: GameState): GameState {
   const mission = missionDefinitions[state.missionId];
 
   if (
+    !mission.unlockedAbilities.includes("interferons") ||
     state.productionCooldowns.antiviralSignalMs > 0 ||
     state.resources.cytokines < antiviral.cytokineCost
   ) {
@@ -488,6 +504,8 @@ function useAntiviralSignal(state: GameState): GameState {
     balanceValues.inflammation.maxValue,
     next.inflammation.value + antiviral.inflammationIncrease,
   );
+  next.missionStats.usedAbilities.interferons =
+    (next.missionStats.usedAbilities.interferons ?? 0) + 1;
 
   for (const cell of next.tissueCells) {
     if (

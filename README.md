@@ -2,7 +2,7 @@
 
 Immunostrat est un prototype web de strategie 2D inspire du systeme immunitaire.
 
-La V5.1 ajoute les cellules civiles du tissu, les virus libres, les cellules infectees, la propagation virale, les interferons, les cellules NK et les lymphocytes T cytotoxiques.
+La V6 organise les mecaniques existantes en campagne courte de 8 missions, avec progression locale, objectifs, briefings, score et deblocages progressifs.
 
 ## Stack
 
@@ -131,11 +131,21 @@ npm run dev -- --port 5175
 - cellules infectees detruites qui exposent des antigenes viraux collectables ;
 - HUD et rendu Phaser mis a jour pour NK, T cytotoxiques et analyse virale.
 
+## Gameplay V6
+
+- menu de campagne avec 8 missions progressives ;
+- missions data-driven avec briefing, objectifs, ressources, unites et vagues propres ;
+- deblocage progressif des macrophages, neutrophiles, dendritiques, plasmocytes, interferons, NK et T cytotoxiques ;
+- progression sauvegardee en localStorage ;
+- score simple et rang de mission ;
+- ecran victoire/defaite avec objectifs, score, restart, retour missions et mission suivante ;
+- scene Phaser generique chargee par `missionId`.
+
 ## Qualite
 
 - `npm run test` teste la simulation pure avec Vitest.
 - `npm run build` verifie TypeScript et genere le build Vite.
 
-## Hors scope V5.1
+## Hors scope V6
 
-Pas de campagne complete, carte globale, mode infini, champignons, parasites, cellules cancereuses, factions pathogenes jouables, medicaments avances, vaccination, memoire immunitaire, arbre technologique complet, pixel art final ou polish visuel avance.
+Pas de medicaments, vaccination, memoire immunitaire, vraie lymphe, carte globale, mode infini, champignons, parasites, cellules cancereuses, factions pathogenes jouables, arbre technologique complet, pixel art final ou polish visuel avance.

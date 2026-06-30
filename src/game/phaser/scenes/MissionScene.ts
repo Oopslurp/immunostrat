@@ -1,4 +1,9 @@
 import Phaser from "phaser";
+import {
+  calculateMissionScore,
+  evaluateMissionObjectives,
+  getMissionRank,
+} from "../../campaign/objectives";
 import { balanceValues } from "../../data/balance";
 import { missionDefinitions, type MissionId } from "../../data/missions";
 import { pathogenDefinitions, type PathogenTypeId } from "../../data/pathogens";
@@ -61,7 +66,7 @@ export class MissionScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.DESTROY, () => this.cleanupBridge());
 
     this.add
-      .text(map.width / 2, 42, "Immunostrat - Wound Defense V5.1", {
+      .text(map.width / 2, 42, mission.title, {
         color: "#f5fbff",
         fontFamily: "monospace",
         fontSize: "24px",
@@ -72,7 +77,8 @@ export class MissionScene extends Phaser.Scene {
       .text(
         map.width / 2,
         72,
-        "Left click selects and orders. NK/T target infected cells. Right drag or WASD/ZQSD moves camera.",
+        mission.tutorialHints?.[0]?.text ??
+          "Left click selects and orders. Right drag or WASD/ZQSD moves camera.",
         {
           color: "#a8c0cc",
           fontFamily: "monospace",
@@ -872,7 +878,10 @@ export class MissionScene extends Phaser.Scene {
 
   private publishSnapshot(state: GameState = this.simulation.getState()) {
     const mission = missionDefinitions[state.missionId];
+    const score = calculateMissionScore(state);
     const snapshot: GameSnapshot = {
+      missionId: state.missionId,
+      missionTitle: mission.title,
       status: state.status,
       tissueHealth: state.tissue.health,
       tissueMaxHealth: state.tissue.maxHealth,
@@ -888,6 +897,9 @@ export class MissionScene extends Phaser.Scene {
       bacterialAnalysisComplete:
         state.adaptiveResearch.bacterialAnalysisComplete,
       viralAnalysisComplete: state.adaptiveResearch.viralAnalysisComplete,
+      objectives: evaluateMissionObjectives(state),
+      score,
+      rank: getMissionRank(score),
       currentWave: Math.min(
         state.waves.currentWaveIndex + 1,
         mission.waves.length,

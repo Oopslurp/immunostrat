@@ -1,0 +1,159 @@
+import {
+  campaignMissionOrder,
+  getFirstMissionId,
+  isMissionId,
+  missionDefinitions,
+  type MissionId,
+} from "../data/missions";
+
+const SAVE_KEY = "immunostrat-campaign-progress-v1";
+const SAVE_VERSION = 1;
+
+export type MissionCompletionRecord = {
+  completedAt: string;
+  bestScore: number;
+  bestRank: "C" | "B" | "A" | "S";
+};
+
+export type CampaignProgress = {
+  version: number;
+  unlockedMissionIds: MissionId[];
+  completedMissions: Partial<Record<MissionId, MissionCompletionRecord>>;
+};
+
+export type MissionResultSummary = {
+  missionId: MissionId;
+  score: number;
+  rank: "C" | "B" | "A" | "S";
+};
+
+export function loadCampaignProgress(): CampaignProgress {
+  if (typeof window === "undefined") {
+    return createDefaultProgress();
+  }
+
+  try {
+    const raw = window.localStorage.getItem(SAVE_KEY);
+
+    if (!raw) {
+      return createDefaultProgress();
+    }
+
+    const parsed = JSON.parse(raw) as Partial<CampaignProgress>;
+
+    if (parsed.version !== SAVE_VERSION) {
+      return createDefaultProgress();
+    }
+
+    return normalizeProgress(parsed);
+  } catch {
+    return createDefaultProgress();
+  }
+}
+
+export function saveCampaignProgress(progress: CampaignProgress): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(SAVE_KEY, JSON.stringify(normalizeProgress(progress)));
+}
+
+export function resetCampaignProgress(): CampaignProgress {
+  const progress = createDefaultProgress();
+  saveCampaignProgress(progress);
+
+  return progress;
+}
+
+export function completeMission(
+  progress: CampaignProgress,
+  result: MissionResultSummary,
+): CampaignProgress {
+  const mission = missionDefinitions[result.missionId];
+  const currentRecord = progress.completedMissions[result.missionId];
+  const nextCompletedMissions = {
+    ...progress.completedMissions,
+    [result.missionId]: {
+      completedAt: new Date().toISOString(),
+      bestScore: Math.max(currentRecord?.bestScore ?? 0, result.score),
+      bestRank: getBetterRank(currentRecord?.bestRank, result.rank),
+    },
+  };
+  const nextUnlocked = new Set(progress.unlockedMissionIds);
+
+  if (mission.nextMissionId && isMissionId(mission.nextMissionId)) {
+    nextUnlocked.add(mission.nextMissionId);
+  }
+
+  const next = normalizeProgress({
+    version: SAVE_VERSION,
+    unlockedMissionIds: Array.from(nextUnlocked),
+    completedMissions: nextCompletedMissions,
+  });
+
+  saveCampaignProgress(next);
+
+  return next;
+}
+
+export function isMissionUnlocked(
+  progress: CampaignProgress,
+  missionId: MissionId,
+): boolean {
+  return progress.unlockedMissionIds.includes(missionId);
+}
+
+function createDefaultProgress(): CampaignProgress {
+  return {
+    version: SAVE_VERSION,
+    unlockedMissionIds: [getFirstMissionId()],
+    completedMissions: {},
+  };
+}
+
+function normalizeProgress(progress: Partial<CampaignProgress>): CampaignProgress {
+  const unlocked = new Set<MissionId>([getFirstMissionId()]);
+
+  for (const missionId of progress.unlockedMissionIds ?? []) {
+    if (isMissionId(missionId)) {
+      unlocked.add(missionId);
+    }
+  }
+
+  const completedMissions: CampaignProgress["completedMissions"] = {};
+
+  for (const missionId of campaignMissionOrder) {
+    const record = progress.completedMissions?.[missionId];
+
+    if (record) {
+      completedMissions[missionId] = {
+        completedAt: record.completedAt,
+        bestScore: Math.max(0, record.bestScore),
+        bestRank: record.bestRank,
+      };
+      unlocked.add(missionId);
+    }
+  }
+
+  return {
+    version: SAVE_VERSION,
+    unlockedMissionIds: campaignMissionOrder.filter((missionId) =>
+      unlocked.has(missionId),
+    ),
+    completedMissions,
+  };
+}
+
+function getBetterRank(
+  previous: MissionCompletionRecord["bestRank"] | undefined,
+  next: MissionCompletionRecord["bestRank"],
+): MissionCompletionRecord["bestRank"] {
+  const ranks = ["C", "B", "A", "S"];
+
+  if (!previous) {
+    return next;
+  }
+
+  return ranks.indexOf(next) > ranks.indexOf(previous) ? next : previous;
+}

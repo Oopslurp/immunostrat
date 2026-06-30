@@ -12,37 +12,18 @@ export function createInitialState(
   const entities: GameState["entities"] = {};
   let nextEntityNumber = 1;
 
-  for (let index = 0; index < balanceValues.startingUnits.macrophages; index += 1) {
-    const id = `macrophage-${nextEntityNumber}`;
-    nextEntityNumber += 1;
-    entities[id] = createImmuneUnit(
-      id,
-      "macrophage",
-      offsetPosition(mission.map.macrophageSpawn, index, 34),
-      1100 + index * 120,
-    );
-  }
-
-  for (let index = 0; index < balanceValues.startingUnits.neutrophils; index += 1) {
-    const id = `neutrophil-${nextEntityNumber}`;
-    nextEntityNumber += 1;
-    entities[id] = createImmuneUnit(
-      id,
-      "neutrophil",
-      offsetPosition(unitDefinitions.neutrophil.spawnPosition, index, 32),
-      1200,
-    );
-  }
-
-  for (let index = 0; index < balanceValues.startingUnits.dendriticCells; index += 1) {
-    const id = `dendriticCell-${nextEntityNumber}`;
-    nextEntityNumber += 1;
-    entities[id] = createImmuneUnit(
-      id,
-      "dendriticCell",
-      offsetPosition(unitDefinitions.dendriticCell.spawnPosition, index, 32),
-      1300,
-    );
+  for (const startingUnit of mission.startingUnits) {
+    for (let index = 0; index < startingUnit.count; index += 1) {
+      const unitTypeId = startingUnit.unitTypeId;
+      const id = `${unitTypeId}-${nextEntityNumber}`;
+      nextEntityNumber += 1;
+      entities[id] = createImmuneUnit(
+        id,
+        unitTypeId,
+        getSpawnPosition(mission.map.macrophageSpawn, unitTypeId, index),
+        1100 + nextEntityNumber * 90,
+      );
+    }
   }
 
   return {
@@ -53,21 +34,30 @@ export function createInitialState(
       health: balanceValues.startingTissueHealth,
       maxHealth: balanceValues.startingTissueHealth,
     },
-    tissueCells: mission.map.tissueCells.map((position, index) => ({
-      id: `tissue-cell-${index + 1}`,
-      position: { ...position },
-      health: balanceValues.tissueCells.maxHealth,
-      maxHealth: balanceValues.tissueCells.maxHealth,
-      radius: balanceValues.tissueCells.radius,
-      status: "healthy",
-      infectedElapsedMs: 0,
-      nextVirusBurstMs: balanceValues.tissueCells.infectedInitialDelayMs,
-      antiviralProtectedMs: 0,
-    })),
+    tissueCells: mission.map.tissueCells.map((position, index) => {
+      const infected = index < (mission.initialInfectedTissueCells ?? 0);
+
+      return {
+        id: `tissue-cell-${index + 1}`,
+        position: { ...position },
+        health: balanceValues.tissueCells.maxHealth,
+        maxHealth: balanceValues.tissueCells.maxHealth,
+        radius: balanceValues.tissueCells.radius,
+        status: infected ? "infected" : "healthy",
+        infectedElapsedMs: infected ? balanceValues.tissueCells.infectedInitialDelayMs : 0,
+        nextVirusBurstMs: balanceValues.tissueCells.infectedInitialDelayMs,
+        antiviralProtectedMs: 0,
+      };
+    }),
     resources: {
-      atp: balanceValues.startingAtp,
-      cytokines: balanceValues.startingCytokines,
-      antigens: balanceValues.startingAntigens,
+      atp: mission.startingResources.atp,
+      cytokines: mission.startingResources.cytokines,
+      antigens: mission.startingResources.antigens,
+    },
+    missionStats: {
+      producedUnits: {},
+      usedAbilities: {},
+      peakInflammation: balanceValues.inflammation.startingValue,
     },
     inflammation: {
       value: balanceValues.inflammation.startingValue,
@@ -139,4 +129,16 @@ function offsetPosition(origin: Vector2, index: number, spacing: number): Vector
     x: origin.x + (index % 2) * spacing,
     y: origin.y + Math.floor(index / 2) * spacing,
   };
+}
+
+function getSpawnPosition(
+  macrophageSpawn: Vector2,
+  unitTypeId: UnitTypeId,
+  index: number,
+): Vector2 {
+  if (unitTypeId === "macrophage") {
+    return offsetPosition(macrophageSpawn, index, 34);
+  }
+
+  return offsetPosition(unitDefinitions[unitTypeId].spawnPosition, index, 32);
 }

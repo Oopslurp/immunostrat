@@ -14,12 +14,12 @@ export function HomePage({ onPlay }: HomePageProps) {
           Immunostrat
         </h1>
         <p className="hero-text">
-          Defends une plaie cutanee contre bacteries et virus, protege les
-          cellules civiles du tissu, puis declenche NK, interferons et reponse T.
+          Progresse dans une campagne de huit missions pour apprendre les
+          bases de l'immunite innee, adaptative et antivirale.
         </p>
         <div className="home-actions">
           <Button variant="primary" onClick={onPlay}>
-            Lancer la mission
+            Ouvrir la campagne
           </Button>
         </div>
       </section>

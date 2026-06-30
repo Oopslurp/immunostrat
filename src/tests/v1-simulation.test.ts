@@ -15,7 +15,7 @@ describe("V1 simulation", () => {
 
     expect(Object.values(produced.entities)).toHaveLength(initialEntityCount + 1);
     expect(produced.resources.atp).toBe(
-      balanceValues.startingAtp - unitDefinitions.macrophage.atpCost,
+      initial.resources.atp - unitDefinitions.macrophage.atpCost,
     );
 
     const poorState: GameState = {

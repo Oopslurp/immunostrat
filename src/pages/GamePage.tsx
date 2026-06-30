@@ -1,42 +1,96 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { balanceValues } from "../game/data/balance";
+import {
+  isMissionId,
+  missionDefinitions,
+  type MissionAbilityId,
+  type MissionId,
+  type MissionResearchId,
+} from "../game/data/missions";
 import { pathogenDefinitions } from "../game/data/pathogens";
-import { unitDefinitions } from "../game/data/units";
+import { unitDefinitions, type UnitTypeId } from "../game/data/units";
+import type {
+  CampaignProgress,
+  MissionResultSummary,
+} from "../game/campaign/progress";
 import { GameBridge, type GameSnapshot } from "../game/phaser/GameBridge";
 import { PhaserGame } from "../game/phaser/PhaserGame";
 import { Button } from "../ui/Button";
 
-export function GamePage() {
+type GamePageProps = {
+  missionId: MissionId;
+  progress: CampaignProgress;
+  onBackToCampaign: () => void;
+  onMissionComplete: (result: MissionResultSummary) => void;
+  onPlayMission: (missionId: MissionId) => void;
+};
+
+export function GamePage({
+  missionId,
+  progress,
+  onBackToCampaign,
+  onMissionComplete,
+  onPlayMission,
+}: GamePageProps) {
   const bridge = useMemo(() => new GameBridge(), []);
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
-  const missionId = "woundBacteriaV1";
+  const completedMissionRef = useRef<string | null>(null);
+  const mission = missionDefinitions[missionId];
+  const nextMissionId = mission.nextMissionId;
+  const playableNextMissionId =
+    nextMissionId && isMissionId(nextMissionId) ? nextMissionId : null;
 
   useEffect(() => bridge.subscribeSnapshot(setSnapshot), [bridge]);
+  useEffect(() => {
+    completedMissionRef.current = null;
+  }, [missionId]);
+  useEffect(() => {
+    if (!snapshot || snapshot.status !== "victory") {
+      return;
+    }
+
+    if (completedMissionRef.current === snapshot.missionId) {
+      return;
+    }
+
+    completedMissionRef.current = snapshot.missionId;
+    onMissionComplete({
+      missionId: snapshot.missionId,
+      score: snapshot.score,
+      rank: snapshot.rank,
+    });
+  }, [onMissionComplete, snapshot]);
 
   const canProduceMacrophage =
     snapshot?.status === "running" &&
+    isUnitUnlocked(missionId, "macrophage") &&
     snapshot.atp >= unitDefinitions.macrophage.atpCost;
   const canProduceNeutrophil =
     snapshot?.status === "running" &&
+    isUnitUnlocked(missionId, "neutrophil") &&
     snapshot.atp >= unitDefinitions.neutrophil.atpCost &&
     snapshot.cytokines >= unitDefinitions.neutrophil.cytokineCost &&
     snapshot.neutrophilCooldownMs <= 0;
   const canProduceDendritic =
     snapshot?.status === "running" &&
+    isUnitUnlocked(missionId, "dendriticCell") &&
     snapshot.atp >= unitDefinitions.dendriticCell.atpCost &&
     snapshot.cytokines >= unitDefinitions.dendriticCell.cytokineCost;
   const canResearch =
     snapshot?.status === "running" &&
+    isResearchUnlocked(missionId, "bacterialAnalysis") &&
     !snapshot.bacterialAnalysisComplete &&
     snapshot.antigens >= balanceValues.adaptive.bacterialAnalysisAntigenCost;
   const canProducePlasmocyte =
     snapshot?.status === "running" &&
+    isUnitUnlocked(missionId, "plasmocyte") &&
     snapshot.bacterialAnalysisComplete &&
     snapshot.atp >= unitDefinitions.plasmocyte.atpCost &&
     snapshot.cytokines >= unitDefinitions.plasmocyte.cytokineCost &&
     snapshot.antigens >= balanceValues.adaptive.plasmocyteAntigenCost;
   const canUseAdaptive =
     snapshot?.status === "running" &&
+    isAbilityUnlocked(missionId, "massiveNeutralization") &&
     snapshot.bacterialAnalysisComplete &&
     snapshot.massiveNeutralizationCooldownMs <= 0 &&
     snapshot.antigens >= balanceValues.adaptive.massiveNeutralizationAntigenCost &&
@@ -44,18 +98,22 @@ export function GamePage() {
     snapshot.cytokines >= balanceValues.adaptive.massiveNeutralizationCytokineCost;
   const canUseAntiviral =
     snapshot?.status === "running" &&
+    isAbilityUnlocked(missionId, "interferons") &&
     snapshot.antiviralSignalCooldownMs <= 0 &&
     snapshot.cytokines >= balanceValues.antiviral.cytokineCost;
   const canProduceNk =
     snapshot?.status === "running" &&
+    isUnitUnlocked(missionId, "nkCell") &&
     snapshot.atp >= unitDefinitions.nkCell.atpCost &&
     snapshot.cytokines >= unitDefinitions.nkCell.cytokineCost;
   const canResearchViral =
     snapshot?.status === "running" &&
+    isResearchUnlocked(missionId, "viralAnalysis") &&
     !snapshot.viralAnalysisComplete &&
     snapshot.antigens >= balanceValues.adaptive.viralAnalysisAntigenCost;
   const canProduceCytotoxicT =
     snapshot?.status === "running" &&
+    isUnitUnlocked(missionId, "cytotoxicT") &&
     snapshot.viralAnalysisComplete &&
     snapshot.atp >= unitDefinitions.cytotoxicT.atpCost &&
     snapshot.cytokines >= unitDefinitions.cytotoxicT.cytokineCost &&
@@ -65,86 +123,132 @@ export function GamePage() {
     <div className="page game-page">
       <header className="game-header">
         <div>
-          <span className="eyebrow">Prototype jouable V5.1</span>
-          <h1>Plaie cutanee infectee</h1>
-          <p>
-            Produis macrophages, neutrophiles et NK, controle bacteries et virus,
-            collecte les debris avec des cellules dendritiques puis debloque la
-            reponse T cytotoxique contre les cellules infectees.
-          </p>
+          <span className="eyebrow">Campagne V6</span>
+          <h1>{mission.title}</h1>
+          <p>{mission.description}</p>
         </div>
         <div className="game-actions">
-          <Button
-            disabled={!canProduceMacrophage}
-            onClick={() => bridge.dispatch({ type: "produceMacrophage" })}
-            variant="primary"
-          >
-            Macrophage (-{unitDefinitions.macrophage.atpCost} ATP)
-          </Button>
-          <Button
-            disabled={!canProduceNeutrophil}
-            onClick={() => bridge.dispatch({ type: "produceNeutrophil" })}
-          >
-            Neutrophile (-{unitDefinitions.neutrophil.atpCost} ATP, -
-            {unitDefinitions.neutrophil.cytokineCost} CYT)
-          </Button>
-          <Button
-            disabled={!canProduceDendritic}
-            onClick={() => bridge.dispatch({ type: "produceDendriticCell" })}
-          >
-            Dendritique (-{unitDefinitions.dendriticCell.atpCost} ATP, -
-            {unitDefinitions.dendriticCell.cytokineCost} CYT)
-          </Button>
-          <Button
-            disabled={!canResearch}
-            onClick={() => bridge.dispatch({ type: "researchBacterialAnalysis" })}
-          >
-            Analyse bacterienne (-{balanceValues.adaptive.bacterialAnalysisAntigenCost} AG)
-          </Button>
-          <Button
-            disabled={!canProducePlasmocyte}
-            onClick={() => bridge.dispatch({ type: "producePlasmocyte" })}
-          >
-            Plasmocyte (-{balanceValues.adaptive.plasmocyteAntigenCost} AG)
-          </Button>
-          <Button
-            disabled={!canUseAdaptive}
-            onClick={() => bridge.dispatch({ type: "useMassiveNeutralization" })}
-          >
-            Neutralisation massive
-          </Button>
-          <Button
-            disabled={!canUseAntiviral}
-            onClick={() => bridge.dispatch({ type: "useAntiviralSignal" })}
-          >
-            Interferons (-{balanceValues.antiviral.cytokineCost} CYT)
-          </Button>
-          <Button
-            disabled={!canProduceNk}
-            onClick={() => bridge.dispatch({ type: "produceNkCell" })}
-          >
-            Cellule NK (-{unitDefinitions.nkCell.atpCost} ATP, -
-            {unitDefinitions.nkCell.cytokineCost} CYT)
-          </Button>
-          <Button
-            disabled={!canResearchViral}
-            onClick={() => bridge.dispatch({ type: "researchViralAnalysis" })}
-          >
-            Analyse virale (-{balanceValues.adaptive.viralAnalysisAntigenCost} AG)
-          </Button>
-          <Button
-            disabled={!canProduceCytotoxicT}
-            onClick={() => bridge.dispatch({ type: "produceCytotoxicT" })}
-          >
-            T cytotoxique (-{unitDefinitions.cytotoxicT.atpCost} ATP, -
-            {unitDefinitions.cytotoxicT.cytokineCost} CYT, -
-            {balanceValues.adaptive.cytotoxicTAntigenCost} AG)
-          </Button>
+          {isUnitUnlocked(missionId, "macrophage") ? (
+            <Button
+              disabled={!canProduceMacrophage}
+              onClick={() => bridge.dispatch({ type: "produceMacrophage" })}
+              variant="primary"
+            >
+              Macrophage (-{unitDefinitions.macrophage.atpCost} ATP)
+            </Button>
+          ) : null}
+          {isUnitUnlocked(missionId, "neutrophil") ? (
+            <Button
+              disabled={!canProduceNeutrophil}
+              onClick={() => bridge.dispatch({ type: "produceNeutrophil" })}
+            >
+              Neutrophile (-{unitDefinitions.neutrophil.atpCost} ATP, -
+              {unitDefinitions.neutrophil.cytokineCost} CYT)
+            </Button>
+          ) : null}
+          {isUnitUnlocked(missionId, "dendriticCell") ? (
+            <Button
+              disabled={!canProduceDendritic}
+              onClick={() => bridge.dispatch({ type: "produceDendriticCell" })}
+            >
+              Dendritique (-{unitDefinitions.dendriticCell.atpCost} ATP, -
+              {unitDefinitions.dendriticCell.cytokineCost} CYT)
+            </Button>
+          ) : null}
+          {isResearchUnlocked(missionId, "bacterialAnalysis") ? (
+            <Button
+              disabled={!canResearch}
+              onClick={() => bridge.dispatch({ type: "researchBacterialAnalysis" })}
+            >
+              Analyse bacterienne (-{balanceValues.adaptive.bacterialAnalysisAntigenCost} AG)
+            </Button>
+          ) : null}
+          {isUnitUnlocked(missionId, "plasmocyte") ? (
+            <Button
+              disabled={!canProducePlasmocyte}
+              onClick={() => bridge.dispatch({ type: "producePlasmocyte" })}
+            >
+              Plasmocyte (-{balanceValues.adaptive.plasmocyteAntigenCost} AG)
+            </Button>
+          ) : null}
+          {isAbilityUnlocked(missionId, "massiveNeutralization") ? (
+            <Button
+              disabled={!canUseAdaptive}
+              onClick={() => bridge.dispatch({ type: "useMassiveNeutralization" })}
+            >
+              Neutralisation massive
+            </Button>
+          ) : null}
+          {isAbilityUnlocked(missionId, "interferons") ? (
+            <Button
+              disabled={!canUseAntiviral}
+              onClick={() => bridge.dispatch({ type: "useAntiviralSignal" })}
+            >
+              Interferons (-{balanceValues.antiviral.cytokineCost} CYT)
+            </Button>
+          ) : null}
+          {isUnitUnlocked(missionId, "nkCell") ? (
+            <Button
+              disabled={!canProduceNk}
+              onClick={() => bridge.dispatch({ type: "produceNkCell" })}
+            >
+              Cellule NK (-{unitDefinitions.nkCell.atpCost} ATP, -
+              {unitDefinitions.nkCell.cytokineCost} CYT)
+            </Button>
+          ) : null}
+          {isResearchUnlocked(missionId, "viralAnalysis") ? (
+            <Button
+              disabled={!canResearchViral}
+              onClick={() => bridge.dispatch({ type: "researchViralAnalysis" })}
+            >
+              Analyse virale (-{balanceValues.adaptive.viralAnalysisAntigenCost} AG)
+            </Button>
+          ) : null}
+          {isUnitUnlocked(missionId, "cytotoxicT") ? (
+            <Button
+              disabled={!canProduceCytotoxicT}
+              onClick={() => bridge.dispatch({ type: "produceCytotoxicT" })}
+            >
+              T cytotoxique (-{unitDefinitions.cytotoxicT.atpCost} ATP, -
+              {unitDefinitions.cytotoxicT.cytokineCost} CYT, -
+              {balanceValues.adaptive.cytotoxicTAntigenCost} AG)
+            </Button>
+          ) : null}
           <Button onClick={() => bridge.dispatch({ type: "restart" })}>
             Recommencer
           </Button>
+          <Button onClick={onBackToCampaign}>Retour missions</Button>
         </div>
       </header>
+
+      <section className="mission-briefing-panel">
+        <div>
+          <strong>Briefing</strong>
+          {mission.briefing.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
+        </div>
+        <div>
+          <strong>Objectifs</strong>
+          {(snapshot?.objectives ?? mission.objectives.map((objective) => ({
+            id: objective.id,
+            label: objective.label,
+            complete: false,
+            required: objective.required ?? false,
+            progressLabel: "en attente",
+          }))).map((objective) => (
+            <span
+              className={`objective-pill ${
+                objective.complete ? "objective-pill-complete" : ""
+              }`}
+              key={objective.id}
+            >
+              {objective.complete ? "[x]" : "[ ]"} {objective.label}{" "}
+              <em>{objective.progressLabel}</em>
+            </span>
+          ))}
+        </div>
+      </section>
 
       <section className="game-frame" aria-label="Canvas du jeu Immunostrat">
         <PhaserGame bridge={bridge} missionId={missionId} />
@@ -153,9 +257,29 @@ export function GamePage() {
             <div className="result-title">
               {snapshot.status === "victory" ? "Victoire" : "Defaite"}
             </div>
+            <div className="result-score">
+              Score {snapshot.score} - Rang {snapshot.rank}
+            </div>
+            <div className="result-objectives">
+              {snapshot.objectives.map((objective) => (
+                <span key={objective.id}>
+                  {objective.complete ? "[x]" : "[ ]"} {objective.label}
+                </span>
+              ))}
+            </div>
             <Button onClick={() => bridge.dispatch({ type: "restart" })}>
               Recommencer
             </Button>
+            <Button onClick={onBackToCampaign}>Retour missions</Button>
+            {snapshot.status === "victory" && playableNextMissionId ? (
+              <Button
+                disabled={!progress.unlockedMissionIds.includes(playableNextMissionId)}
+                onClick={() => onPlayMission(playableNextMissionId)}
+                variant="primary"
+              >
+                Mission suivante
+              </Button>
+            ) : null}
           </div>
         ) : null}
       </section>
@@ -195,6 +319,7 @@ export function GamePage() {
           Vague: {snapshot ? Math.min(snapshot.currentWave, snapshot.totalWaves) : 0}/
           {snapshot?.totalWaves ?? 0}
         </span>
+        <span className="hud-item">Score: {snapshot?.score ?? 0}</span>
         <span className="hud-item">
           Bacteries:{" "}
           {snapshot?.entities.filter((entity) => entity.kind === "bacterium")
@@ -277,6 +402,24 @@ export function GamePage() {
       </aside>
     </div>
   );
+}
+
+function isUnitUnlocked(missionId: MissionId, unitTypeId: UnitTypeId): boolean {
+  return missionDefinitions[missionId].unlockedUnits.includes(unitTypeId);
+}
+
+function isAbilityUnlocked(
+  missionId: MissionId,
+  abilityId: MissionAbilityId,
+): boolean {
+  return missionDefinitions[missionId].unlockedAbilities.includes(abilityId);
+}
+
+function isResearchUnlocked(
+  missionId: MissionId,
+  researchId: MissionResearchId,
+): boolean {
+  return missionDefinitions[missionId].unlockedResearch.includes(researchId);
 }
 
 type GaugeProps = {

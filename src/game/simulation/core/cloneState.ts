@@ -10,6 +10,11 @@ export function cloneState(state: GameState): GameState {
       position: { ...cell.position },
     })),
     resources: { ...state.resources },
+    missionStats: {
+      producedUnits: { ...state.missionStats.producedUnits },
+      usedAbilities: { ...state.missionStats.usedAbilities },
+      peakInflammation: state.missionStats.peakInflammation,
+    },
     inflammation: { ...state.inflammation },
     inflammatoryZones: state.inflammatoryZones.map((zone) => ({
       ...zone,

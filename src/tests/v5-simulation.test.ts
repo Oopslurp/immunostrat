@@ -12,28 +12,28 @@ import { spawnVirus } from "../game/simulation/pathogens/createVirus";
 
 describe("V5 viral infection and tissue cells", () => {
   it("starts with tissue cells and an initial immune force", () => {
-    const state = createInitialState();
+    const state = createInitialState("mixedInfectionV8");
 
     expect(state.tissueCells.length).toBeGreaterThan(6);
     expect(
       Object.values(state.entities).filter((entity) => entity.kind === "macrophage"),
-    ).toHaveLength(balanceValues.startingUnits.macrophages);
+    ).toHaveLength(3);
     expect(
       Object.values(state.entities).filter((entity) => entity.kind === "neutrophil"),
-    ).toHaveLength(balanceValues.startingUnits.neutrophils);
+    ).toHaveLength(1);
     expect(
       Object.values(state.entities).filter(
         (entity) => entity.kind === "dendriticCell",
       ),
-    ).toHaveLength(balanceValues.startingUnits.dendriticCells);
+    ).toHaveLength(1);
   });
 
   it("spawns viruses from V5 mission waves", () => {
     const state: GameState = {
-      ...createInitialState(),
-      elapsedMs: 9000,
+      ...createInitialState("viralInfectionV6"),
+      elapsedMs: 1500,
       waves: {
-        currentWaveIndex: 1,
+        currentWaveIndex: 0,
         spawnedInCurrentWave: 0,
       },
     };
@@ -45,13 +45,13 @@ describe("V5 viral infection and tissue cells", () => {
   });
 
   it("free viruses infect healthy tissue cells and reduce tissue health", () => {
-    const initial = createInitialState();
+    const initial = createInitialState("viralInfectionV6");
     const targetCell = initial.tissueCells[0];
     const state: GameState = {
       ...initial,
       entities: {},
       waves: {
-        currentWaveIndex: missionDefinitions.woundBacteriaV1.waves.length,
+        currentWaveIndex: missionDefinitions.viralInfectionV6.waves.length,
         spawnedInCurrentWave: 0,
       },
     };
@@ -72,13 +72,13 @@ describe("V5 viral infection and tissue cells", () => {
 
   it("infected tissue cells produce new viruses over time", () => {
     const state: GameState = {
-      ...createInitialState(),
+      ...createInitialState("viralInfectionV6"),
       entities: {},
       waves: {
-        currentWaveIndex: missionDefinitions.woundBacteriaV1.waves.length,
+        currentWaveIndex: missionDefinitions.viralInfectionV6.waves.length,
         spawnedInCurrentWave: 0,
       },
-      tissueCells: createInitialState().tissueCells.map((cell, index) =>
+      tissueCells: createInitialState("viralInfectionV6").tissueCells.map((cell, index) =>
         index === 0
           ? {
               ...cell,
@@ -99,7 +99,7 @@ describe("V5 viral infection and tissue cells", () => {
 
   it("antiviral signal costs cytokines and activates temporary protection", () => {
     const state: GameState = {
-      ...createInitialState(),
+      ...createInitialState("viralInfectionV6"),
       resources: {
         atp: 100,
         cytokines: balanceValues.antiviral.cytokineCost,
@@ -122,14 +122,14 @@ describe("V5 viral infection and tissue cells", () => {
   it("produces NK cells that damage infected tissue cells", () => {
     const produced = applyCommand(
       {
-        ...createInitialState(),
+        ...createInitialState("viralCleanupV7"),
         resources: {
           atp: unitDefinitions.nkCell.atpCost,
           cytokines: unitDefinitions.nkCell.cytokineCost,
           antigens: 0,
         },
         waves: {
-          currentWaveIndex: missionDefinitions.woundBacteriaV1.waves.length,
+          currentWaveIndex: missionDefinitions.viralCleanupV7.waves.length,
           spawnedInCurrentWave: 0,
         },
       },
@@ -163,7 +163,7 @@ describe("V5 viral infection and tissue cells", () => {
   it("locks cytotoxic T cells behind viral analysis and antigen cost", () => {
     const locked = applyCommand(
       {
-        ...createInitialState(),
+        ...createInitialState("viralCleanupV7"),
         resources: {
           atp: 200,
           cytokines: 120,
@@ -193,7 +193,7 @@ describe("V5 viral infection and tissue cells", () => {
   it("cytotoxic T cells can destroy infected tissue cells and expose viral antigen", () => {
     const researched = applyCommand(
       {
-        ...createInitialState(),
+        ...createInitialState("viralCleanupV7"),
         resources: {
           atp: 200,
           cytokines: 120,
@@ -202,7 +202,7 @@ describe("V5 viral infection and tissue cells", () => {
             balanceValues.adaptive.cytotoxicTAntigenCost,
         },
         waves: {
-          currentWaveIndex: missionDefinitions.woundBacteriaV1.waves.length,
+          currentWaveIndex: missionDefinitions.viralCleanupV7.waves.length,
           spawnedInCurrentWave: 0,
         },
       },

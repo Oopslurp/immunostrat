@@ -2,6 +2,8 @@ import type { GameCommand } from "../simulation/core/commands";
 import type { GameState } from "../simulation/core/GameState";
 import type { GameEntity } from "../simulation/entities";
 import type { PathogenTypeId } from "../data/pathogens";
+import type { MissionId } from "../data/missions";
+import type { ObjectiveStatus } from "../campaign/objectives";
 
 export type ThreatSummaryItem = {
   pathogenTypeId: PathogenTypeId;
@@ -9,6 +11,8 @@ export type ThreatSummaryItem = {
 };
 
 export type GameSnapshot = {
+  missionId: MissionId;
+  missionTitle: string;
   status: GameState["status"];
   tissueHealth: number;
   tissueMaxHealth: number;
@@ -22,6 +26,9 @@ export type GameSnapshot = {
   antiviralActiveMs: number;
   bacterialAnalysisComplete: boolean;
   viralAnalysisComplete: boolean;
+  objectives: ObjectiveStatus[];
+  score: number;
+  rank: "C" | "B" | "A" | "S";
   currentWave: number;
   totalWaves: number;
   entities: GameEntity[];

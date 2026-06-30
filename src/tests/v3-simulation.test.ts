@@ -123,7 +123,7 @@ describe("V3 adaptive response", () => {
   it("research unlocks plasmocytes and massive neutralization", () => {
     const researched = applyCommand(
       {
-        ...createInitialState(),
+        ...createInitialState("adaptiveResponseV5"),
         resources: {
           atp: 160,
           cytokines: 100,
