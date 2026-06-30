@@ -4,6 +4,12 @@ import { isImmuneUnit } from "../entities";
 export function cloneState(state: GameState): GameState {
   return {
     ...state,
+    preparation: {
+      ...state.preparation,
+      memoryProfiles: state.preparation.memoryProfiles
+        ? [...state.preparation.memoryProfiles]
+        : undefined,
+    },
     tissue: { ...state.tissue },
     tissueCells: state.tissueCells.map((cell) => ({
       ...cell,
@@ -14,6 +20,10 @@ export function cloneState(state: GameState): GameState {
       producedUnits: { ...state.missionStats.producedUnits },
       usedAbilities: { ...state.missionStats.usedAbilities },
       peakInflammation: state.missionStats.peakInflammation,
+    },
+    treatments: {
+      cooldowns: { ...state.treatments.cooldowns },
+      activeMs: { ...state.treatments.activeMs },
     },
     inflammation: { ...state.inflammation },
     inflammatoryZones: state.inflammatoryZones.map((zone) => ({

@@ -4,6 +4,7 @@ import { missionDefinitions } from "../../data/missions";
 import { distance } from "../../types/shared";
 import type { GameState } from "../core/GameState";
 import { isBacterium, isImmuneUnit, isNeutrophil, isVirus } from "../entities";
+import { isTreatmentActive } from "./treatmentSystem";
 
 export function applyInflammationSystem(
   state: GameState,
@@ -70,10 +71,13 @@ function applyInflammationTissueDamage(state: GameState, seconds: number): void 
     state.inflammation.value >= inflammation.criticalThreshold
       ? inflammation.criticalTissueDamagePerSecond
       : inflammation.dangerousTissueDamagePerSecond;
+  const treatmentMultiplier = isTreatmentActive(state, "antiInflammatory")
+    ? 0.45
+    : 1;
 
   state.tissue.health = Math.max(
     0,
-    state.tissue.health - damagePerSecond * seconds,
+    state.tissue.health - damagePerSecond * treatmentMultiplier * seconds,
   );
 }
 

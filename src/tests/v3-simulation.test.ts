@@ -109,7 +109,7 @@ describe("V3 adaptive response", () => {
         ...afterCollect.entities,
         "dendritic-test": {
           ...carrying,
-          position: { x: mission.map.lymphNode.x, y: mission.map.lymphNode.y },
+          position: { x: mission.map.lymphExit.x, y: mission.map.lymphExit.y },
         },
       },
     };

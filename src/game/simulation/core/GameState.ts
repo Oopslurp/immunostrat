@@ -1,4 +1,5 @@
-import type { MissionId } from "../../data/missions";
+import type { MissionId, MissionPreparation } from "../../data/missions";
+import type { TreatmentId } from "../../data/treatments";
 import type { EntityId, GameStatus, Vector2 } from "../../types/shared";
 import type { GameEntity } from "../entities";
 
@@ -12,6 +13,11 @@ export type MissionRuntimeStats = {
   producedUnits: Partial<Record<string, number>>;
   usedAbilities: Partial<Record<string, number>>;
   peakInflammation: number;
+};
+
+export type TreatmentState = {
+  cooldowns: Partial<Record<TreatmentId, number>>;
+  activeMs: Partial<Record<TreatmentId, number>>;
 };
 
 export type TissueState = {
@@ -95,7 +101,8 @@ export type CombatEffect = {
     | "phagocytosis"
     | "infection"
     | "antiviral"
-    | "cytotoxic";
+    | "cytotoxic"
+    | "treatment";
   position: Vector2;
   radius: number;
   ttlMs: number;
@@ -103,12 +110,14 @@ export type CombatEffect = {
 
 export type GameState = {
   missionId: MissionId;
+  preparation: MissionPreparation;
   elapsedMs: number;
   status: GameStatus;
   tissue: TissueState;
   tissueCells: TissueCellState[];
   resources: GameResources;
   missionStats: MissionRuntimeStats;
+  treatments: TreatmentState;
   inflammation: InflammationState;
   inflammatoryZones: InflammatoryZone[];
   biofilmZones: BiofilmZone[];

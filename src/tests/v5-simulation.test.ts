@@ -31,7 +31,7 @@ describe("V5 viral infection and tissue cells", () => {
   it("spawns viruses from V5 mission waves", () => {
     const state: GameState = {
       ...createInitialState("viralInfectionV6"),
-      elapsedMs: 1500,
+      elapsedMs: 2500,
       waves: {
         currentWaveIndex: 0,
         spawnedInCurrentWave: 0,

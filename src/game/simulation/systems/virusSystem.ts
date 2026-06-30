@@ -3,6 +3,7 @@ import { distance, moveToward, stableHash, type Vector2 } from "../../types/shar
 import type { GameState, TissueCellState } from "../core/GameState";
 import { isVirus, type VirusEntity } from "../entities";
 import { spawnVirus } from "../pathogens/createVirus";
+import { isTreatmentActive } from "./treatmentSystem";
 
 export function applyVirusSystem(state: GameState, deltaMs: number): void {
   const seconds = deltaMs / 1000;
@@ -31,7 +32,7 @@ export function applyVirusSystem(state: GameState, deltaMs: number): void {
 
     cell.infectedElapsedMs += deltaMs;
     const antiviralMultiplier =
-      cell.antiviralProtectedMs > 0
+      cell.antiviralProtectedMs > 0 || isTreatmentActive(state, "antiviralDrug")
         ? balanceValues.antiviral.viralProductionMultiplier
         : 1;
     cell.nextVirusBurstMs -=
@@ -67,11 +68,11 @@ function moveVirusTowardHealthyCell(
   }
 
   const infectionRangeMultiplier =
-    target.antiviralProtectedMs > 0
+    target.antiviralProtectedMs > 0 || isTreatmentActive(state, "antiviralDrug")
       ? balanceValues.antiviral.infectionRangeMultiplier
       : 1;
   const speedMultiplier =
-    target.antiviralProtectedMs > 0
+    target.antiviralProtectedMs > 0 || isTreatmentActive(state, "antiviralDrug")
       ? balanceValues.antiviral.virusSpeedMultiplier
       : 1;
   const infectionRange = virus.infectionRange * infectionRangeMultiplier;

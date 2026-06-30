@@ -76,7 +76,7 @@ function createVirusDebris(
 
 function processDendriticCells(state: GameState): void {
   const mission = missionDefinitions[state.missionId];
-  const lymphNode = mission.map.lymphNode;
+  const lymphNode = mission.map.lymphExit ?? mission.map.lymphNode;
   const adaptive = balanceValues.adaptive;
 
   for (const entity of Object.values(state.entities)) {

@@ -1,8 +1,14 @@
 import { balanceValues } from "../../data/balance";
 import { missionDefinitions } from "../../data/missions";
+import { treatmentDefinitions, type TreatmentId } from "../../data/treatments";
 import { unitDefinitions, type UnitTypeId } from "../../data/units";
 import { distance, type EntityId, type Vector2 } from "../../types/shared";
-import { isDendriticCell, isHostilePathogen, isImmuneUnit } from "../entities";
+import {
+  isBacterium,
+  isDendriticCell,
+  isHostilePathogen,
+  isImmuneUnit,
+} from "../entities";
 import { createInitialState } from "./createInitialState";
 import type { GameState } from "./GameState";
 import { cloneState } from "./cloneState";
@@ -18,6 +24,7 @@ export type GameCommand =
   | { type: "researchViralAnalysis" }
   | { type: "useMassiveNeutralization" }
   | { type: "useAntiviralSignal" }
+  | { type: "useTreatment"; treatmentId: TreatmentId }
   | { type: "selectEntity"; entityId: EntityId | null }
   | { type: "selectEntities"; entityIds: EntityId[] }
   | { type: "orderMove"; position: Vector2 }
@@ -29,7 +36,7 @@ export type GameCommand =
 
 export function applyCommand(state: GameState, command: GameCommand): GameState {
   if (command.type === "restart") {
-    return createInitialState(state.missionId);
+    return createInitialState(state.missionId, state.preparation);
   }
 
   if (state.status !== "running") {
@@ -74,6 +81,10 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
 
   if (command.type === "useAntiviralSignal") {
     return useAntiviralSignal(state);
+  }
+
+  if (command.type === "useTreatment") {
+    return useTreatment(state, command.treatmentId);
   }
 
   if (command.type === "selectEntity") {
@@ -186,6 +197,7 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
   if (command.type === "orderReturnToLymphNode") {
     const next = cloneState(state);
     const mission = missionDefinitions[next.missionId];
+    const lymphTarget = mission.map.lymphExit ?? mission.map.lymphNode;
 
     for (const entityId of next.selectedEntityIds) {
       const selected = next.entities[entityId];
@@ -196,8 +208,8 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
         selected.carriedDebrisCount > 0
       ) {
         selected.targetPosition = {
-          x: mission.map.lymphNode.x,
-          y: mission.map.lymphNode.y,
+          x: lymphTarget.x,
+          y: lymphTarget.y,
         };
         selected.idleTargetPosition = null;
       }
@@ -525,4 +537,95 @@ function useAntiviralSignal(state: GameState): GameState {
   }
 
   return next;
+}
+
+function useTreatment(state: GameState, treatmentId: TreatmentId): GameState {
+  const mission = missionDefinitions[state.missionId];
+  const treatment = treatmentDefinitions[treatmentId];
+
+  if (
+    !mission.unlockedTreatments.includes(treatmentId) ||
+    (state.treatments.cooldowns[treatmentId] ?? 0) > 0 ||
+    state.resources.atp < treatment.atpCost ||
+    state.resources.cytokines < treatment.cytokineCost ||
+    state.resources.antigens < treatment.antigenCost
+  ) {
+    return state;
+  }
+
+  const next = cloneState(state);
+
+  next.resources.atp = Math.max(0, next.resources.atp - treatment.atpCost);
+  next.resources.cytokines = Math.max(
+    0,
+    next.resources.cytokines - treatment.cytokineCost,
+  );
+  next.resources.antigens = Math.max(
+    0,
+    next.resources.antigens - treatment.antigenCost,
+  );
+  next.treatments.cooldowns[treatmentId] = treatment.cooldownMs;
+  next.missionStats.usedAbilities[treatmentId] =
+    (next.missionStats.usedAbilities[treatmentId] ?? 0) + 1;
+
+  if (treatmentId === "antibiotic") {
+    applyAntibiotic(next);
+  }
+
+  if (treatmentId === "antiviralDrug") {
+    next.treatments.activeMs.antiviralDrug = treatment.durationMs;
+    addTreatmentEffect(next, mission.map.tissueCore, treatment.radius);
+  }
+
+  if (treatmentId === "antiInflammatory") {
+    next.treatments.activeMs.antiInflammatory = treatment.durationMs;
+    next.inflammation.value = Math.max(0, next.inflammation.value - 28);
+    next.inflammatoryZones = next.inflammatoryZones.map((zone) => ({
+      ...zone,
+      intensity: zone.intensity * 0.48,
+      ttlMs: zone.ttlMs * 0.62,
+    }));
+    addTreatmentEffect(next, mission.map.tissueCore, 220);
+  }
+
+  return next;
+}
+
+function applyAntibiotic(state: GameState): void {
+  const mission = missionDefinitions[state.missionId];
+  const treatment = treatmentDefinitions.antibiotic;
+
+  for (const entity of Object.values(state.entities)) {
+    if (!isBacterium(entity)) {
+      continue;
+    }
+
+    if (distance(entity.position, mission.map.tissueCore) > treatment.radius) {
+      continue;
+    }
+
+    const biofilmProtected = state.biofilmZones.some(
+      (zone) => distance(zone.position, entity.position) <= zone.radius,
+    );
+    const damage = biofilmProtected ? 14 : 28;
+
+    entity.health -= damage;
+    entity.movementSpeed *= biofilmProtected ? 0.86 : 0.72;
+    addTreatmentEffect(state, entity.position, entity.radius + 22);
+  }
+}
+
+function addTreatmentEffect(
+  state: GameState,
+  position: Vector2,
+  radius: number,
+): void {
+  state.effects.push({
+    id: `effect-${state.nextEffectNumber}`,
+    kind: "treatment",
+    position: { ...position },
+    radius,
+    ttlMs: balanceValues.attackEffectTtlMs * 3,
+  });
+  state.nextEffectNumber += 1;
 }

@@ -5,7 +5,11 @@ import {
   getMissionRank,
 } from "../../campaign/objectives";
 import { balanceValues } from "../../data/balance";
-import { missionDefinitions, type MissionId } from "../../data/missions";
+import {
+  missionDefinitions,
+  type MissionId,
+  type MissionPreparation,
+} from "../../data/missions";
 import { pathogenDefinitions, type PathogenTypeId } from "../../data/pathogens";
 import type { GameBridge, GameSnapshot } from "../GameBridge";
 import { Simulation } from "../../simulation/core/Simulation";
@@ -49,9 +53,10 @@ export class MissionScene extends Phaser.Scene {
   constructor(
     private readonly bridge: GameBridge,
     private readonly missionId: MissionId,
+    private readonly preparation?: MissionPreparation,
   ) {
     super("MissionScene");
-    this.simulation = new Simulation(missionId);
+    this.simulation = new Simulation(missionId, preparation);
   }
 
   create() {
@@ -106,6 +111,7 @@ export class MissionScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number) {
+    this.recoverLostPointerRelease();
     this.updateCameraFromKeyboard(delta);
     const state = this.simulation.step(delta);
 
@@ -192,6 +198,21 @@ export class MissionScene extends Phaser.Scene {
       x: pointer.worldX,
       y: pointer.worldY,
     };
+  }
+
+  private recoverLostPointerRelease(): void {
+    const pointer = this.input.activePointer;
+
+    if (this.leftDragStart && !pointer.leftButtonDown()) {
+      this.leftDragStart = null;
+      this.leftDragCurrent = null;
+    }
+
+    if (this.rightDragStartScreen && !pointer.rightButtonDown()) {
+      this.rightDragStartScreen = null;
+      this.rightDragLastScreen = null;
+      this.rightDragMoved = false;
+    }
   }
 
   private handlePointerUp(pointer: Phaser.Input.Pointer) {
@@ -399,7 +420,8 @@ export class MissionScene extends Phaser.Scene {
     state: GameState,
     position: { x: number; y: number },
   ): boolean {
-    const lymphNode = missionDefinitions[state.missionId].map.lymphNode;
+    const missionMap = missionDefinitions[state.missionId].map;
+    const lymphNode = missionMap.lymphExit ?? missionMap.lymphNode;
 
     return distanceSquared(lymphNode, position) <= lymphNode.radius * lymphNode.radius;
   }
@@ -552,6 +574,11 @@ export class MissionScene extends Phaser.Scene {
     graphics.fillCircle(map.lymphNode.x, map.lymphNode.y, map.lymphNode.radius);
     graphics.lineStyle(4, 0xb69cff, 0.65);
     graphics.strokeCircle(map.lymphNode.x, map.lymphNode.y, map.lymphNode.radius);
+
+    graphics.fillStyle(0x62d3c8, 0.16);
+    graphics.fillCircle(map.lymphExit.x, map.lymphExit.y, map.lymphExit.radius);
+    graphics.lineStyle(3, 0x62d3c8, 0.58);
+    graphics.strokeCircle(map.lymphExit.x, map.lymphExit.y, map.lymphExit.radius);
   }
 
   private drawTissueCells(graphics: Phaser.GameObjects.Graphics, state: GameState) {
@@ -837,6 +864,8 @@ export class MissionScene extends Phaser.Scene {
       const maxTtl =
         effect.kind === "attack" || effect.kind === "antibody"
           ? balanceValues.attackEffectTtlMs
+          : effect.kind === "treatment"
+            ? balanceValues.attackEffectTtlMs * 3
           : effect.kind === "phagocytosis"
             ? balanceValues.attackEffectTtlMs * 2
           : effect.kind === "adaptive"
@@ -894,6 +923,8 @@ export class MissionScene extends Phaser.Scene {
         state.productionCooldowns.massiveNeutralizationMs,
       antiviralSignalCooldownMs: state.productionCooldowns.antiviralSignalMs,
       antiviralActiveMs: state.antiviral.activeMs,
+      treatmentCooldowns: { ...state.treatments.cooldowns },
+      activeTreatments: { ...state.treatments.activeMs },
       bacterialAnalysisComplete:
         state.adaptiveResearch.bacterialAnalysisComplete,
       viralAnalysisComplete: state.adaptiveResearch.viralAnalysisComplete,
@@ -1041,6 +1072,10 @@ function getEffectColor(kind: string): number {
 
   if (kind === "infection" || kind === "antiviral") {
     return 0x8bbcff;
+  }
+
+  if (kind === "treatment") {
+    return 0x7ee28a;
   }
 
   if (kind === "cytotoxic") {

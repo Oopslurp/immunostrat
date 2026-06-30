@@ -1,5 +1,9 @@
 import { balanceValues } from "../../data/balance";
-import { missionDefinitions, type MissionId } from "../../data/missions";
+import {
+  missionDefinitions,
+  type MissionId,
+  type MissionPreparation,
+} from "../../data/missions";
 import { unitDefinitions, type UnitTypeId } from "../../data/units";
 import type { Vector2 } from "../../types/shared";
 import type { ImmuneUnitEntity } from "../entities";
@@ -7,8 +11,17 @@ import type { GameState } from "./GameState";
 
 export function createInitialState(
   missionId: MissionId = "woundBacteriaV1",
+  preparation: MissionPreparation = {},
 ): GameState {
   const mission = missionDefinitions[missionId];
+  const vaccination = mission.vaccinationOptions?.find(
+    (option) => option.id === preparation.vaccinationId,
+  );
+  const memoryBonusProfiles = new Set(preparation.memoryProfiles ?? []);
+  const memoryAntigenBonus = (mission.memoryHintProfiles ?? []).reduce(
+    (bonus, profile) => bonus + (memoryBonusProfiles.has(profile) ? 6 : 0),
+    0,
+  );
   const entities: GameState["entities"] = {};
   let nextEntityNumber = 1;
 
@@ -28,6 +41,7 @@ export function createInitialState(
 
   return {
     missionId,
+    preparation,
     elapsedMs: 0,
     status: "running",
     tissue: {
@@ -50,9 +64,17 @@ export function createInitialState(
       };
     }),
     resources: {
-      atp: mission.startingResources.atp,
-      cytokines: mission.startingResources.cytokines,
-      antigens: mission.startingResources.antigens,
+      atp: Math.max(0, mission.startingResources.atp - (vaccination?.atpCost ?? 0)),
+      cytokines: Math.min(
+        balanceValues.maxCytokines,
+        mission.startingResources.cytokines + (vaccination?.cytokineBonus ?? 0),
+      ),
+      antigens: Math.min(
+        balanceValues.maxAntigens,
+        mission.startingResources.antigens +
+          (vaccination?.antigenBonus ?? 0) +
+          memoryAntigenBonus,
+      ),
     },
     missionStats: {
       producedUnits: {},
@@ -61,6 +83,10 @@ export function createInitialState(
     },
     inflammation: {
       value: balanceValues.inflammation.startingValue,
+    },
+    treatments: {
+      cooldowns: {},
+      activeMs: {},
     },
     inflammatoryZones: [],
     biofilmZones: [],

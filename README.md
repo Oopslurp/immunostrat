@@ -2,7 +2,7 @@
 
 Immunostrat est un prototype web de strategie 2D inspire du systeme immunitaire.
 
-La V6 organise les mecaniques existantes en campagne courte de 8 missions, avec progression locale, objectifs, briefings, score et deblocages progressifs.
+La V6.5 consolide la campagne avec traitements simples, memoire immunitaire, vaccination optionnelle, sortie lymphatique locale et notes science/gameplay.
 
 ## Stack
 
@@ -141,11 +141,21 @@ npm run dev -- --port 5175
 - ecran victoire/defaite avec objectifs, score, restart, retour missions et mission suivante ;
 - scene Phaser generique chargee par `missionId`.
 
+## Patch V6.5
+
+- traitements simples data-driven : antibiotique, antiviral, anti-inflammatoire ;
+- boutons de traitements seulement dans les missions qui les debloquent ;
+- memoire immunitaire de campagne stockee dans la progression locale ;
+- vaccination pre-mission optionnelle pour certaines missions virales ou mixtes ;
+- sortie lymphatique locale pour les cellules dendritiques ;
+- descriptions science vs gameplay dans `src/game/data/scienceGlossary.ts` ;
+- documentation de consolidation dans `docs/v6-5-systems-roadmap.md`.
+
 ## Qualite
 
 - `npm run test` teste la simulation pure avec Vitest.
 - `npm run build` verifie TypeScript et genere le build Vite.
 
-## Hors scope V6
+## Hors scope V6.5
 
-Pas de medicaments, vaccination, memoire immunitaire, vraie lymphe, carte globale, mode infini, champignons, parasites, cellules cancereuses, factions pathogenes jouables, arbre technologique complet, pixel art final ou polish visuel avance.
+Pas de vraie carte globale du corps, organes multiples, mode infini, champignons, parasites, cellules cancereuses, factions pathogenes jouables, arbre technologique complet, pixel art final ou polish visuel avance.

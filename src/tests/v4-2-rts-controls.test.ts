@@ -205,8 +205,8 @@ describe("V4.2 RTS commands", () => {
       throw new Error("Expected a dendritic cell");
     }
     expect(returning.targetPosition).toEqual({
-      x: mission.map.lymphNode.x,
-      y: mission.map.lymphNode.y,
+      x: mission.map.lymphExit.x,
+      y: mission.map.lymphExit.y,
     });
   });
 

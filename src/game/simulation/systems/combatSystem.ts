@@ -17,6 +17,7 @@ import {
   type ImmuneUnitEntity,
   type VirusEntity,
 } from "../entities";
+import { isTreatmentActive } from "./treatmentSystem";
 
 export function applyCombatSystem(state: GameState, deltaMs: number): void {
   processPhagocytosis(state, deltaMs);
@@ -331,7 +332,11 @@ function getInflammationDamageMultiplier(
     ? 1.08
     : 1;
 
-  return usefulBonus * zoneBonus;
+  const antiInflammatoryPenalty = isTreatmentActive(state, "antiInflammatory")
+    ? 0.9
+    : 1;
+
+  return usefulBonus * zoneBonus * antiInflammatoryPenalty;
 }
 
 function addInflammatoryZone(

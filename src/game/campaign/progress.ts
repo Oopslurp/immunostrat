@@ -19,6 +19,10 @@ export type CampaignProgress = {
   version: number;
   unlockedMissionIds: MissionId[];
   completedMissions: Partial<Record<MissionId, MissionCompletionRecord>>;
+  immuneMemory: {
+    knownProfiles: Array<"bacterial" | "viral">;
+    analyzedPathogenTypes: string[];
+  };
 };
 
 export type MissionResultSummary = {
@@ -81,6 +85,16 @@ export function completeMission(
     },
   };
   const nextUnlocked = new Set(progress.unlockedMissionIds);
+  const nextMemoryProfiles = new Set(progress.immuneMemory.knownProfiles);
+  const nextAnalyzedTypes = new Set(progress.immuneMemory.analyzedPathogenTypes);
+
+  for (const profile of mission.memoryHintProfiles ?? []) {
+    nextMemoryProfiles.add(profile);
+  }
+
+  for (const pathogenTypeId of mission.allowedPathogens) {
+    nextAnalyzedTypes.add(pathogenTypeId);
+  }
 
   if (mission.nextMissionId && isMissionId(mission.nextMissionId)) {
     nextUnlocked.add(mission.nextMissionId);
@@ -90,6 +104,10 @@ export function completeMission(
     version: SAVE_VERSION,
     unlockedMissionIds: Array.from(nextUnlocked),
     completedMissions: nextCompletedMissions,
+    immuneMemory: {
+      knownProfiles: Array.from(nextMemoryProfiles),
+      analyzedPathogenTypes: Array.from(nextAnalyzedTypes),
+    },
   });
 
   saveCampaignProgress(next);
@@ -109,6 +127,10 @@ function createDefaultProgress(): CampaignProgress {
     version: SAVE_VERSION,
     unlockedMissionIds: [getFirstMissionId()],
     completedMissions: {},
+    immuneMemory: {
+      knownProfiles: [],
+      analyzedPathogenTypes: [],
+    },
   };
 }
 
@@ -142,6 +164,18 @@ function normalizeProgress(progress: Partial<CampaignProgress>): CampaignProgres
       unlocked.has(missionId),
     ),
     completedMissions,
+    immuneMemory: {
+      knownProfiles: Array.from(
+        new Set(
+          (progress.immuneMemory?.knownProfiles ?? []).filter(
+            (profile) => profile === "bacterial" || profile === "viral",
+          ),
+        ),
+      ),
+      analyzedPathogenTypes: Array.from(
+        new Set(progress.immuneMemory?.analyzedPathogenTypes ?? []),
+      ),
+    },
   };
 }
 

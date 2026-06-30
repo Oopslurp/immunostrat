@@ -3,6 +3,7 @@ import type { GameState } from "../simulation/core/GameState";
 import type { GameEntity } from "../simulation/entities";
 import type { PathogenTypeId } from "../data/pathogens";
 import type { MissionId } from "../data/missions";
+import type { TreatmentId } from "../data/treatments";
 import type { ObjectiveStatus } from "../campaign/objectives";
 
 export type ThreatSummaryItem = {
@@ -24,6 +25,8 @@ export type GameSnapshot = {
   massiveNeutralizationCooldownMs: number;
   antiviralSignalCooldownMs: number;
   antiviralActiveMs: number;
+  treatmentCooldowns: Partial<Record<TreatmentId, number>>;
+  activeTreatments: Partial<Record<TreatmentId, number>>;
   bacterialAnalysisComplete: boolean;
   viralAnalysisComplete: boolean;
   objectives: ObjectiveStatus[];

@@ -1,6 +1,10 @@
 import Phaser from "phaser";
 import { balanceValues } from "../data/balance";
-import { missionDefinitions, type MissionId } from "../data/missions";
+import {
+  missionDefinitions,
+  type MissionId,
+  type MissionPreparation,
+} from "../data/missions";
 import { BootScene } from "./scenes/BootScene";
 import type { GameBridge } from "./GameBridge";
 import { MissionScene } from "./scenes/MissionScene";
@@ -11,6 +15,7 @@ export function createPhaserConfig(
   parent: HTMLElement,
   bridge: GameBridge,
   missionId: MissionId,
+  preparation?: MissionPreparation,
 ): Phaser.Types.Core.GameConfig {
   const map = missionDefinitions[missionId].map;
 
@@ -23,7 +28,7 @@ export function createPhaserConfig(
     scene: [
       new BootScene(),
       new PreloadScene(),
-      new MissionScene(bridge, missionId),
+      new MissionScene(bridge, missionId, preparation),
       new UIScene(),
     ],
     scale: {

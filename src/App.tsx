@@ -7,7 +7,7 @@ import {
   resetCampaignProgress,
   type MissionResultSummary,
 } from "./game/campaign/progress";
-import type { MissionId } from "./game/data/missions";
+import type { MissionId, MissionPreparation } from "./game/data/missions";
 import { CampaignPage } from "./pages/CampaignPage";
 import { GamePage } from "./pages/GamePage";
 import { HomePage } from "./pages/HomePage";
@@ -17,9 +17,15 @@ export default function App() {
   const [progress, setProgress] = useState(() => loadCampaignProgress());
   const [selectedMissionId, setSelectedMissionId] =
     useState<MissionId>("woundBacteriaV1");
+  const [selectedPreparation, setSelectedPreparation] =
+    useState<MissionPreparation>({});
 
-  const playMission = (missionId: MissionId) => {
+  const playMission = (missionId: MissionId, vaccinationId?: string | null) => {
     setSelectedMissionId(missionId);
+    setSelectedPreparation({
+      vaccinationId,
+      memoryProfiles: progress.immuneMemory.knownProfiles,
+    });
     setRoute(routes.game);
   };
 
@@ -46,6 +52,7 @@ export default function App() {
           onBackToCampaign={() => setRoute(routes.campaign)}
           onMissionComplete={handleMissionComplete}
           onPlayMission={playMission}
+          preparation={selectedPreparation}
         />
       ) : null}
     </AppShell>

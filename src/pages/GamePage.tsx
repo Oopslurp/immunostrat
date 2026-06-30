@@ -5,9 +5,14 @@ import {
   missionDefinitions,
   type MissionAbilityId,
   type MissionId,
+  type MissionPreparation,
   type MissionResearchId,
 } from "../game/data/missions";
 import { pathogenDefinitions } from "../game/data/pathogens";
+import {
+  treatmentDefinitions,
+  type TreatmentId,
+} from "../game/data/treatments";
 import { unitDefinitions, type UnitTypeId } from "../game/data/units";
 import type {
   CampaignProgress,
@@ -22,7 +27,8 @@ type GamePageProps = {
   progress: CampaignProgress;
   onBackToCampaign: () => void;
   onMissionComplete: (result: MissionResultSummary) => void;
-  onPlayMission: (missionId: MissionId) => void;
+  onPlayMission: (missionId: MissionId, vaccinationId?: string | null) => void;
+  preparation?: MissionPreparation;
 };
 
 export function GamePage({
@@ -31,6 +37,7 @@ export function GamePage({
   onBackToCampaign,
   onMissionComplete,
   onPlayMission,
+  preparation,
 }: GamePageProps) {
   const bridge = useMemo(() => new GameBridge(), []);
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
@@ -118,6 +125,18 @@ export function GamePage({
     snapshot.atp >= unitDefinitions.cytotoxicT.atpCost &&
     snapshot.cytokines >= unitDefinitions.cytotoxicT.cytokineCost &&
     snapshot.antigens >= balanceValues.adaptive.cytotoxicTAntigenCost;
+  const canUseTreatment = (treatmentId: TreatmentId): boolean => {
+    const treatment = treatmentDefinitions[treatmentId];
+
+    return Boolean(
+      snapshot?.status === "running" &&
+        mission.unlockedTreatments.includes(treatmentId) &&
+        (snapshot.treatmentCooldowns[treatmentId] ?? 0) <= 0 &&
+        snapshot.atp >= treatment.atpCost &&
+        snapshot.cytokines >= treatment.cytokineCost &&
+        snapshot.antigens >= treatment.antigenCost,
+    );
+  };
 
   return (
     <div className="page game-page">
@@ -214,6 +233,26 @@ export function GamePage({
               {balanceValues.adaptive.cytotoxicTAntigenCost} AG)
             </Button>
           ) : null}
+          {mission.unlockedTreatments.map((treatmentId) => {
+            const treatment = treatmentDefinitions[treatmentId];
+            const activeMs = snapshot?.activeTreatments[treatmentId] ?? 0;
+            const cooldownMs = snapshot?.treatmentCooldowns[treatmentId] ?? 0;
+
+            return (
+              <Button
+                disabled={!canUseTreatment(treatmentId)}
+                key={treatmentId}
+                onClick={() =>
+                  bridge.dispatch({ type: "useTreatment", treatmentId })
+                }
+                title={`${treatment.gameplayDescription} ${treatment.scienceDescription}`}
+              >
+                {treatment.displayName} (-{treatment.atpCost} ATP
+                {treatment.cytokineCost > 0 ? `, -${treatment.cytokineCost} CYT` : ""}
+                ) {activeMs > 0 ? `actif ${formatCooldown(activeMs)}` : cooldownMs > 0 ? `CD ${formatCooldown(cooldownMs)}` : ""}
+              </Button>
+            );
+          })}
           <Button onClick={() => bridge.dispatch({ type: "restart" })}>
             Recommencer
           </Button>
@@ -248,10 +287,33 @@ export function GamePage({
             </span>
           ))}
         </div>
+        <div>
+          <strong>Science vs gameplay</strong>
+          <p>
+            {mission.memoryHintProfiles?.length
+              ? `Memoire immunitaire: ${mission.memoryHintProfiles
+                  .map((profile) =>
+                    progress.immuneMemory.knownProfiles.includes(profile)
+                      ? `${profile} deja reconnu`
+                      : `${profile} a apprendre`,
+                  )
+                  .join(" / ")}.`
+              : "Les mecaniques biologiques restent simplifiees pour le gameplay."}
+          </p>
+          {mission.unlockedTreatments.length ? (
+            <p>
+              Traitements disponibles:{" "}
+              {mission.unlockedTreatments
+                .map((id) => treatmentDefinitions[id].displayName)
+                .join(", ")}
+              .
+            </p>
+          ) : null}
+        </div>
       </section>
 
       <section className="game-frame" aria-label="Canvas du jeu Immunostrat">
-        <PhaserGame bridge={bridge} missionId={missionId} />
+        <PhaserGame bridge={bridge} missionId={missionId} preparation={preparation} />
         {snapshot && snapshot.status !== "running" ? (
           <div className="result-overlay">
             <div className="result-title">

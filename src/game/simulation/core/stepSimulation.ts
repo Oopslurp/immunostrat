@@ -11,6 +11,7 @@ import { applyMovementSystem } from "../systems/movementSystem";
 import { applyPathogenSystem } from "../systems/pathogenSystem";
 import { applyResourceSystem } from "../systems/resourceSystem";
 import { applyTissueSystem } from "../systems/tissueSystem";
+import { applyTreatmentSystem } from "../systems/treatmentSystem";
 import { applyVirusSystem } from "../systems/virusSystem";
 import { applyWaveSystem } from "../systems/waveSystem";
 
@@ -23,6 +24,7 @@ export function stepSimulation(state: GameState, deltaMs: number): GameState {
   next.elapsedMs += deltaMs;
 
   applyResourceSystem(next, deltaMs);
+  applyTreatmentSystem(next, deltaMs);
   applyEffectSystem(next, deltaMs);
   applyWaveSystem(next);
   applyPathogenSystem(next, deltaMs);

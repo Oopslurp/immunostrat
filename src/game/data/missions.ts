@@ -1,4 +1,5 @@
 import type { PathogenTypeId } from "./pathogens";
+import type { TreatmentId } from "./treatments";
 import type { UnitTypeId } from "./units";
 
 export type MissionWaveDefinition = {
@@ -93,6 +94,21 @@ export type TutorialHint = {
 
 export type MissionMapDefinition = typeof baseMap;
 
+export type VaccinationOption = {
+  id: string;
+  displayName: string;
+  targetProfile: "bacterial" | "viral";
+  atpCost: number;
+  antigenBonus: number;
+  cytokineBonus: number;
+  description: string;
+};
+
+export type MissionPreparation = {
+  vaccinationId?: string | null;
+  memoryProfiles?: Array<"bacterial" | "viral">;
+};
+
 export const campaignMissionOrder = [
   "woundBacteriaV1",
   "inflammatoryReactionV2",
@@ -121,6 +137,9 @@ export type MissionDefinition = {
   unlockedUnits: UnitTypeId[];
   unlockedAbilities: MissionAbilityId[];
   unlockedResearch: MissionResearchId[];
+  unlockedTreatments: TreatmentId[];
+  vaccinationOptions?: VaccinationOption[];
+  memoryHintProfiles?: Array<"bacterial" | "viral">;
   allowedPathogens: PathogenTypeId[];
   initialInfectedTissueCells?: number;
   map: MissionMapDefinition;
@@ -156,6 +175,8 @@ const baseMap = {
   },
   tissueCore: { x: 235, y: 410 },
   lymphNode: { x: 410, y: 650, radius: 46 },
+  lymphExit: { x: 350, y: 675, radius: 28, localNodeId: "skin-local-node", regionalNodeId: "future-skin-region" },
+  missionRegion: "skin-local",
   tissueCells: [
     { x: 210, y: 315 },
     { x: 285, y: 305 },
@@ -206,6 +227,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedUnits: ["macrophage"],
     unlockedAbilities: [],
     unlockedResearch: [],
+    unlockedTreatments: [],
     allowedPathogens: ["cocciRapid"],
     map: baseMap,
     waves: [
@@ -244,6 +266,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedUnits: ["macrophage", "neutrophil"],
     unlockedAbilities: [],
     unlockedResearch: [],
+    unlockedTreatments: ["antiInflammatory"],
     allowedPathogens: ["cocciRapid", "proliferatingBacillus"],
     map: baseMap,
     waves: [
@@ -281,6 +304,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedUnits: ["macrophage", "neutrophil"],
     unlockedAbilities: [],
     unlockedResearch: [],
+    unlockedTreatments: ["antibiotic", "antiInflammatory"],
     allowedPathogens: ["cocciRapid", "proliferatingBacillus", "resistantBacterium", "biofilmColony"],
     map: baseMap,
     waves: [
@@ -319,6 +343,8 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedUnits: ["macrophage", "neutrophil", "dendriticCell"],
     unlockedAbilities: [],
     unlockedResearch: [],
+    unlockedTreatments: ["antibiotic", "antiInflammatory"],
+    memoryHintProfiles: ["bacterial"],
     allowedPathogens: ["cocciRapid", "proliferatingBacillus", "resistantBacterium"],
     map: baseMap,
     waves: [
@@ -357,6 +383,8 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedUnits: ["macrophage", "neutrophil", "dendriticCell", "plasmocyte"],
     unlockedAbilities: ["massiveNeutralization"],
     unlockedResearch: ["bacterialAnalysis"],
+    unlockedTreatments: ["antibiotic", "antiInflammatory"],
+    memoryHintProfiles: ["bacterial"],
     allowedPathogens: ["cocciRapid", "proliferatingBacillus", "resistantBacterium", "biofilmColony", "toxicBacterium"],
     map: baseMap,
     waves: [
@@ -386,20 +414,33 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     ],
     victoryConditions: [{ kind: "allWavesCleared" }, { kind: "requiredObjectivesComplete" }],
     defeatConditions: easyFailure,
-    startingResources: { atp: 125, cytokines: 55, antigens: 0 },
+    startingResources: { atp: 145, cytokines: 72, antigens: 0 },
     startingUnits: [
-      { unitTypeId: "macrophage", count: 2 },
+      { unitTypeId: "macrophage", count: 3 },
       { unitTypeId: "dendriticCell", count: 1 },
     ],
     unlockedUnits: ["macrophage", "dendriticCell"],
     unlockedAbilities: ["interferons"],
     unlockedResearch: [],
+    unlockedTreatments: ["antiviralDrug", "antiInflammatory"],
+    vaccinationOptions: [
+      {
+        id: "viral-prime",
+        displayName: "Vaccination antivirale",
+        targetProfile: "viral",
+        atpCost: 18,
+        antigenBonus: 8,
+        cytokineBonus: 8,
+        description: "Preparation simple contre virus respiratoire : demarre avec antigenes et cytokines bonus.",
+      },
+    ],
+    memoryHintProfiles: ["viral"],
     allowedPathogens: ["respiratoryVirus"],
     map: baseMap,
     waves: [
-      { startsAtMs: 1500, pathogenTypeId: "respiratoryVirus", count: 4, spawnIntervalMs: 1400 },
-      { startsAtMs: 18000, pathogenTypeId: "respiratoryVirus", count: 5, spawnIntervalMs: 1250 },
-      { startsAtMs: 38000, pathogenTypeId: "respiratoryVirus", count: 7, spawnIntervalMs: 950 },
+      { startsAtMs: 2500, pathogenTypeId: "respiratoryVirus", count: 2, spawnIntervalMs: 1800 },
+      { startsAtMs: 23000, pathogenTypeId: "respiratoryVirus", count: 3, spawnIntervalMs: 1700 },
+      { startsAtMs: 47000, pathogenTypeId: "respiratoryVirus", count: 4, spawnIntervalMs: 1450 },
     ],
     tutorialHints: [{ text: "Les interferons protegent temporairement les cellules dans la zone du tissu." }],
     nextMissionId: "viralCleanupV7",
@@ -432,6 +473,19 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedUnits: ["macrophage", "dendriticCell", "nkCell", "cytotoxicT"],
     unlockedAbilities: ["interferons"],
     unlockedResearch: ["viralAnalysis"],
+    unlockedTreatments: ["antiviralDrug", "antiInflammatory"],
+    vaccinationOptions: [
+      {
+        id: "viral-memory-prime",
+        displayName: "Rappel antiviral",
+        targetProfile: "viral",
+        atpCost: 20,
+        antigenBonus: 10,
+        cytokineBonus: 6,
+        description: "Prepare la reponse T contre une menace virale connue.",
+      },
+    ],
+    memoryHintProfiles: ["viral"],
     allowedPathogens: ["respiratoryVirus"],
     initialInfectedTissueCells: 2,
     map: baseMap,
@@ -472,6 +526,28 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedUnits: ["macrophage", "neutrophil", "dendriticCell", "plasmocyte", "nkCell", "cytotoxicT"],
     unlockedAbilities: ["interferons", "massiveNeutralization"],
     unlockedResearch: ["bacterialAnalysis", "viralAnalysis"],
+    unlockedTreatments: ["antibiotic", "antiviralDrug", "antiInflammatory"],
+    vaccinationOptions: [
+      {
+        id: "mixed-bacterial-prime",
+        displayName: "Preparation antibacterienne",
+        targetProfile: "bacterial",
+        atpCost: 20,
+        antigenBonus: 8,
+        cytokineBonus: 4,
+        description: "Preparation adaptee aux colonies bacteriennes attendues.",
+      },
+      {
+        id: "mixed-viral-prime",
+        displayName: "Preparation antivirale",
+        targetProfile: "viral",
+        atpCost: 20,
+        antigenBonus: 8,
+        cytokineBonus: 6,
+        description: "Preparation adaptee aux virus libres et cellules infectees.",
+      },
+    ],
+    memoryHintProfiles: ["bacterial", "viral"],
     allowedPathogens: ["cocciRapid", "proliferatingBacillus", "resistantBacterium", "biofilmColony", "toxicBacterium", "respiratoryVirus"],
     initialInfectedTissueCells: 1,
     map: baseMap,

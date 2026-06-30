@@ -9,10 +9,11 @@ import {
 } from "../game/campaign/progress";
 import { Button } from "../ui/Button";
 import { Panel } from "../ui/Panel";
+import { useState } from "react";
 
 type CampaignPageProps = {
   progress: CampaignProgress;
-  onPlayMission: (missionId: MissionId) => void;
+  onPlayMission: (missionId: MissionId, vaccinationId?: string | null) => void;
   onResetProgress: () => void;
 };
 
@@ -21,6 +22,10 @@ export function CampaignPage({
   onPlayMission,
   onResetProgress,
 }: CampaignPageProps) {
+  const [selectedVaccinations, setSelectedVaccinations] = useState<
+    Partial<Record<MissionId, string>>
+  >({});
+
   return (
     <div className="page campaign-page">
       <header className="campaign-header">
@@ -65,6 +70,40 @@ export function CampaignPage({
                   <span key={ability}>{formatUnlock(ability)}</span>
                 ))}
               </div>
+              {mission.memoryHintProfiles?.length ? (
+                <p className="mission-score">
+                  Memoire:{" "}
+                  {mission.memoryHintProfiles
+                    .map((profile) =>
+                      progress.immuneMemory.knownProfiles.includes(profile)
+                        ? `${profile} connu`
+                        : `${profile} nouveau`,
+                    )
+                    .join(" / ")}
+                </p>
+              ) : null}
+              {mission.vaccinationOptions?.length ? (
+                <label className="mission-vaccine">
+                  Preparation
+                  <select
+                    value={selectedVaccinations[missionId] ?? ""}
+                    onChange={(event) =>
+                      setSelectedVaccinations((current) => ({
+                        ...current,
+                        [missionId]: event.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Aucune vaccination</option>
+                    {mission.vaccinationOptions.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.displayName} (-{option.atpCost} ATP, +
+                        {option.antigenBonus} AG)
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
               {completion ? (
                 <p className="mission-score">
                   Meilleur score {completion.bestScore} - Rang {completion.bestRank}
@@ -72,7 +111,9 @@ export function CampaignPage({
               ) : null}
               <Button
                 disabled={!unlocked}
-                onClick={() => onPlayMission(missionId)}
+                onClick={() =>
+                  onPlayMission(missionId, selectedVaccinations[missionId] ?? null)
+                }
                 variant={unlocked ? "primary" : undefined}
               >
                 {completion ? "Rejouer" : "Jouer"}
