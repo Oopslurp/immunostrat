@@ -1,9 +1,20 @@
 import { balanceValues } from "../../data/balance";
+import { getActiveInfiniteMutators, getInfiniteCycle } from "../../data/infiniteMode";
 import { pathogenDefinitions } from "../../data/pathogens";
+import { missionDefinitions } from "../../data/missions";
 import type { GameState } from "../core/GameState";
 import { isBacterium, isVirus } from "../entities";
 
 export function applyResourceSystem(state: GameState, deltaMs: number): void {
+  const mission = missionDefinitions[state.missionId];
+  const infiniteResourceMultiplier =
+    mission.mode === "infinite" &&
+    getActiveInfiniteMutators(
+      getInfiniteCycle(state.waves.currentWaveIndex + 1),
+      state.preparation.infiniteDifficulty ?? "normal",
+    ).some((mutator) => mutator.id === "resourceProductionDown")
+      ? 0.84
+      : 1;
   const bacteriaPressure = Object.values(state.entities)
     .filter(isBacterium)
     .reduce((pressure, bacterium) => {
@@ -17,7 +28,10 @@ export function applyResourceSystem(state: GameState, deltaMs: number): void {
 
   state.resources.atp = Math.min(
     balanceValues.maxAtp,
-    state.resources.atp + balanceValues.passiveAtpPerSecond * (deltaMs / 1000),
+    state.resources.atp +
+      balanceValues.passiveAtpPerSecond *
+        infiniteResourceMultiplier *
+        (deltaMs / 1000),
   );
   state.resources.cytokines = Math.min(
     balanceValues.maxCytokines,
@@ -27,6 +41,7 @@ export function applyResourceSystem(state: GameState, deltaMs: number): void {
         (virusPressure + infectedPressure) *
           balanceValues.cytokinesPerBacteriumPerSecond *
           0.55) *
+        infiniteResourceMultiplier *
         (deltaMs / 1000),
   );
   state.productionCooldowns.neutrophilMs = Math.max(

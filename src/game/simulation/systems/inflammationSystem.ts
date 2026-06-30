@@ -1,4 +1,5 @@
 import { balanceValues } from "../../data/balance";
+import { getActiveInfiniteMutators, getInfiniteCycle } from "../../data/infiniteMode";
 import { pathogenDefinitions } from "../../data/pathogens";
 import { missionDefinitions } from "../../data/missions";
 import { distance } from "../../types/shared";
@@ -74,10 +75,30 @@ function applyInflammationTissueDamage(state: GameState, seconds: number): void 
   const treatmentMultiplier = isTreatmentActive(state, "antiInflammatory")
     ? 0.45
     : 1;
+  const infiniteMutators =
+    missionDefinitions[state.missionId].mode === "infinite"
+      ? getActiveInfiniteMutators(
+          getInfiniteCycle(state.waves.currentWaveIndex + 1),
+          state.preparation.infiniteDifficulty ?? "normal",
+        )
+      : [];
+  const infiniteDamageMultiplier =
+    1 +
+    infiniteMutators.reduce((bonus, mutator) => {
+      if (
+        mutator.id === "inflammationDamageUp" ||
+        mutator.id === "tissueFragilityUp"
+      ) {
+        return bonus + mutator.intensity;
+      }
+
+      return bonus;
+    }, 0);
 
   state.tissue.health = Math.max(
     0,
-    state.tissue.health - damagePerSecond * treatmentMultiplier * seconds,
+    state.tissue.health -
+      damagePerSecond * treatmentMultiplier * infiniteDamageMultiplier * seconds,
   );
 }
 

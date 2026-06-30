@@ -5,6 +5,7 @@ type HomePageProps = {
   onPlay: () => void;
   onOpenBodyMap: () => void;
   onStartNormalGame: () => void;
+  onOpenInfinite: () => void;
   bodyMapUnlocked: boolean;
 };
 
@@ -12,19 +13,20 @@ export function HomePage({
   onPlay,
   onOpenBodyMap,
   onStartNormalGame,
+  onOpenInfinite,
   bodyMapUnlocked,
 }: HomePageProps) {
   return (
     <div className="page home-layout">
       <section className="hero-copy" aria-labelledby="home-title">
-        <span className="eyebrow">Prototype jouable V7</span>
+        <span className="eyebrow">Prototype jouable V8</span>
         <h1 className="hero-title" id="home-title">
           Immunostrat
         </h1>
         <p className="hero-text">
-          Apprends les mecaniques en campagne, puis lance une partie normale
-          generee sur la carte du corps. Le mode infini tres difficile arrivera
-          en V8.
+          Apprends les mecaniques en campagne, lance une partie normale sur la
+          carte du corps, ou tente le mode infini pour survivre le plus
+          longtemps possible.
         </p>
         <div className="home-actions">
           <Button variant="primary" onClick={onPlay}>
@@ -36,6 +38,7 @@ export function HomePage({
           <Button disabled={!bodyMapUnlocked} onClick={onOpenBodyMap}>
             Continuer carte du corps
           </Button>
+          <Button onClick={onOpenInfinite}>Mode infini</Button>
         </div>
       </section>
 
@@ -62,7 +65,7 @@ export function HomePage({
           </div>
           <div className="stat-item">
             <span className="stat-label">Mode infini</span>
-            <span className="stat-value">V8, verrouille</span>
+            <span className="stat-value">Disponible, difficile</span>
           </div>
           <div className="stat-item">
             <span className="stat-label">Science</span>

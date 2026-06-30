@@ -55,6 +55,15 @@ export function AppShell({
           >
             Carte du corps
           </button>
+          <button
+            className={`nav-button ${
+              currentRoute === routes.infinite ? "nav-button-active" : ""
+            }`}
+            type="button"
+            onClick={() => onNavigate(routes.infinite)}
+          >
+            Mode infini
+          </button>
         </nav>
       </header>
       <main>{children}</main>

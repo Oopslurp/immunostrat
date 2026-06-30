@@ -2,7 +2,7 @@
 
 Immunostrat est un prototype web de strategie 2D inspire du systeme immunitaire.
 
-La V7.1 ajoute une vraie partie normale generee sur la carte du corps, tout en gardant la campagne V6 comme mode apprentissage.
+La V8 ajoute un mode infini separe, avec phases, mutateurs, score et records locaux.
 
 ## Stack
 
@@ -35,6 +35,7 @@ npm run dev -- --port 5175
 - `src/ui` : petits composants React hors-jeu.
 - `src/game/phaser` : creation de Phaser, configuration, scenes, rendu et input.
 - `src/game/bodyMap` : carte strategique du corps, propagation, ganglions regionaux et sauvegarde globale.
+- `src/game/infinite` : sauvegarde des records du mode infini.
 - `src/game/simulation` : logique du jeu independante de Phaser.
 - `src/game/data` : definitions de mission, unites, pathogenes et balance.
 - `src/game/types` : types partages.
@@ -176,11 +177,26 @@ npm run dev -- --port 5175
 - propagation influencee par infection, inflammation, sang, menace, difficulte, ganglion et dernier resultat ;
 - historique court des evenements strategiques.
 
+## Gameplay V8
+
+- troisieme grand mode : `Mode infini` ;
+- mode separe de la campagne et de la carte du corps ;
+- difficulte `Normal`, `Difficile`, `Nightmare` ;
+- bataille locale longue avec vagues virtuelles generees sans plafond fixe ;
+- cycles de 3 vagues ;
+- 8 phases : contamination simple, expansion bacterienne, resistance, infection virale, infection mixte, mutation, crise systemique, Nightmare ;
+- mutateurs data-driven visibles dans le HUD ;
+- effets simples de mutateurs : vitesse, resistance, replication virale, fatigue ressources, tissu fragile, inflammation dangereuse ;
+- score infini base sur vague, cycle, tissu, cellules, inflammation et antigenes ;
+- meilleurs scores sauvegardes par difficulte en localStorage ;
+- limites de performance sur les pathogenes actifs ;
+- hooks V9 pour menaces avancees sans les coder.
+
 ## Qualite
 
 - `npm run test` teste la simulation pure avec Vitest.
 - `npm run build` verifie TypeScript et genere le build Vite.
 
-## Hors scope V7
+## Hors scope V8
 
-Pas de mode infini complet, mutations, nouveaux pathogenes V9, champignons, parasites, cellules cancereuses, factions pathogenes jouables, boss, arbre technologique complet, pixel art final ou polish visuel avance.
+Pas de vrais champignons, parasites, cellules cancereuses, factions pathogenes jouables, boss complexe, arbre strategique pathogene, multijoueur, pixel art final, animations finales ou polish visuel avance.

@@ -35,6 +35,10 @@ export function applyEndConditionSystem(state: GameState): void {
     return;
   }
 
+  if (mission.mode === "infinite") {
+    return;
+  }
+
   const victory = mission.victoryConditions.every((condition) => {
     if (condition.kind === "allWavesCleared") {
       return isAllWavesCleared(state);

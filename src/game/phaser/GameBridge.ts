@@ -4,6 +4,7 @@ import type { GameEntity } from "../simulation/entities";
 import type { PathogenTypeId } from "../data/pathogens";
 import type { MissionId } from "../data/missions";
 import type { TreatmentId } from "../data/treatments";
+import type { InfiniteRunInfo } from "../data/infiniteMode";
 import type { ObjectiveStatus } from "../campaign/objectives";
 
 export type ThreatSummaryItem = {
@@ -47,6 +48,7 @@ export type GameSnapshot = {
   destroyedTissueCells: number;
   threatSummary: ThreatSummaryItem[];
   selectedEntityIds: GameState["selectedEntityIds"];
+  infinite?: InfiniteRunInfo;
 };
 
 type SnapshotListener = (snapshot: GameSnapshot) => void;

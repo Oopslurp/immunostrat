@@ -24,12 +24,13 @@ import { PhaserGame } from "../game/phaser/PhaserGame";
 import { Button } from "../ui/Button";
 
 type GamePageProps = {
-  battleSource?: "campaign" | "bodyMap";
+  battleSource?: "campaign" | "bodyMap" | "infinite";
   missionId: MissionId;
   progress: CampaignProgress;
   onBackToCampaign: () => void;
   onMissionComplete: (result: MissionResultSummary) => void;
   onBodyBattleComplete?: (result: MissionRunResultSummary) => void;
+  onInfiniteComplete?: (result: MissionRunResultSummary) => void;
   onPlayMission: (missionId: MissionId, vaccinationId?: string | null) => void;
   preparation?: MissionPreparation;
 };
@@ -40,6 +41,7 @@ export function GamePage({
   progress,
   onBackToCampaign,
   onBodyBattleComplete,
+  onInfiniteComplete,
   onMissionComplete,
   onPlayMission,
   preparation,
@@ -97,6 +99,7 @@ export function GamePage({
       pathogenTypesEncountered: snapshot.threatSummary.map(
         (item) => item.pathogenTypeId,
       ),
+      infinite: snapshot.infinite,
     } satisfies MissionRunResultSummary;
 
     if (battleSource === "campaign" && snapshot.status === "victory") {
@@ -106,7 +109,11 @@ export function GamePage({
     if (battleSource === "bodyMap") {
       onBodyBattleComplete?.(result);
     }
-  }, [battleSource, onBodyBattleComplete, onMissionComplete, snapshot]);
+
+    if (battleSource === "infinite" && snapshot.status === "defeat") {
+      onInfiniteComplete?.(result);
+    }
+  }, [battleSource, onBodyBattleComplete, onInfiniteComplete, onMissionComplete, snapshot]);
 
   const canProduceMacrophage =
     snapshot?.status === "running" &&
@@ -183,7 +190,11 @@ export function GamePage({
       <header className="game-header">
         <div>
           <span className="eyebrow">
-            {battleSource === "bodyMap" ? "Carte du corps V7" : "Campagne V6"}
+            {battleSource === "infinite"
+              ? "Mode infini V8"
+              : battleSource === "bodyMap"
+                ? "Carte du corps V7"
+                : "Campagne V6"}
           </span>
           <h1>{mission.title}</h1>
           <p>{mission.description}</p>
@@ -299,7 +310,11 @@ export function GamePage({
             Recommencer
           </Button>
           <Button onClick={onBackToCampaign}>
-            {battleSource === "bodyMap" ? "Retour carte" : "Retour missions"}
+            {battleSource === "infinite"
+              ? "Retour mode infini"
+              : battleSource === "bodyMap"
+                ? "Retour carte"
+                : "Retour missions"}
           </Button>
         </div>
       </header>
@@ -364,7 +379,9 @@ export function GamePage({
               {snapshot.status === "victory" ? "Victoire" : "Defaite"}
             </div>
             <div className="result-score">
-              Score {snapshot.score} - Rang {snapshot.rank}
+              {snapshot.infinite
+                ? `Score infini ${snapshot.infinite.score} - Cycle ${snapshot.infinite.cycle} - Phase ${snapshot.infinite.phase.id}`
+                : `Score ${snapshot.score} - Rang ${snapshot.rank}`}
             </div>
             <div className="result-objectives">
               {snapshot.objectives.map((objective) => (
@@ -377,7 +394,11 @@ export function GamePage({
               Recommencer
             </Button>
             <Button onClick={onBackToCampaign}>
-              {battleSource === "bodyMap" ? "Retour carte du corps" : "Retour missions"}
+              {battleSource === "infinite"
+                ? "Retour mode infini"
+                : battleSource === "bodyMap"
+                  ? "Retour carte du corps"
+                  : "Retour missions"}
             </Button>
             {battleSource === "campaign" &&
             snapshot.status === "victory" &&
@@ -395,6 +416,22 @@ export function GamePage({
       </section>
 
       <div className="hud-strip" aria-label="Statut du jeu V5">
+        {snapshot?.infinite ? (
+          <>
+            <span className="hud-item">Score infini: {snapshot.infinite.score}</span>
+            <span className="hud-item">Cycle: {snapshot.infinite.cycle}</span>
+            <span className="hud-item">Vague: {snapshot.infinite.wave}</span>
+            <span className="hud-item">
+              Phase {snapshot.infinite.phase.id}: {snapshot.infinite.phase.name}
+            </span>
+            <span className="hud-item">
+              Prochaine phase:{" "}
+              {snapshot.infinite.nextPhaseAtCycle
+                ? `cycle ${snapshot.infinite.nextPhaseAtCycle}`
+                : "Nightmare"}
+            </span>
+          </>
+        ) : null}
         <Gauge
           label="Sante du tissu"
           value={formatHealth(snapshot?.tissueHealth)}
@@ -426,8 +463,12 @@ export function GamePage({
           tone="inflammation"
         />
         <span className="hud-item">
-          Vague: {snapshot ? Math.min(snapshot.currentWave, snapshot.totalWaves) : 0}/
-          {snapshot?.totalWaves ?? 0}
+          Vague:{" "}
+          {snapshot?.infinite
+            ? snapshot.currentWave
+            : `${snapshot ? Math.min(snapshot.currentWave, snapshot.totalWaves) : 0}/${
+                snapshot?.totalWaves ?? 0
+              }`}
         </span>
         <span className="hud-item">Score: {snapshot?.score ?? 0}</span>
         <span className="hud-item">
@@ -481,6 +522,22 @@ export function GamePage({
             : `CD ${formatCooldown(snapshot?.antiviralSignalCooldownMs)}`}
         </span>
       </div>
+
+      {snapshot?.infinite ? (
+        <aside className="threat-panel" aria-label="Mutateurs infinis">
+          <strong>Mutateurs actifs</strong>
+          {snapshot.infinite.activeMutators.length ? (
+            snapshot.infinite.activeMutators.map((mutator) => (
+              <span className="threat-pill" key={mutator.id} title={mutator.description}>
+                {mutator.name}
+                <em>{mutator.tags.join("/")}</em>
+              </span>
+            ))
+          ) : (
+            <span className="threat-empty">Aucun mutateur actif en phase initiale</span>
+          )}
+        </aside>
+      ) : null}
 
       <aside className="threat-panel" aria-label="Menaces detectees">
         <strong>Menaces detectees</strong>

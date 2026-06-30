@@ -6,6 +6,7 @@ import {
   type MissionId,
 } from "../data/missions";
 import type { PathogenTypeId } from "../data/pathogens";
+import type { InfiniteRunInfo } from "../data/infiniteMode";
 
 const SAVE_KEY = "immunostrat-campaign-progress-v1";
 const SAVE_VERSION = 1;
@@ -47,6 +48,7 @@ export type MissionRunResultSummary = MissionResultSummary & {
   treatmentsUsed?: Partial<Record<string, number>>;
   timeElapsedMs?: number;
   pathogenTypesEncountered?: PathogenTypeId[];
+  infinite?: InfiniteRunInfo;
 };
 
 export function loadCampaignProgress(): CampaignProgress {

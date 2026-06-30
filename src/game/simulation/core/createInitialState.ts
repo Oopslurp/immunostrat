@@ -1,4 +1,5 @@
 import { balanceValues } from "../../data/balance";
+import { infiniteDifficultySettings } from "../../data/infiniteMode";
 import {
   missionDefinitions,
   type MissionId,
@@ -30,6 +31,11 @@ export function createInitialState(
     preparation.regionalNodeBonus?.active === true
       ? preparation.regionalNodeBonus.cytokineBonus
       : 0;
+  const infiniteResourceMultiplier =
+    mission.mode === "infinite"
+      ? infiniteDifficultySettings[preparation.infiniteDifficulty ?? "normal"]
+          .resourceMultiplier
+      : 1;
   const startingUnits = [
     ...mission.startingUnits,
     ...(preparation.globalReinforcements ?? []),
@@ -76,16 +82,20 @@ export function createInitialState(
       };
     }),
     resources: {
-      atp: Math.max(0, mission.startingResources.atp - (vaccination?.atpCost ?? 0)),
+      atp: Math.max(
+        0,
+        mission.startingResources.atp * infiniteResourceMultiplier -
+          (vaccination?.atpCost ?? 0),
+      ),
       cytokines: Math.min(
         balanceValues.maxCytokines,
-        mission.startingResources.cytokines +
+        mission.startingResources.cytokines * infiniteResourceMultiplier +
           (vaccination?.cytokineBonus ?? 0) +
           regionalNodeCytokineBonus,
       ),
       antigens: Math.min(
         balanceValues.maxAntigens,
-        mission.startingResources.antigens +
+        mission.startingResources.antigens * infiniteResourceMultiplier +
           (vaccination?.antigenBonus ?? 0) +
           memoryAntigenBonus +
           regionalNodeAntigenBonus,

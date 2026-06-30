@@ -1,3 +1,4 @@
+import { createInfiniteWaves, type InfiniteDifficulty } from "./infiniteMode";
 import type { PathogenTypeId } from "./pathogens";
 import type { TreatmentId } from "./treatments";
 import type { UnitTypeId } from "./units";
@@ -115,6 +116,7 @@ export type MissionPreparation = {
     antigenBonus: number;
     cytokineBonus: number;
   };
+  infiniteDifficulty?: InfiniteDifficulty;
 };
 
 export const campaignMissionOrder = [
@@ -139,12 +141,16 @@ export const bodyBattleMissionOrder = [
   "boneMarrowReinforcementPressure",
 ] as const;
 
+export const infiniteMissionOrder = ["infiniteSurvivalV8"] as const;
+
 export type CampaignMissionId = (typeof campaignMissionOrder)[number];
 export type BodyBattleMissionId = (typeof bodyBattleMissionOrder)[number];
-export type MissionId = CampaignMissionId | BodyBattleMissionId;
+export type InfiniteMissionId = (typeof infiniteMissionOrder)[number];
+export type MissionId = CampaignMissionId | BodyBattleMissionId | InfiniteMissionId;
 
 export type MissionDefinition = {
   id: string;
+  mode?: "campaign" | "bodyBattle" | "infinite";
   title: string;
   displayName: string;
   subtitle?: string;
@@ -226,6 +232,60 @@ const easyFailure: DefeatCondition[] = [
 ];
 
 export const missionDefinitions: Record<MissionId, MissionDefinition> = {
+  infiniteSurvivalV8: {
+    id: "infiniteSurvivalV8",
+    mode: "infinite",
+    title: "Mode infini - Survie immunitaire",
+    displayName: "Survie infinie",
+    subtitle: "V8 - score et phases",
+    description:
+      "Survis a des vagues de plus en plus dangereuses. Il n'y a pas de victoire finale.",
+    briefing: [
+      "Le mode infini est separe de la campagne et de la carte du corps.",
+      "Les phases montent progressivement jusqu'a Nightmare.",
+      "Les mutateurs changent les regles : lis-les avant de surproduire.",
+    ],
+    objectives: [
+      { id: "clear", label: "Survivre le plus longtemps possible", kind: "clearThreats" },
+      { id: "health30", label: "Garder le tissu au-dessus de 30%", kind: "tissueHealthAtLeast", value: 30 },
+      { id: "inflam90", label: "Eviter une crise inflammatoire totale", kind: "inflammationBelow", value: 90 },
+    ],
+    victoryConditions: [],
+    defeatConditions: easyFailure,
+    startingResources: { atp: 160, cytokines: 68, antigens: 8 },
+    startingUnits: [
+      { unitTypeId: "macrophage", count: 3 },
+      { unitTypeId: "dendriticCell", count: 1 },
+      { unitTypeId: "neutrophil", count: 1 },
+    ],
+    unlockedUnits: [
+      "macrophage",
+      "neutrophil",
+      "dendriticCell",
+      "plasmocyte",
+      "nkCell",
+      "cytotoxicT",
+    ],
+    unlockedAbilities: ["interferons", "massiveNeutralization"],
+    unlockedResearch: ["bacterialAnalysis", "viralAnalysis"],
+    unlockedTreatments: ["antibiotic", "antiviralDrug", "antiInflammatory"],
+    memoryHintProfiles: ["bacterial", "viral"],
+    allowedPathogens: [
+      "cocciRapid",
+      "proliferatingBacillus",
+      "resistantBacterium",
+      "biofilmColony",
+      "toxicBacterium",
+      "respiratoryVirus",
+    ],
+    initialInfectedTissueCells: 0,
+    map: baseMap,
+    waves: createInfiniteWaves("normal"),
+    tutorialHints: [
+      { text: "Mode infini : chaque cycle contient trois vagues, puis la phase progresse." },
+    ],
+    scoreReward: 0,
+  },
   woundBacteriaV1: {
     id: "woundBacteriaV1",
     title: "Mission 1 - Plaie cutanee",

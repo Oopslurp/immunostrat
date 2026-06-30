@@ -1,5 +1,14 @@
 import Phaser from "phaser";
 import {
+  calculateInfiniteScore,
+  getActiveInfiniteMutators,
+  getInfiniteCycle,
+  getInfinitePhase,
+  getNextPhaseAtCycle,
+  infiniteDifficultySettings,
+  type InfiniteRunInfo,
+} from "../../data/infiniteMode";
+import {
   calculateMissionScore,
   evaluateMissionObjectives,
   getMissionRank,
@@ -936,11 +945,11 @@ export class MissionScene extends Phaser.Scene {
       antigensCollected: state.missionStats.antigensCollected,
       lymphSignalsDelivered: state.missionStats.lymphSignalsDelivered,
       treatmentsUsed: { ...state.missionStats.usedAbilities },
-      currentWave: Math.min(
-        state.waves.currentWaveIndex + 1,
-        mission.waves.length,
-      ),
-      totalWaves: mission.waves.length,
+      currentWave:
+        mission.mode === "infinite"
+          ? state.waves.currentWaveIndex + 1
+          : Math.min(state.waves.currentWaveIndex + 1, mission.waves.length),
+      totalWaves: mission.mode === "infinite" ? 0 : mission.waves.length,
       entities: Object.values(state.entities),
       debrisCount: state.debris.length,
       biofilmCount: state.biofilmZones.length,
@@ -955,11 +964,56 @@ export class MissionScene extends Phaser.Scene {
       ).length,
       threatSummary: getThreatSummary(state),
       selectedEntityIds: state.selectedEntityIds,
+      infinite: getInfiniteRunInfo(state),
     };
 
     this.bridge.publishSnapshot(snapshot);
     this.lastPublishedStatus = state.status;
   }
+}
+
+function getInfiniteRunInfo(state: GameState): InfiniteRunInfo | undefined {
+  if (missionDefinitions[state.missionId].mode !== "infinite") {
+    return undefined;
+  }
+
+  const difficulty = state.preparation.infiniteDifficulty ?? "normal";
+  const wave = state.waves.currentWaveIndex + 1;
+  const cycle = getInfiniteCycle(wave);
+  const phase = getInfinitePhase(cycle);
+  const healthyCells = state.tissueCells.filter(
+    (cell) => cell.status === "healthy",
+  ).length;
+  const destroyedCells = state.tissueCells.filter(
+    (cell) => cell.status === "destroyed",
+  ).length;
+  const infectedCells = state.tissueCells.filter(
+    (cell) => cell.status === "infected",
+  ).length;
+
+  return {
+    difficulty,
+    score: calculateInfiniteScore(
+      {
+        wave,
+        cycle,
+        tissueHealth: state.tissue.health,
+        healthyCells,
+        destroyedCells,
+        infectedCells,
+        peakInflammation: state.missionStats.peakInflammation,
+        antigensCollected: state.missionStats.antigensCollected,
+      },
+      difficulty,
+    ),
+    cycle,
+    wave,
+    phase,
+    nextPhaseAtCycle: getNextPhaseAtCycle(cycle),
+    activeMutators: getActiveInfiniteMutators(cycle, difficulty),
+    maxActivePathogens:
+      infiniteDifficultySettings[difficulty].maxActivePathogens,
+  };
 }
 
 function drawPathogenShape(

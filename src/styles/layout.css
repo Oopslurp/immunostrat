@@ -753,6 +753,45 @@
   gap: 0.65rem;
 }
 
+.infinite-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.infinite-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.infinite-launch-panel {
+  display: grid;
+  align-content: start;
+  gap: 0.85rem;
+  padding: 1rem;
+}
+
+.infinite-launch-panel h2,
+.infinite-launch-panel p {
+  margin: 0;
+}
+
+.infinite-launch-panel p {
+  color: #c7d7df;
+  line-height: 1.5;
+}
+
+.infinite-record,
+.infinite-record-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.infinite-record strong {
+  color: #ffc76b;
+  font-size: 2rem;
+}
+
 .body-status-healthy,
 .body-status-controlled {
   color: #7ee28a;
