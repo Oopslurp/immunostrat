@@ -5,6 +5,7 @@ import {
   missionDefinitions,
   type MissionId,
 } from "../data/missions";
+import type { PathogenTypeId } from "../data/pathogens";
 
 const SAVE_KEY = "immunostrat-campaign-progress-v1";
 const SAVE_VERSION = 1;
@@ -29,6 +30,23 @@ export type MissionResultSummary = {
   missionId: MissionId;
   score: number;
   rank: "C" | "B" | "A" | "S";
+};
+
+export type MissionRunResultSummary = MissionResultSummary & {
+  status: "victory" | "defeat";
+  tissueHealthRemaining?: number;
+  tissueMaxHealth?: number;
+  civilianCellsSaved?: number;
+  civilianCellsLost?: number;
+  infectedCellsRemaining?: number;
+  enemiesRemaining?: number;
+  inflammationPeak?: number;
+  antigensCollected?: number;
+  lymphSignalsDelivered?: number;
+  adaptiveResearchCompleted?: boolean;
+  treatmentsUsed?: Partial<Record<string, number>>;
+  timeElapsedMs?: number;
+  pathogenTypesEncountered?: PathogenTypeId[];
 };
 
 export function loadCampaignProgress(): CampaignProgress {

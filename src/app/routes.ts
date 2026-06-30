@@ -1,6 +1,7 @@
 export const routes = {
   home: "home",
   campaign: "campaign",
+  bodyMap: "bodyMap",
   game: "game",
 } as const;
 

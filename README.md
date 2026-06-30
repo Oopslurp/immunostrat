@@ -2,7 +2,7 @@
 
 Immunostrat est un prototype web de strategie 2D inspire du systeme immunitaire.
 
-La V6.5 consolide la campagne avec traitements simples, memoire immunitaire, vaccination optionnelle, sortie lymphatique locale et notes science/gameplay.
+La V7.1 ajoute une vraie partie normale generee sur la carte du corps, tout en gardant la campagne V6 comme mode apprentissage.
 
 ## Stack
 
@@ -34,6 +34,7 @@ npm run dev -- --port 5175
 - `src/pages` : page d'accueil et page jeu.
 - `src/ui` : petits composants React hors-jeu.
 - `src/game/phaser` : creation de Phaser, configuration, scenes, rendu et input.
+- `src/game/bodyMap` : carte strategique du corps, propagation, ganglions regionaux et sauvegarde globale.
 - `src/game/simulation` : logique du jeu independante de Phaser.
 - `src/game/data` : definitions de mission, unites, pathogenes et balance.
 - `src/game/types` : types partages.
@@ -151,11 +152,35 @@ npm run dev -- --port 5175
 - descriptions science vs gameplay dans `src/game/data/scienceGlossary.ts` ;
 - documentation de consolidation dans `docs/v6-5-systems-roadmap.md`.
 
+## Gameplay V7
+
+- mode `Carte du corps` debloque apres la mission 7 ;
+- huit regions strategiques : peau, poumons, intestin, sang, ganglions lymphatiques, rate, moelle osseuse, foie ;
+- statut par region : sante locale, infection, inflammation, menace et pathogenes ;
+- graphe de propagation simple par tour strategique ;
+- ganglions regionaux avec signaux antigeniques et bonus leger ;
+- renforts globaux convertis en unites de depart dans les batailles locales ;
+- resultat de bataille locale applique a la region et a la sante globale ;
+- sauvegarde separee de la carte du corps en localStorage ;
+- documentation V7 dans `docs/v7-body-map.md`.
+
+## Patch V7.1
+
+- separation claire des modes : campagne guidee, partie normale generee, mode infini reserve a V8 ;
+- bouton `Nouvelle partie normale` avec difficulte facile, normale ou difficile ;
+- generation controlee par seed : foyers initiaux, region malade, menace, pathogenes et preset local ;
+- presets de batailles normales separes des missions de campagne ;
+- presets regionaux : peau bacterienne, peau biofilm, poumons viraux, intestin bacilles, sang mixte, ganglion, rate, moelle ;
+- resultats de bataille plus detailles transmis a la carte du corps ;
+- signaux dendritiques/lymphatiques comptes pendant la bataille locale ;
+- propagation influencee par infection, inflammation, sang, menace, difficulte, ganglion et dernier resultat ;
+- historique court des evenements strategiques.
+
 ## Qualite
 
 - `npm run test` teste la simulation pure avec Vitest.
 - `npm run build` verifie TypeScript et genere le build Vite.
 
-## Hors scope V6.5
+## Hors scope V7
 
-Pas de vraie carte globale du corps, organes multiples, mode infini, champignons, parasites, cellules cancereuses, factions pathogenes jouables, arbre technologique complet, pixel art final ou polish visuel avance.
+Pas de mode infini complet, mutations, nouveaux pathogenes V9, champignons, parasites, cellules cancereuses, factions pathogenes jouables, boss, arbre technologique complet, pixel art final ou polish visuel avance.

@@ -4,10 +4,16 @@ import { routes, type AppRoute } from "./routes";
 type AppShellProps = {
   children: ReactNode;
   currentRoute: AppRoute;
+  bodyMapUnlocked?: boolean;
   onNavigate: (route: AppRoute) => void;
 };
 
-export function AppShell({ children, currentRoute, onNavigate }: AppShellProps) {
+export function AppShell({
+  children,
+  currentRoute,
+  bodyMapUnlocked = false,
+  onNavigate,
+}: AppShellProps) {
   return (
     <div className="app-shell">
       <header className="top-bar">
@@ -33,6 +39,21 @@ export function AppShell({ children, currentRoute, onNavigate }: AppShellProps) 
             onClick={() => onNavigate(routes.campaign)}
           >
             Campagne
+          </button>
+          <button
+            className={`nav-button ${
+              currentRoute === routes.bodyMap ? "nav-button-active" : ""
+            }`}
+            disabled={!bodyMapUnlocked}
+            title={
+              bodyMapUnlocked
+                ? "Ouvrir la carte du corps"
+                : "Debloque apres la mission 7"
+            }
+            type="button"
+            onClick={() => onNavigate(routes.bodyMap)}
+          >
+            Carte du corps
           </button>
         </nav>
       </header>

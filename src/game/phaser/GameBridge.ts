@@ -17,6 +17,7 @@ export type GameSnapshot = {
   status: GameState["status"];
   tissueHealth: number;
   tissueMaxHealth: number;
+  elapsedMs: number;
   atp: number;
   cytokines: number;
   antigens: number;
@@ -32,6 +33,10 @@ export type GameSnapshot = {
   objectives: ObjectiveStatus[];
   score: number;
   rank: "C" | "B" | "A" | "S";
+  peakInflammation: number;
+  antigensCollected: number;
+  lymphSignalsDelivered: number;
+  treatmentsUsed: Partial<Record<string, number>>;
   currentWave: number;
   totalWaves: number;
   entities: GameEntity[];

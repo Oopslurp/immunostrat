@@ -13,6 +13,8 @@ export type MissionRuntimeStats = {
   producedUnits: Partial<Record<string, number>>;
   usedAbilities: Partial<Record<string, number>>;
   peakInflammation: number;
+  antigensCollected: number;
+  lymphSignalsDelivered: number;
 };
 
 export type TreatmentState = {

@@ -914,6 +914,7 @@ export class MissionScene extends Phaser.Scene {
       status: state.status,
       tissueHealth: state.tissue.health,
       tissueMaxHealth: state.tissue.maxHealth,
+      elapsedMs: state.elapsedMs,
       atp: state.resources.atp,
       cytokines: state.resources.cytokines,
       antigens: state.resources.antigens,
@@ -931,6 +932,10 @@ export class MissionScene extends Phaser.Scene {
       objectives: evaluateMissionObjectives(state),
       score,
       rank: getMissionRank(score),
+      peakInflammation: state.missionStats.peakInflammation,
+      antigensCollected: state.missionStats.antigensCollected,
+      lymphSignalsDelivered: state.missionStats.lymphSignalsDelivered,
+      treatmentsUsed: { ...state.missionStats.usedAbilities },
       currentWave: Math.min(
         state.waves.currentWaveIndex + 1,
         mission.waves.length,

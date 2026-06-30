@@ -22,10 +22,22 @@ export function createInitialState(
     (bonus, profile) => bonus + (memoryBonusProfiles.has(profile) ? 6 : 0),
     0,
   );
+  const regionalNodeAntigenBonus =
+    preparation.regionalNodeBonus?.active === true
+      ? preparation.regionalNodeBonus.antigenBonus
+      : 0;
+  const regionalNodeCytokineBonus =
+    preparation.regionalNodeBonus?.active === true
+      ? preparation.regionalNodeBonus.cytokineBonus
+      : 0;
+  const startingUnits = [
+    ...mission.startingUnits,
+    ...(preparation.globalReinforcements ?? []),
+  ];
   const entities: GameState["entities"] = {};
   let nextEntityNumber = 1;
 
-  for (const startingUnit of mission.startingUnits) {
+  for (const startingUnit of startingUnits) {
     for (let index = 0; index < startingUnit.count; index += 1) {
       const unitTypeId = startingUnit.unitTypeId;
       const id = `${unitTypeId}-${nextEntityNumber}`;
@@ -67,19 +79,24 @@ export function createInitialState(
       atp: Math.max(0, mission.startingResources.atp - (vaccination?.atpCost ?? 0)),
       cytokines: Math.min(
         balanceValues.maxCytokines,
-        mission.startingResources.cytokines + (vaccination?.cytokineBonus ?? 0),
+        mission.startingResources.cytokines +
+          (vaccination?.cytokineBonus ?? 0) +
+          regionalNodeCytokineBonus,
       ),
       antigens: Math.min(
         balanceValues.maxAntigens,
         mission.startingResources.antigens +
           (vaccination?.antigenBonus ?? 0) +
-          memoryAntigenBonus,
+          memoryAntigenBonus +
+          regionalNodeAntigenBonus,
       ),
     },
     missionStats: {
       producedUnits: {},
       usedAbilities: {},
       peakInflammation: balanceValues.inflammation.startingValue,
+      antigensCollected: 0,
+      lymphSignalsDelivered: 0,
     },
     inflammation: {
       value: balanceValues.inflammation.startingValue,

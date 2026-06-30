@@ -88,10 +88,15 @@ function processDendriticCells(state: GameState): void {
       entity.carriedDebrisCount > 0 &&
       distance(entity.position, lymphNode) <= adaptive.lymphNodeRange
     ) {
+      const deliveredAntigens = entity.carriedAntigenValue;
+      const deliveredSignals = entity.carriedDebrisCount;
+
       state.resources.antigens = Math.min(
         balanceValues.maxAntigens,
-        state.resources.antigens + entity.carriedAntigenValue,
+        state.resources.antigens + deliveredAntigens,
       );
+      state.missionStats.antigensCollected += deliveredAntigens;
+      state.missionStats.lymphSignalsDelivered += deliveredSignals;
       entity.carriedAntigenValue = 0;
       entity.carriedDebrisCount = 0;
       entity.targetPosition = null;

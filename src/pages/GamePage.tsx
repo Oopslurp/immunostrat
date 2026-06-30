@@ -17,24 +17,29 @@ import { unitDefinitions, type UnitTypeId } from "../game/data/units";
 import type {
   CampaignProgress,
   MissionResultSummary,
+  MissionRunResultSummary,
 } from "../game/campaign/progress";
 import { GameBridge, type GameSnapshot } from "../game/phaser/GameBridge";
 import { PhaserGame } from "../game/phaser/PhaserGame";
 import { Button } from "../ui/Button";
 
 type GamePageProps = {
+  battleSource?: "campaign" | "bodyMap";
   missionId: MissionId;
   progress: CampaignProgress;
   onBackToCampaign: () => void;
   onMissionComplete: (result: MissionResultSummary) => void;
+  onBodyBattleComplete?: (result: MissionRunResultSummary) => void;
   onPlayMission: (missionId: MissionId, vaccinationId?: string | null) => void;
   preparation?: MissionPreparation;
 };
 
 export function GamePage({
+  battleSource = "campaign",
   missionId,
   progress,
   onBackToCampaign,
+  onBodyBattleComplete,
   onMissionComplete,
   onPlayMission,
   preparation,
@@ -52,21 +57,56 @@ export function GamePage({
     completedMissionRef.current = null;
   }, [missionId]);
   useEffect(() => {
-    if (!snapshot || snapshot.status !== "victory") {
+    if (!snapshot) {
       return;
     }
 
-    if (completedMissionRef.current === snapshot.missionId) {
+    if (snapshot.status === "running") {
+      completedMissionRef.current = null;
       return;
     }
 
-    completedMissionRef.current = snapshot.missionId;
-    onMissionComplete({
+    const resultKey = `${snapshot.missionId}-${snapshot.status}`;
+
+    if (completedMissionRef.current === resultKey) {
+      return;
+    }
+
+    completedMissionRef.current = resultKey;
+
+    const result = {
       missionId: snapshot.missionId,
       score: snapshot.score,
       rank: snapshot.rank,
-    });
-  }, [onMissionComplete, snapshot]);
+      status: snapshot.status,
+      tissueHealthRemaining: snapshot.tissueHealth,
+      tissueMaxHealth: snapshot.tissueMaxHealth,
+      civilianCellsSaved: snapshot.healthyTissueCells,
+      civilianCellsLost: snapshot.destroyedTissueCells,
+      infectedCellsRemaining: snapshot.infectedTissueCells,
+      enemiesRemaining: snapshot.entities.filter(
+        (entity) => entity.kind === "bacterium" || entity.kind === "virus",
+      ).length,
+      inflammationPeak: snapshot.peakInflammation,
+      antigensCollected: snapshot.antigensCollected,
+      lymphSignalsDelivered: snapshot.lymphSignalsDelivered,
+      adaptiveResearchCompleted:
+        snapshot.bacterialAnalysisComplete || snapshot.viralAnalysisComplete,
+      treatmentsUsed: snapshot.treatmentsUsed,
+      timeElapsedMs: snapshot.elapsedMs,
+      pathogenTypesEncountered: snapshot.threatSummary.map(
+        (item) => item.pathogenTypeId,
+      ),
+    } satisfies MissionRunResultSummary;
+
+    if (battleSource === "campaign" && snapshot.status === "victory") {
+      onMissionComplete(result);
+    }
+
+    if (battleSource === "bodyMap") {
+      onBodyBattleComplete?.(result);
+    }
+  }, [battleSource, onBodyBattleComplete, onMissionComplete, snapshot]);
 
   const canProduceMacrophage =
     snapshot?.status === "running" &&
@@ -142,7 +182,9 @@ export function GamePage({
     <div className="page game-page">
       <header className="game-header">
         <div>
-          <span className="eyebrow">Campagne V6</span>
+          <span className="eyebrow">
+            {battleSource === "bodyMap" ? "Carte du corps V7" : "Campagne V6"}
+          </span>
           <h1>{mission.title}</h1>
           <p>{mission.description}</p>
         </div>
@@ -256,7 +298,9 @@ export function GamePage({
           <Button onClick={() => bridge.dispatch({ type: "restart" })}>
             Recommencer
           </Button>
-          <Button onClick={onBackToCampaign}>Retour missions</Button>
+          <Button onClick={onBackToCampaign}>
+            {battleSource === "bodyMap" ? "Retour carte" : "Retour missions"}
+          </Button>
         </div>
       </header>
 
@@ -332,8 +376,12 @@ export function GamePage({
             <Button onClick={() => bridge.dispatch({ type: "restart" })}>
               Recommencer
             </Button>
-            <Button onClick={onBackToCampaign}>Retour missions</Button>
-            {snapshot.status === "victory" && playableNextMissionId ? (
+            <Button onClick={onBackToCampaign}>
+              {battleSource === "bodyMap" ? "Retour carte du corps" : "Retour missions"}
+            </Button>
+            {battleSource === "campaign" &&
+            snapshot.status === "victory" &&
+            playableNextMissionId ? (
               <Button
                 disabled={!progress.unlockedMissionIds.includes(playableNextMissionId)}
                 onClick={() => onPlayMission(playableNextMissionId)}

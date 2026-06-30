@@ -9,6 +9,12 @@ export function cloneState(state: GameState): GameState {
       memoryProfiles: state.preparation.memoryProfiles
         ? [...state.preparation.memoryProfiles]
         : undefined,
+      globalReinforcements: state.preparation.globalReinforcements?.map(
+        (unit) => ({ ...unit }),
+      ),
+      regionalNodeBonus: state.preparation.regionalNodeBonus
+        ? { ...state.preparation.regionalNodeBonus }
+        : undefined,
     },
     tissue: { ...state.tissue },
     tissueCells: state.tissueCells.map((cell) => ({
@@ -20,6 +26,8 @@ export function cloneState(state: GameState): GameState {
       producedUnits: { ...state.missionStats.producedUnits },
       usedAbilities: { ...state.missionStats.usedAbilities },
       peakInflammation: state.missionStats.peakInflammation,
+      antigensCollected: state.missionStats.antigensCollected,
+      lymphSignalsDelivered: state.missionStats.lymphSignalsDelivered,
     },
     treatments: {
       cooldowns: { ...state.treatments.cooldowns },

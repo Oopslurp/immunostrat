@@ -107,6 +107,14 @@ export type VaccinationOption = {
 export type MissionPreparation = {
   vaccinationId?: string | null;
   memoryProfiles?: Array<"bacterial" | "viral">;
+  bodyRegionId?: string;
+  globalReinforcements?: StartingUnitDefinition[];
+  regionalNodeBonus?: {
+    nodeId: string;
+    active: boolean;
+    antigenBonus: number;
+    cytokineBonus: number;
+  };
 };
 
 export const campaignMissionOrder = [
@@ -120,7 +128,20 @@ export const campaignMissionOrder = [
   "mixedInfectionV8",
 ] as const;
 
-export type MissionId = (typeof campaignMissionOrder)[number];
+export const bodyBattleMissionOrder = [
+  "skinBacterialSkirmish",
+  "skinBiofilmPressure",
+  "lungViralSpread",
+  "intestineBacillusSwarm",
+  "bloodMixedAlert",
+  "lymphNodeSignalResponse",
+  "spleenBloodFiltering",
+  "boneMarrowReinforcementPressure",
+] as const;
+
+export type CampaignMissionId = (typeof campaignMissionOrder)[number];
+export type BodyBattleMissionId = (typeof bodyBattleMissionOrder)[number];
+export type MissionId = CampaignMissionId | BodyBattleMissionId;
 
 export type MissionDefinition = {
   id: string;
@@ -561,6 +582,313 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
       { startsAtMs: 82000, pathogenTypeId: "toxicBacterium", count: 3, spawnIntervalMs: 1300 },
     ],
     scoreReward: 260,
+  },
+  skinBacterialSkirmish: {
+    id: "skinBacterialSkirmish",
+    title: "Bataille locale - Plaie bacterienne",
+    displayName: "Plaie bacterienne",
+    subtitle: "Partie normale - peau",
+    description: "Contiens une entree bacterienne cutanee generee par la carte du corps.",
+    briefing: [
+      "Cette bataille vient de la carte du corps, pas de la campagne tutoriel.",
+      "La peau favorise les bacteries rapides et les combats de contact.",
+      "Une livraison lymphatique renforce le ganglion regional de la peau.",
+    ],
+    objectives: [
+      { id: "clear", label: "Eliminer l'infection locale", kind: "clearThreats", required: true },
+      { id: "health45", label: "Sauver au moins 45% du tissu", kind: "tissueHealthAtLeast", value: 45 },
+      { id: "signals6", label: "Collecter 6 antigenes locaux", kind: "antigensAtLeast", value: 6 },
+    ],
+    victoryConditions: [{ kind: "allWavesCleared" }, { kind: "requiredObjectivesComplete" }],
+    defeatConditions: easyFailure,
+    startingResources: { atp: 118, cytokines: 28, antigens: 0 },
+    startingUnits: [
+      { unitTypeId: "macrophage", count: 2 },
+      { unitTypeId: "dendriticCell", count: 1 },
+    ],
+    unlockedUnits: ["macrophage", "neutrophil", "dendriticCell"],
+    unlockedAbilities: [],
+    unlockedResearch: [],
+    unlockedTreatments: ["antibiotic", "antiInflammatory"],
+    memoryHintProfiles: ["bacterial"],
+    allowedPathogens: ["cocciRapid", "proliferatingBacillus"],
+    map: baseMap,
+    waves: [
+      { startsAtMs: 1300, pathogenTypeId: "cocciRapid", count: 5, spawnIntervalMs: 650 },
+      { startsAtMs: 14500, pathogenTypeId: "proliferatingBacillus", count: 4, spawnIntervalMs: 1150 },
+      { startsAtMs: 30000, pathogenTypeId: "cocciRapid", count: 7, spawnIntervalMs: 540 },
+    ],
+    tutorialHints: [{ text: "Bataille normale : gagne proprement pour reduire le risque de propagation." }],
+    scoreReward: 120,
+  },
+  skinBiofilmPressure: {
+    id: "skinBiofilmPressure",
+    title: "Bataille locale - Biofilm cutane",
+    displayName: "Biofilm cutane",
+    subtitle: "Partie normale - peau",
+    description: "Nettoie une colonie protegee avant qu'elle ne relance la plaie.",
+    briefing: [
+      "Le biofilm est une protection de groupe simplifiee.",
+      "Les antibiotiques aident, mais n'effacent pas tout seuls une colonie.",
+      "Les dendritiques peuvent transformer les debris en signaux regionaux.",
+    ],
+    objectives: [
+      { id: "clear", label: "Detruire la colonie locale", kind: "clearThreats", required: true },
+      { id: "inflam82", label: "Limiter l'inflammation sous 82", kind: "inflammationBelow", value: 82 },
+      { id: "health35", label: "Eviter l'effondrement du tissu", kind: "tissueHealthAtLeast", value: 35 },
+    ],
+    victoryConditions: [{ kind: "allWavesCleared" }, { kind: "requiredObjectivesComplete" }],
+    defeatConditions: easyFailure,
+    startingResources: { atp: 130, cytokines: 38, antigens: 2 },
+    startingUnits: [
+      { unitTypeId: "macrophage", count: 2 },
+      { unitTypeId: "neutrophil", count: 1 },
+      { unitTypeId: "dendriticCell", count: 1 },
+    ],
+    unlockedUnits: ["macrophage", "neutrophil", "dendriticCell"],
+    unlockedAbilities: [],
+    unlockedResearch: ["bacterialAnalysis"],
+    unlockedTreatments: ["antibiotic", "antiInflammatory"],
+    memoryHintProfiles: ["bacterial"],
+    allowedPathogens: ["resistantBacterium", "biofilmColony", "cocciRapid"],
+    map: baseMap,
+    waves: [
+      { startsAtMs: 1600, pathogenTypeId: "resistantBacterium", count: 2, spawnIntervalMs: 1800 },
+      { startsAtMs: 17000, pathogenTypeId: "biofilmColony", count: 1, spawnIntervalMs: 1000 },
+      { startsAtMs: 33000, pathogenTypeId: "cocciRapid", count: 7, spawnIntervalMs: 560 },
+    ],
+    scoreReward: 135,
+  },
+  lungViralSpread: {
+    id: "lungViralSpread",
+    title: "Bataille locale - Foyer viral respiratoire",
+    displayName: "Foyer viral respiratoire",
+    subtitle: "Partie normale - poumons",
+    description: "Ralentis une propagation virale locale et protege les cellules pulmonaires.",
+    briefing: [
+      "Les poumons favorisent les virus et les cellules infectees.",
+      "Les interferons et antiviraux gagnent du temps.",
+      "NK et T cytotoxiques deviennent precieux si l'analyse avance.",
+    ],
+    objectives: [
+      { id: "clear", label: "Controler virus et cellules infectees", kind: "clearThreats", required: true },
+      { id: "infected4", label: "Finir avec moins de 5 cellules infectees", kind: "infectedCellsAtMost", value: 4 },
+      { id: "interferons", label: "Utiliser les interferons", kind: "abilityUsed", abilityId: "interferons" },
+    ],
+    victoryConditions: [{ kind: "allWavesCleared" }, { kind: "requiredObjectivesComplete" }],
+    defeatConditions: easyFailure,
+    startingResources: { atp: 145, cytokines: 74, antigens: 4 },
+    startingUnits: [
+      { unitTypeId: "macrophage", count: 2 },
+      { unitTypeId: "dendriticCell", count: 1 },
+      { unitTypeId: "nkCell", count: 1 },
+    ],
+    unlockedUnits: ["macrophage", "dendriticCell", "nkCell", "cytotoxicT"],
+    unlockedAbilities: ["interferons"],
+    unlockedResearch: ["viralAnalysis"],
+    unlockedTreatments: ["antiviralDrug", "antiInflammatory"],
+    memoryHintProfiles: ["viral"],
+    allowedPathogens: ["respiratoryVirus"],
+    initialInfectedTissueCells: 1,
+    map: baseMap,
+    waves: [
+      { startsAtMs: 2600, pathogenTypeId: "respiratoryVirus", count: 3, spawnIntervalMs: 1650 },
+      { startsAtMs: 24500, pathogenTypeId: "respiratoryVirus", count: 4, spawnIntervalMs: 1400 },
+      { startsAtMs: 48500, pathogenTypeId: "respiratoryVirus", count: 5, spawnIntervalMs: 1200 },
+    ],
+    scoreReward: 155,
+  },
+  intestineBacillusSwarm: {
+    id: "intestineBacillusSwarm",
+    title: "Bataille locale - Essaim intestinal",
+    displayName: "Essaim intestinal",
+    subtitle: "Partie normale - intestin",
+    description: "Gere une pression bacterienne dense sans emballement inflammatoire.",
+    briefing: [
+      "L'intestin est simplifie comme une zone dense et exposee aux bacilles.",
+      "Les vagues sont nombreuses, mais pas faites pour ecraser le joueur.",
+      "Controle l'inflammation pour eviter les degats collateraux.",
+    ],
+    objectives: [
+      { id: "clear", label: "Survivre aux vagues de bacilles", kind: "clearThreats", required: true },
+      { id: "inflam78", label: "Garder l'inflammation sous 78", kind: "inflammationBelow", value: 78 },
+      { id: "health38", label: "Garder le tissu au-dessus de 38%", kind: "tissueHealthAtLeast", value: 38 },
+    ],
+    victoryConditions: [{ kind: "allWavesCleared" }, { kind: "requiredObjectivesComplete" }],
+    defeatConditions: easyFailure,
+    startingResources: { atp: 135, cytokines: 48, antigens: 0 },
+    startingUnits: [
+      { unitTypeId: "macrophage", count: 2 },
+      { unitTypeId: "neutrophil", count: 1 },
+      { unitTypeId: "dendriticCell", count: 1 },
+    ],
+    unlockedUnits: ["macrophage", "neutrophil", "dendriticCell"],
+    unlockedAbilities: [],
+    unlockedResearch: ["bacterialAnalysis"],
+    unlockedTreatments: ["antibiotic", "antiInflammatory"],
+    memoryHintProfiles: ["bacterial"],
+    allowedPathogens: ["proliferatingBacillus", "resistantBacterium", "toxicBacterium"],
+    map: baseMap,
+    waves: [
+      { startsAtMs: 1500, pathogenTypeId: "proliferatingBacillus", count: 5, spawnIntervalMs: 950 },
+      { startsAtMs: 18500, pathogenTypeId: "proliferatingBacillus", count: 6, spawnIntervalMs: 820 },
+      { startsAtMs: 37000, pathogenTypeId: "resistantBacterium", count: 3, spawnIntervalMs: 1500 },
+      { startsAtMs: 54000, pathogenTypeId: "toxicBacterium", count: 2, spawnIntervalMs: 1500 },
+    ],
+    scoreReward: 150,
+  },
+  bloodMixedAlert: {
+    id: "bloodMixedAlert",
+    title: "Bataille locale - Alerte sanguine",
+    displayName: "Alerte sanguine",
+    subtitle: "Partie normale - sang",
+    description: "Contiens une menace mixte avant qu'elle ne profite de la circulation.",
+    briefing: [
+      "Le sang est une route de circulation et de propagation.",
+      "Cette bataille mixte demande de prioriser virus, bacteries et inflammation.",
+      "Une defaite dans le sang rend la carte globale plus instable.",
+    ],
+    objectives: [
+      { id: "clear", label: "Nettoyer la menace circulante", kind: "clearThreats", required: true },
+      { id: "infected5", label: "Limiter les cellules infectees a 5", kind: "infectedCellsAtMost", value: 5 },
+      { id: "health35", label: "Stabiliser au moins 35% du tissu", kind: "tissueHealthAtLeast", value: 35 },
+    ],
+    victoryConditions: [{ kind: "allWavesCleared" }, { kind: "requiredObjectivesComplete" }],
+    defeatConditions: easyFailure,
+    startingResources: { atp: 160, cytokines: 82, antigens: 8 },
+    startingUnits: [
+      { unitTypeId: "macrophage", count: 3 },
+      { unitTypeId: "neutrophil", count: 1 },
+      { unitTypeId: "dendriticCell", count: 1 },
+      { unitTypeId: "nkCell", count: 1 },
+    ],
+    unlockedUnits: ["macrophage", "neutrophil", "dendriticCell", "plasmocyte", "nkCell", "cytotoxicT"],
+    unlockedAbilities: ["interferons", "massiveNeutralization"],
+    unlockedResearch: ["bacterialAnalysis", "viralAnalysis"],
+    unlockedTreatments: ["antibiotic", "antiviralDrug", "antiInflammatory"],
+    memoryHintProfiles: ["bacterial", "viral"],
+    allowedPathogens: ["cocciRapid", "proliferatingBacillus", "respiratoryVirus"],
+    initialInfectedTissueCells: 1,
+    map: baseMap,
+    waves: [
+      { startsAtMs: 1600, pathogenTypeId: "cocciRapid", count: 5, spawnIntervalMs: 620 },
+      { startsAtMs: 13500, pathogenTypeId: "respiratoryVirus", count: 3, spawnIntervalMs: 1400 },
+      { startsAtMs: 29000, pathogenTypeId: "proliferatingBacillus", count: 5, spawnIntervalMs: 900 },
+      { startsAtMs: 48000, pathogenTypeId: "respiratoryVirus", count: 4, spawnIntervalMs: 1200 },
+    ],
+    scoreReward: 175,
+  },
+  lymphNodeSignalResponse: {
+    id: "lymphNodeSignalResponse",
+    title: "Bataille locale - Relais lymphatique",
+    displayName: "Relais lymphatique",
+    subtitle: "Partie normale - ganglion",
+    description: "Protege la sortie lymphatique et convertis des debris en signaux utiles.",
+    briefing: [
+      "Le ganglion n'est pas une tour : c'est un centre d'analyse strategique.",
+      "Les dendritiques doivent livrer des debris vers la lymphe.",
+      "Plus les signaux sont nombreux, plus la carte globale profite du resultat.",
+    ],
+    objectives: [
+      { id: "antigens14", label: "Livrer assez de signaux antigeniques", kind: "antigensAtLeast", value: 14, required: true },
+      { id: "clear", label: "Proteger le relais local", kind: "clearThreats", required: true },
+      { id: "health40", label: "Garder le tissu au-dessus de 40%", kind: "tissueHealthAtLeast", value: 40 },
+    ],
+    victoryConditions: [{ kind: "allWavesCleared" }, { kind: "requiredObjectivesComplete" }],
+    defeatConditions: easyFailure,
+    startingResources: { atp: 135, cytokines: 56, antigens: 6 },
+    startingUnits: [
+      { unitTypeId: "macrophage", count: 2 },
+      { unitTypeId: "dendriticCell", count: 2 },
+    ],
+    unlockedUnits: ["macrophage", "neutrophil", "dendriticCell", "plasmocyte", "nkCell", "cytotoxicT"],
+    unlockedAbilities: ["interferons", "massiveNeutralization"],
+    unlockedResearch: ["bacterialAnalysis", "viralAnalysis"],
+    unlockedTreatments: ["antibiotic", "antiviralDrug", "antiInflammatory"],
+    memoryHintProfiles: ["bacterial", "viral"],
+    allowedPathogens: ["cocciRapid", "respiratoryVirus", "proliferatingBacillus"],
+    map: baseMap,
+    waves: [
+      { startsAtMs: 1800, pathogenTypeId: "cocciRapid", count: 4, spawnIntervalMs: 720 },
+      { startsAtMs: 18000, pathogenTypeId: "respiratoryVirus", count: 3, spawnIntervalMs: 1500 },
+      { startsAtMs: 38000, pathogenTypeId: "proliferatingBacillus", count: 4, spawnIntervalMs: 1100 },
+    ],
+    scoreReward: 165,
+  },
+  spleenBloodFiltering: {
+    id: "spleenBloodFiltering",
+    title: "Bataille locale - Filtrage splenique",
+    displayName: "Filtrage splenique",
+    subtitle: "Partie normale - rate",
+    description: "Filtre une menace circulante moderee avant diffusion systemique.",
+    briefing: [
+      "La rate surveille le sang dans cette version simplifiee.",
+      "Les menaces sont mixtes mais moins longues que dans une alerte sanguine complete.",
+      "Un bon resultat stabilise la carte globale.",
+    ],
+    objectives: [
+      { id: "clear", label: "Filtrer la menace sanguine", kind: "clearThreats", required: true },
+      { id: "inflam80", label: "Limiter l'inflammation sous 80", kind: "inflammationBelow", value: 80 },
+      { id: "health40", label: "Preserver 40% du tissu", kind: "tissueHealthAtLeast", value: 40 },
+    ],
+    victoryConditions: [{ kind: "allWavesCleared" }, { kind: "requiredObjectivesComplete" }],
+    defeatConditions: easyFailure,
+    startingResources: { atp: 150, cytokines: 70, antigens: 8 },
+    startingUnits: [
+      { unitTypeId: "macrophage", count: 3 },
+      { unitTypeId: "dendriticCell", count: 1 },
+      { unitTypeId: "nkCell", count: 1 },
+    ],
+    unlockedUnits: ["macrophage", "neutrophil", "dendriticCell", "nkCell", "cytotoxicT"],
+    unlockedAbilities: ["interferons"],
+    unlockedResearch: ["viralAnalysis", "bacterialAnalysis"],
+    unlockedTreatments: ["antibiotic", "antiviralDrug", "antiInflammatory"],
+    memoryHintProfiles: ["bacterial", "viral"],
+    allowedPathogens: ["cocciRapid", "respiratoryVirus", "resistantBacterium"],
+    map: baseMap,
+    waves: [
+      { startsAtMs: 1400, pathogenTypeId: "cocciRapid", count: 4, spawnIntervalMs: 680 },
+      { startsAtMs: 15500, pathogenTypeId: "respiratoryVirus", count: 3, spawnIntervalMs: 1450 },
+      { startsAtMs: 34000, pathogenTypeId: "resistantBacterium", count: 2, spawnIntervalMs: 1800 },
+    ],
+    scoreReward: 155,
+  },
+  boneMarrowReinforcementPressure: {
+    id: "boneMarrowReinforcementPressure",
+    title: "Bataille locale - Pression sur la moelle",
+    displayName: "Pression sur la moelle",
+    subtitle: "Partie normale - moelle osseuse",
+    description: "Defends la source de renforts immunitaires sans mecanique logistique lourde.",
+    briefing: [
+      "La moelle osseuse soutient la production de cellules immunitaires.",
+      "Dans V7.1, elle donne surtout un enjeu strategique aux ressources globales.",
+      "La bataille reste locale et lisible.",
+    ],
+    objectives: [
+      { id: "clear", label: "Proteger la production de renforts", kind: "clearThreats", required: true },
+      { id: "health50", label: "Garder la zone au-dessus de 50%", kind: "tissueHealthAtLeast", value: 50 },
+      { id: "inflam70", label: "Limiter l'inflammation sous 70", kind: "inflammationBelow", value: 70 },
+    ],
+    victoryConditions: [{ kind: "allWavesCleared" }, { kind: "requiredObjectivesComplete" }],
+    defeatConditions: easyFailure,
+    startingResources: { atp: 150, cytokines: 52, antigens: 2 },
+    startingUnits: [
+      { unitTypeId: "macrophage", count: 3 },
+      { unitTypeId: "dendriticCell", count: 1 },
+    ],
+    unlockedUnits: ["macrophage", "neutrophil", "dendriticCell"],
+    unlockedAbilities: [],
+    unlockedResearch: ["bacterialAnalysis"],
+    unlockedTreatments: ["antibiotic", "antiInflammatory"],
+    memoryHintProfiles: ["bacterial"],
+    allowedPathogens: ["cocciRapid", "resistantBacterium"],
+    map: baseMap,
+    waves: [
+      { startsAtMs: 1700, pathogenTypeId: "cocciRapid", count: 5, spawnIntervalMs: 760 },
+      { startsAtMs: 18500, pathogenTypeId: "resistantBacterium", count: 2, spawnIntervalMs: 1800 },
+      { startsAtMs: 39000, pathogenTypeId: "cocciRapid", count: 6, spawnIntervalMs: 640 },
+    ],
+    scoreReward: 145,
   },
 };
 
