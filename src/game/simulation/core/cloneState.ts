@@ -26,6 +26,7 @@ export function cloneState(state: GameState): GameState {
     missionStats: {
       producedUnits: { ...state.missionStats.producedUnits },
       usedAbilities: { ...state.missionStats.usedAbilities },
+      pathogenKills: { ...state.missionStats.pathogenKills },
       peakInflammation: state.missionStats.peakInflammation,
       antigensCollected: state.missionStats.antigensCollected,
       lymphSignalsDelivered: state.missionStats.lymphSignalsDelivered,

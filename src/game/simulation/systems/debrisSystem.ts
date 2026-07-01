@@ -283,6 +283,8 @@ function addThreatScoreBonus(
   state: GameState,
   pathogenTypeId: keyof typeof pathogenDefinitions,
 ): void {
+  state.missionStats.pathogenKills[pathogenTypeId] =
+    (state.missionStats.pathogenKills[pathogenTypeId] ?? 0) + 1;
   state.missionStats.threatScoreBonus +=
     pathogenDefinitions[pathogenTypeId].scoreValue ?? 0;
 }

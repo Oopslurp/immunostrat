@@ -134,6 +134,7 @@ export function createInitialState(
     missionStats: {
       producedUnits: {},
       usedAbilities: {},
+      pathogenKills: {},
       peakInflammation: balanceValues.inflammation.startingValue,
       antigensCollected: 0,
       lymphSignalsDelivered: 0,

@@ -2,6 +2,7 @@ import { pathogenDefinitions, type PathogenTypeId } from "../../data/pathogens";
 import type { Vector2 } from "../../types/shared";
 import type { GameState } from "../core/GameState";
 import type { AdvancedThreatEntity } from "../entities";
+import { getRuntimeMapBalance } from "../systems/runtimeMapBalance";
 
 export function spawnAdvancedThreat(
   state: GameState,
@@ -20,6 +21,7 @@ export function spawnAdvancedThreat(
   }
 
   const id = `advanced-${state.nextEntityNumber}`;
+  const mapBalance = getRuntimeMapBalance(state);
   state.nextEntityNumber += 1;
 
   const entity: AdvancedThreatEntity = {
@@ -31,7 +33,7 @@ export function spawnAdvancedThreat(
     health: definition.maxHealth,
     maxHealth: definition.maxHealth,
     radius: definition.radius,
-    movementSpeed: definition.movementSpeed,
+    movementSpeed: definition.movementSpeed * mapBalance.pathogenSpeedMultiplier,
     tissueDamage: definition.tissueDamage,
     tissueAttackRange: definition.tissueAttackRange,
     attackCooldownMs: definition.attackCooldownMs,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  areAllWavesSpawned,
   areRequiredObjectivesComplete,
   evaluateMissionObjectives,
 } from "../game/campaign/objectives";
@@ -73,6 +74,29 @@ describe("V6 campaign", () => {
     const objectives = evaluateMissionObjectives(state);
 
     expect(objectives.some((objective) => objective.complete)).toBe(true);
+    expect(areRequiredObjectivesComplete(state)).toBe(true);
+  });
+
+  it("uses a softer viral control objective before NK and cytotoxic T cells unlock", () => {
+    const state: GameState = {
+      ...createInitialState("viralInfectionV6"),
+      missionStats: {
+        ...createInitialState("viralInfectionV6").missionStats,
+        pathogenKills: {
+          respiratoryVirus: 3,
+        },
+      },
+      waves: {
+        currentWaveIndex: missionDefinitions.viralInfectionV6.waves.length,
+        spawnedInCurrentWave: 0,
+      },
+    };
+    const objectives = evaluateMissionObjectives(state);
+
+    expect(areAllWavesSpawned(state)).toBe(true);
+    expect(objectives.find((objective) => objective.id === "virusKills3")?.complete).toBe(
+      true,
+    );
     expect(areRequiredObjectivesComplete(state)).toBe(true);
   });
 });

@@ -7,6 +7,7 @@ export type MapScaleDifficulty = "easy" | "normal" | "hard";
 
 export type RuntimeMapBalance = {
   pathogenDamageMultiplier: number;
+  pathogenSpeedMultiplier: number;
   infectionRateMultiplier: number;
   spreadRateMultiplier: number;
   waveIntervalMultiplier: number;
@@ -28,6 +29,7 @@ type PartialRuntimeMapBalance = Partial<RuntimeMapBalance>;
 
 const baseMapScaleBalance: RuntimeMapBalance = {
   pathogenDamageMultiplier: 1,
+  pathogenSpeedMultiplier: 1,
   infectionRateMultiplier: 1,
   spreadRateMultiplier: 1,
   waveIntervalMultiplier: 1,
@@ -47,8 +49,9 @@ const baseMapScaleBalance: RuntimeMapBalance = {
 
 const modeBalance: Record<TacticalMapMode, PartialRuntimeMapBalance> = {
   campaign: {
-    pathogenDamageMultiplier: 0.9,
-    infectionRateMultiplier: 0.94,
+    pathogenDamageMultiplier: 0.84,
+    pathogenSpeedMultiplier: 0.88,
+    infectionRateMultiplier: 0.82,
     spreadRateMultiplier: 1,
     waveIntervalMultiplier: 1,
     tissueRegenRate: 0.46,
@@ -59,6 +62,7 @@ const modeBalance: Record<TacticalMapMode, PartialRuntimeMapBalance> = {
   },
   bodyBattle: {
     pathogenDamageMultiplier: 0.78,
+    pathogenSpeedMultiplier: 0.92,
     infectionRateMultiplier: 0.82,
     spreadRateMultiplier: 0.84,
     waveIntervalMultiplier: 1.2,
@@ -74,6 +78,7 @@ const modeBalance: Record<TacticalMapMode, PartialRuntimeMapBalance> = {
   },
   infinite: {
     pathogenDamageMultiplier: 0.74,
+    pathogenSpeedMultiplier: 0.92,
     infectionRateMultiplier: 0.78,
     spreadRateMultiplier: 0.78,
     waveIntervalMultiplier: 1.28,
@@ -93,6 +98,7 @@ const modeBalance: Record<TacticalMapMode, PartialRuntimeMapBalance> = {
 const difficultyBalance: Record<MapScaleDifficulty, PartialRuntimeMapBalance> = {
   easy: {
     pathogenDamageMultiplier: 0.72,
+    pathogenSpeedMultiplier: 0.94,
     infectionRateMultiplier: 0.76,
     spreadRateMultiplier: 0.78,
     waveIntervalMultiplier: 1.26,
@@ -118,6 +124,7 @@ const difficultyBalance: Record<MapScaleDifficulty, PartialRuntimeMapBalance> = 
   },
   hard: {
     pathogenDamageMultiplier: 1.02,
+    pathogenSpeedMultiplier: 1.02,
     infectionRateMultiplier: 1.05,
     spreadRateMultiplier: 1.04,
     waveIntervalMultiplier: 0.94,
@@ -137,6 +144,7 @@ const mapSizeBalance: Record<TacticalMapSizeCategory, PartialRuntimeMapBalance> 
   },
   medium: {
     pathogenDamageMultiplier: 0.9,
+    pathogenSpeedMultiplier: 0.94,
     infectionRateMultiplier: 0.92,
     spreadRateMultiplier: 0.92,
     waveIntervalMultiplier: 1.08,
@@ -147,6 +155,7 @@ const mapSizeBalance: Record<TacticalMapSizeCategory, PartialRuntimeMapBalance> 
   },
   large: {
     pathogenDamageMultiplier: 0.76,
+    pathogenSpeedMultiplier: 0.9,
     infectionRateMultiplier: 0.8,
     spreadRateMultiplier: 0.82,
     waveIntervalMultiplier: 1.22,
@@ -161,6 +170,7 @@ const mapSizeBalance: Record<TacticalMapSizeCategory, PartialRuntimeMapBalance> 
   },
   huge: {
     pathogenDamageMultiplier: 0.66,
+    pathogenSpeedMultiplier: 0.88,
     infectionRateMultiplier: 0.72,
     spreadRateMultiplier: 0.72,
     waveIntervalMultiplier: 1.38,

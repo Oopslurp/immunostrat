@@ -40,6 +40,12 @@ export type MissionObjective =
   | {
       id: string;
       label: string;
+      kind: "allWavesSpawned";
+      required?: boolean;
+    }
+  | {
+      id: string;
+      label: string;
       kind: "tissueHealthAtLeast";
       value: number;
       required?: boolean;
@@ -84,6 +90,14 @@ export type MissionObjective =
       label: string;
       kind: "abilityUsed";
       abilityId: MissionAbilityId;
+      required?: boolean;
+    }
+  | {
+      id: string;
+      label: string;
+      kind: "pathogenKillsAtLeast";
+      pathogenTypeId: PathogenTypeId;
+      value: number;
       required?: boolean;
     };
 
@@ -647,11 +661,12 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
       "Les interferons ralentissent la propagation, mais ne nettoient pas tout seuls.",
     ],
     objectives: [
-      { id: "clear", label: "Controler les virus libres", kind: "clearThreats", required: true },
+      { id: "waves", label: "Tenir jusqu'a la fin des vagues virales", kind: "allWavesSpawned", required: true },
+      { id: "virusKills3", label: "Eliminer 3 virus libres", kind: "pathogenKillsAtLeast", pathogenTypeId: "respiratoryVirus", value: 3, required: true },
       { id: "infected4", label: "Garder moins de 5 cellules infectees", kind: "infectedCellsAtMost", value: 4 },
       { id: "interferons", label: "Utiliser les interferons", kind: "abilityUsed", abilityId: "interferons" },
     ],
-    victoryConditions: [{ kind: "allWavesCleared" }, { kind: "requiredObjectivesComplete" }],
+    victoryConditions: [{ kind: "requiredObjectivesComplete" }],
     defeatConditions: easyFailure,
     startingResources: { atp: 145, cytokines: 72, antigens: 0 },
     startingUnits: [

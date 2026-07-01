@@ -3,6 +3,7 @@ import { pathogenDefinitions, type PathogenTypeId } from "../../data/pathogens";
 import type { Vector2 } from "../../types/shared";
 import type { GameState } from "../core/GameState";
 import type { VirusEntity } from "../entities";
+import { getRuntimeMapBalance } from "../systems/runtimeMapBalance";
 
 export function spawnVirus(
   state: GameState,
@@ -16,6 +17,7 @@ export function spawnVirus(
   }
 
   const id = `virus-${state.nextEntityNumber}`;
+  const mapBalance = getRuntimeMapBalance(state);
   state.nextEntityNumber += 1;
 
   const virus: VirusEntity = {
@@ -26,7 +28,7 @@ export function spawnVirus(
     health: definition.maxHealth,
     maxHealth: definition.maxHealth,
     radius: definition.radius,
-    movementSpeed: definition.movementSpeed,
+    movementSpeed: definition.movementSpeed * mapBalance.pathogenSpeedMultiplier,
     infectionRange: balanceValues.virus.infectionRange,
     antigenValue: definition.antigenValue,
     debrisDropChance: definition.debrisDropChance,

@@ -73,11 +73,13 @@ export function getMissionRank(score: number): "C" | "B" | "A" | "S" {
 }
 
 export function isAllWavesCleared(state: GameState): boolean {
-  const mission = missionDefinitions[state.missionId];
-  const allWavesSpawned = state.waves.currentWaveIndex >= mission.waves.length;
-  const pathogensRemaining = Object.values(state.entities).some(isHostilePathogen);
+  return areAllWavesSpawned(state) && !areHostilePathogensRemaining(state);
+}
 
-  return allWavesSpawned && !pathogensRemaining;
+export function areAllWavesSpawned(state: GameState): boolean {
+  const mission = missionDefinitions[state.missionId];
+
+  return state.waves.currentWaveIndex >= mission.waves.length;
 }
 
 export function getFirstMissionId(): MissionId {
@@ -90,6 +92,10 @@ function isObjectiveComplete(
 ): boolean {
   if (objective.kind === "clearThreats") {
     return isAllWavesCleared(state);
+  }
+
+  if (objective.kind === "allWavesSpawned") {
+    return areAllWavesSpawned(state);
   }
 
   if (objective.kind === "tissueHealthAtLeast") {
@@ -122,6 +128,10 @@ function isObjectiveComplete(
     return (state.missionStats.usedAbilities[objective.abilityId] ?? 0) > 0;
   }
 
+  if (objective.kind === "pathogenKillsAtLeast") {
+    return getPathogenKillCount(state, objective.pathogenTypeId) >= objective.value;
+  }
+
   return false;
 }
 
@@ -131,6 +141,13 @@ function getObjectiveProgressLabel(
 ): string {
   if (objective.kind === "clearThreats") {
     return isAllWavesCleared(state) ? "termine" : "en cours";
+  }
+
+  if (objective.kind === "allWavesSpawned") {
+    const mission = missionDefinitions[state.missionId];
+    const spawnedWaves = Math.min(state.waves.currentWaveIndex, mission.waves.length);
+
+    return `${spawnedWaves}/${mission.waves.length}`;
   }
 
   if (objective.kind === "tissueHealthAtLeast") {
@@ -161,9 +178,24 @@ function getObjectiveProgressLabel(
     return `${state.missionStats.usedAbilities[objective.abilityId] ?? 0}/1`;
   }
 
+  if (objective.kind === "pathogenKillsAtLeast") {
+    return `${getPathogenKillCount(state, objective.pathogenTypeId)}/${objective.value}`;
+  }
+
   return "";
 }
 
 function getInfectedCellCount(state: GameState): number {
   return state.tissueCells.filter((cell) => cell.status === "infected").length;
+}
+
+function areHostilePathogensRemaining(state: GameState): boolean {
+  return Object.values(state.entities).some(isHostilePathogen);
+}
+
+function getPathogenKillCount(
+  state: GameState,
+  pathogenTypeId: string,
+): number {
+  return state.missionStats.pathogenKills[pathogenTypeId] ?? 0;
 }

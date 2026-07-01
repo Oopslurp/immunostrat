@@ -690,9 +690,75 @@ export function getPathogenSpawnPositionForWave(
       ? spawnZone.radius * 1.45
       : Math.min(spawnZone.radius * 0.72, 24 + (spawnNumber % 5) * 12);
 
-  return {
+  const position = {
     x: spawnZone.position.x + Math.cos(angle) * radius,
     y: spawnZone.position.y + Math.sin(angle) * radius,
+  };
+
+  return pushCampaignSpawnAwayFromTissue(position, tacticalMap, pathogenFamily);
+}
+
+function pushCampaignSpawnAwayFromTissue(
+  position: MapPoint,
+  tacticalMap: TacticalMapDefinition,
+  pathogenFamily: PathogenSpawnZoneDefinition["pathogenFamilies"][number],
+): MapPoint {
+  if (tacticalMap.generationSummary?.mode !== "campaign") {
+    return position;
+  }
+
+  const focusPoints = [
+    ...tacticalMap.civilianCellZones.map((zoneDefinition) => ({
+      position: zoneDefinition.position,
+      radius: zoneDefinition.radius,
+    })),
+    ...tacticalMap.combatSites.map((site) => ({
+      position: site.position,
+      radius: site.radius,
+    })),
+  ];
+  const nearestFocus = focusPoints
+    .map((focus) => ({
+      ...focus,
+      distance: pointDistance(position, focus.position),
+    }))
+    .sort((a, b) => a.distance - b.distance)[0];
+
+  if (!nearestFocus) {
+    return clampPointToMap(position, tacticalMap, 80);
+  }
+
+  const desiredDistance =
+    (pathogenFamily === "virus" ? 420 : pathogenFamily === "bacterium" ? 330 : 370) +
+    nearestFocus.radius * 0.35;
+
+  if (nearestFocus.distance >= desiredDistance) {
+    return clampPointToMap(position, tacticalMap, 80);
+  }
+
+  const fallbackX = position.x >= tacticalMap.worldWidth / 2 ? 1 : -1;
+  const dx = position.x - nearestFocus.position.x || fallbackX;
+  const dy = position.y - nearestFocus.position.y || 0.5;
+  const length = Math.sqrt(dx * dx + dy * dy) || 1;
+
+  return clampPointToMap(
+    {
+      x: nearestFocus.position.x + (dx / length) * desiredDistance,
+      y: nearestFocus.position.y + (dy / length) * desiredDistance,
+    },
+    tacticalMap,
+    80,
+  );
+}
+
+function clampPointToMap(
+  position: MapPoint,
+  tacticalMap: TacticalMapDefinition,
+  padding: number,
+): MapPoint {
+  return {
+    x: Math.max(padding, Math.min(tacticalMap.worldWidth - padding, position.x)),
+    y: Math.max(padding, Math.min(tacticalMap.worldHeight - padding, position.y)),
   };
 }
 
