@@ -1,5 +1,6 @@
 import type { MissionWaveDefinition } from "./missions";
 import type { PathogenTypeId } from "./pathogens";
+import type { TacticalMapId } from "./tacticalMaps";
 
 export type InfiniteDifficulty = "normal" | "hard" | "nightmare";
 
@@ -41,6 +42,8 @@ export type InfiniteRunInfo = {
   nextPhaseAtCycle: number | null;
   activeMutators: InfiniteMutatorDefinition[];
   maxActivePathogens: number;
+  tacticalMapSeed?: string;
+  tacticalMapTemplateId?: TacticalMapId;
 };
 
 export type InfiniteBestScore = {
@@ -50,6 +53,8 @@ export type InfiniteBestScore = {
   phase: number;
   difficulty: InfiniteDifficulty;
   completedAt: string;
+  tacticalMapSeed?: string;
+  tacticalMapTemplateId?: TacticalMapId;
 };
 
 export const infiniteDifficultySettings: Record<

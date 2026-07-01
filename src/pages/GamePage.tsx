@@ -329,7 +329,9 @@ export function GamePage({
         </div>
       </header>
 
-      <section className="mission-briefing-panel">
+      <details className="mission-briefing-panel" open>
+        <summary>Briefing / objectifs</summary>
+        <div className="mission-briefing-content">
         <div>
           <strong>Briefing</strong>
           {mission.briefing.map((line) => (
@@ -378,8 +380,17 @@ export function GamePage({
               .
             </p>
           ) : null}
+          {snapshot?.tacticalMapSummary ? (
+            <p>
+              Carte seedee: {snapshot.tacticalMapSummary.templateId} / seed{" "}
+              {snapshot.tacticalMapSummary.seed} / sites{" "}
+              {snapshot.tacticalMapSummary.numberOfCombatSites} /{" "}
+              {snapshot.tacticalMapSummary.validationStatus}
+            </p>
+          ) : null}
         </div>
-      </section>
+        </div>
+      </details>
 
       <section className="game-frame" aria-label="Canvas du jeu Immunostrat">
         <PhaserGame bridge={bridge} missionId={missionId} preparation={preparation} />

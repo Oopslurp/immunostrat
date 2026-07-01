@@ -1,5 +1,6 @@
 import type { PathogenTypeId } from "../data/pathogens";
 import type { BodyBattleMissionId } from "../data/missions";
+import { createRunSeed, createSeededRandom } from "../data/tacticalMapSeed";
 import { bodyRegionDefinitions, bodyRegionOrder } from "./bodyRegions";
 import {
   createDefaultBodyMapState,
@@ -225,7 +226,7 @@ const crisisTemplates: CrisisTemplate[] = [
 
 export function createGeneratedBodyMapState(
   difficulty: BodyMapDifficulty = "normal",
-  seed = createSeed(),
+  seed = createRunSeed("normal"),
 ): BodyMapState {
   const random = createSeededRandom(seed);
   const config = getDifficultyConfig(difficulty);
@@ -339,27 +340,4 @@ function isDifficultyAllowed(
 
 function randomInRange(range: [number, number], random: () => number): number {
   return Math.round(range[0] + (range[1] - range[0]) * random());
-}
-
-function createSeed(): string {
-  return `normal-${Date.now().toString(36)}-${Math.floor(Math.random() * 10000)
-    .toString(36)
-    .padStart(3, "0")}`;
-}
-
-function createSeededRandom(seed: string): () => number {
-  let hash = 1779033703 ^ seed.length;
-
-  for (let index = 0; index < seed.length; index += 1) {
-    hash = Math.imul(hash ^ seed.charCodeAt(index), 3432918353);
-    hash = (hash << 13) | (hash >>> 19);
-  }
-
-  return () => {
-    hash = Math.imul(hash ^ (hash >>> 16), 2246822507);
-    hash = Math.imul(hash ^ (hash >>> 13), 3266489909);
-    hash ^= hash >>> 16;
-
-    return (hash >>> 0) / 4294967296;
-  };
 }

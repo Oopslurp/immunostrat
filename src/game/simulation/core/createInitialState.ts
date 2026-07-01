@@ -6,6 +6,12 @@ import {
   type MissionMapDefinition,
   type MissionPreparation,
 } from "../../data/missions";
+import {
+  getEntryPointForUnitFromTacticalMap,
+  getTissueCellPositionsForMissionMap,
+  type TacticalMapDefinition,
+} from "../../data/tacticalMaps";
+import { createRuntimeTacticalMap } from "../../data/runtimeTacticalMap";
 import { unitDefinitions, type UnitTypeId } from "../../data/units";
 import type { Vector2 } from "../../types/shared";
 import type { ImmuneUnitEntity } from "../entities";
@@ -16,6 +22,7 @@ export function createInitialState(
   preparation: MissionPreparation = {},
 ): GameState {
   const mission = missionDefinitions[missionId];
+  const tacticalMap = createRuntimeTacticalMap(missionId, preparation);
   const vaccination = mission.vaccinationOptions?.find(
     (option) => option.id === preparation.vaccinationId,
   );
@@ -42,6 +49,8 @@ export function createInitialState(
     ...(preparation.globalReinforcements ?? []),
   ];
   const entities: GameState["entities"] = {};
+  const tissueCellPositions =
+    getTissueCellPositionsForMissionMap(tacticalMap) ?? mission.map.tissueCells;
   let nextEntityNumber = 1;
 
   for (const startingUnit of startingUnits) {
@@ -52,7 +61,7 @@ export function createInitialState(
       entities[id] = createImmuneUnit(
         id,
         unitTypeId,
-        getSpawnPosition(mission.map, unitTypeId, index),
+        getSpawnPosition(tacticalMap, mission.map, unitTypeId, index),
         1100 + nextEntityNumber * 90,
       );
     }
@@ -61,13 +70,14 @@ export function createInitialState(
   return {
     missionId,
     preparation,
+    tacticalMap,
     elapsedMs: 0,
     status: "running",
     tissue: {
       health: balanceValues.startingTissueHealth,
       maxHealth: balanceValues.startingTissueHealth,
     },
-    tissueCells: mission.map.tissueCells.map((position, index) => {
+    tissueCells: tissueCellPositions.map((position, index) => {
       const infected = index < (mission.initialInfectedTissueCells ?? 0);
 
       return {
@@ -195,26 +205,40 @@ function offsetPosition(origin: Vector2, index: number, spacing: number): Vector
 }
 
 function getSpawnPosition(
+  tacticalMap: TacticalMapDefinition,
   map: MissionMapDefinition,
   unitTypeId: UnitTypeId,
   index: number,
 ): Vector2 {
-  return offsetPosition(getEntryPointForUnit(map, unitTypeId), index, 32);
+  return offsetPosition(getEntryPointForUnit(tacticalMap, map, unitTypeId), index, 32);
 }
 
 function getEntryPointForUnit(
+  tacticalMap: TacticalMapDefinition,
   map: MissionMapDefinition,
   unitTypeId: UnitTypeId,
 ): Vector2 {
   const entryPoints = map.immuneEntryPoints;
 
   if (unitTypeId === "dendriticCell") {
-    return entryPoints.find((entry) => entry.kind === "lymph")?.position ?? map.lymphExit;
+    return (
+      getEntryPointForUnitFromTacticalMap(tacticalMap, unitTypeId) ??
+      entryPoints.find((entry) => entry.kind === "lymph")?.position ??
+      map.lymphExit
+    );
   }
 
   if (unitTypeId === "neutrophil" || unitTypeId === "nkCell" || unitTypeId === "cytotoxicT") {
-    return entryPoints.find((entry) => entry.kind === "diapedesis")?.position ?? unitDefinitions[unitTypeId].spawnPosition;
+    return (
+      getEntryPointForUnitFromTacticalMap(tacticalMap, unitTypeId) ??
+      entryPoints.find((entry) => entry.kind === "diapedesis")?.position ??
+      unitDefinitions[unitTypeId].spawnPosition
+    );
   }
 
-  return entryPoints.find((entry) => entry.kind === "vessel")?.position ?? map.macrophageSpawn;
+  return (
+    getEntryPointForUnitFromTacticalMap(tacticalMap, unitTypeId) ??
+    entryPoints.find((entry) => entry.kind === "vessel")?.position ??
+    map.macrophageSpawn
+  );
 }

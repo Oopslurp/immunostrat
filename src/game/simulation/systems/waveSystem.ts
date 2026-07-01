@@ -7,6 +7,7 @@ import {
 } from "../../data/infiniteMode";
 import { missionDefinitions } from "../../data/missions";
 import { pathogenDefinitions } from "../../data/pathogens";
+import { getPathogenSpawnPositionForWave } from "../../data/tacticalMaps";
 import type { GameState } from "../core/GameState";
 import {
   isHostilePathogen,
@@ -59,16 +60,26 @@ export function applyWaveSystem(state: GameState): void {
   const spawnNumber = state.waves.spawnedInCurrentWave;
   const entryZone = mission.map.bacteriaEntryZone;
   const yRange = entryZone.yMax - entryZone.yMin;
-  const y =
-    entryZone.yMin +
-    ((spawnNumber * balanceValues.bacteriaSpawnYStep +
-      state.waves.currentWaveIndex * balanceValues.bacteriaSpawnWaveOffset) %
-      yRange);
+  const legacyPosition = {
+    x: entryZone.x,
+    y:
+      entryZone.yMin +
+      ((spawnNumber * balanceValues.bacteriaSpawnYStep +
+        state.waves.currentWaveIndex * balanceValues.bacteriaSpawnWaveOffset) %
+        yRange),
+  };
+  const spawnPosition =
+    getPathogenSpawnPositionForWave(
+      state.tacticalMap,
+      wave.pathogenTypeId,
+      state.waves.currentWaveIndex,
+      spawnNumber,
+    ) ?? legacyPosition;
   state.waves.spawnedInCurrentWave += 1;
   if (pathogenDefinitions[wave.pathogenTypeId].pathogenClass === "virus") {
     applyInfiniteSpawnModifiers(
       state,
-      spawnVirus(state, wave.pathogenTypeId, { x: entryZone.x, y }),
+      spawnVirus(state, wave.pathogenTypeId, spawnPosition),
     );
     return;
   }
@@ -76,14 +87,14 @@ export function applyWaveSystem(state: GameState): void {
   if (pathogenDefinitions[wave.pathogenTypeId].pathogenClass !== "bacterium") {
     applyInfiniteSpawnModifiers(
       state,
-      spawnAdvancedThreat(state, wave.pathogenTypeId, { x: entryZone.x, y }),
+      spawnAdvancedThreat(state, wave.pathogenTypeId, spawnPosition),
     );
     return;
   }
 
   applyInfiniteSpawnModifiers(
     state,
-    spawnBacterium(state, wave.pathogenTypeId, { x: entryZone.x, y }),
+    spawnBacterium(state, wave.pathogenTypeId, spawnPosition),
   );
 }
 

@@ -2,6 +2,8 @@ import type { CampaignProgress } from "../campaign/progress";
 import { balanceValues } from "../data/balance";
 import type { MissionPreparation, StartingUnitDefinition } from "../data/missions";
 import { pathogenDefinitions } from "../data/pathogens";
+import { deriveSeed } from "../data/tacticalMapSeed";
+import type { TacticalRegionType } from "../data/tacticalMaps";
 import { unitDefinitions, type UnitTypeId } from "../data/units";
 import {
   bodyRegionDefinitions,
@@ -269,6 +271,18 @@ export function prepareBodyBattle(
     reinforcements: toStartingUnits(region.assignedReinforcements),
     regionalNodeId: definition.regionalNodeId,
     regionalNodeActive: node.active,
+    tacticalMapSeed: deriveSeed(
+      state.seed,
+      regionId,
+      state.strategicTurn,
+      region.treatedCount ?? 0,
+      region.threat,
+      region.activeBattleMissionId ?? definition.linkedMissionId,
+    ),
+    tacticalMapTemplateId: definition.tacticalMapId,
+    tacticalRegionType: toTacticalRegionType(regionId),
+    tacticalThreatType: region.threat,
+    tacticalDifficulty: state.difficulty,
   };
 }
 
@@ -286,7 +300,28 @@ export function toMissionPreparation(
       antigenBonus: bodyPreparation.regionalNodeActive ? 4 : 0,
       cytokineBonus: bodyPreparation.regionalNodeActive ? 4 : 0,
     },
+    tacticalMapSeed: bodyPreparation.tacticalMapSeed,
+    tacticalMapTemplateId: bodyPreparation.tacticalMapTemplateId,
+    tacticalMapMode: "bodyBattle",
+    tacticalRegionType: bodyPreparation.tacticalRegionType,
+    tacticalThreatType: bodyPreparation.tacticalThreatType,
+    tacticalDifficulty: bodyPreparation.tacticalDifficulty,
   };
+}
+
+function toTacticalRegionType(regionId: BodyRegionId): TacticalRegionType {
+  const map: Record<BodyRegionId, TacticalRegionType> = {
+    skin: "skin",
+    lungs: "lungs",
+    intestine: "intestine",
+    blood: "blood",
+    lymphNodes: "lymphNodes",
+    spleen: "spleen",
+    boneMarrow: "boneMarrow",
+    liver: "liver",
+  };
+
+  return map[regionId];
 }
 
 export function applyBodyBattleOutcome(

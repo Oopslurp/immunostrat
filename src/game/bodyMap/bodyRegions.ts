@@ -26,6 +26,7 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     connections: ["blood", "lymphNodes"],
     regionalNodeId: "skinNode",
     linkedMissionId: "skinBacterialSkirmish",
+    tacticalMapId: "skin_multi_wound_template",
     preferredThreat: "bacterial",
     pedagogy:
       "La peau est une barriere. Une plaie peut laisser entrer des bacteries vers la lymphe puis le sang.",
@@ -50,6 +51,7 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     connections: ["blood", "lymphNodes"],
     regionalNodeId: "thoracicNode",
     linkedMissionId: "lungViralSpread",
+    tacticalMapId: "lung_branching_vessels_template",
     preferredThreat: "viral",
     pedagogy:
       "Les poumons exposent beaucoup de cellules aux virus respiratoires. Les interferons ralentissent la propagation.",
@@ -74,6 +76,7 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     connections: ["blood", "lymphNodes", "liver"],
     regionalNodeId: "gutNode",
     linkedMissionId: "intestineBacillusSwarm",
+    tacticalMapId: "intestine_clustered_sites_template",
     preferredThreat: "bacterial",
     pedagogy:
       "L'intestin concentre beaucoup de microbes. Le gameplay le simplifie en foyer bacterien dense.",
@@ -98,6 +101,7 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     connections: ["skin", "lungs", "intestine", "spleen", "boneMarrow", "liver"],
     regionalNodeId: "bloodNode",
     linkedMissionId: "bloodMixedAlert",
+    tacticalMapId: "blood_vessel_crossroads_template",
     preferredThreat: "mixed",
     pedagogy:
       "Le sang transporte les cellules immunitaires, mais il peut aussi accelerer une propagation systemique.",
@@ -122,6 +126,7 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     connections: ["skin", "lungs", "intestine", "blood", "spleen"],
     regionalNodeId: "bloodNode",
     linkedMissionId: "lymphNodeSignalResponse",
+    tacticalMapId: "lymph_node_signal_template",
     preferredThreat: "mixed",
     pedagogy:
       "La lymphe transporte les informations antigeniques vers les ganglions regionaux.",
@@ -146,6 +151,7 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     connections: ["blood", "lymphNodes", "liver"],
     regionalNodeId: "bloodNode",
     linkedMissionId: "spleenBloodFiltering",
+    tacticalMapId: "blood_vessel_crossroads_template",
     preferredThreat: "mixed",
     pedagogy:
       "La rate surveille le sang. Dans V7, elle sert surtout de relais strategique immunitaire.",
@@ -170,6 +176,7 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     connections: ["blood"],
     regionalNodeId: "bloodNode",
     linkedMissionId: "boneMarrowReinforcementPressure",
+    tacticalMapId: "blood_vessel_crossroads_template",
     preferredThreat: "none",
     pedagogy:
       "La moelle osseuse produit des cellules immunitaires. Si elle reste saine, les renforts restent accessibles.",
@@ -194,6 +201,7 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     connections: ["blood", "intestine", "spleen"],
     regionalNodeId: "bloodNode",
     linkedMissionId: "liverAbnormalGrowth",
+    tacticalMapId: "blood_vessel_crossroads_template",
     preferredThreat: "cancer",
     pedagogy:
       "Le foie est une zone de stabilisation simplifiee. Une infection systemique le met sous pression.",

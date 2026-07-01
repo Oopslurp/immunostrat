@@ -1,5 +1,10 @@
 import { balanceValues } from "../../data/balance";
 import { missionDefinitions, type MissionMapDefinition } from "../../data/missions";
+import {
+  getEntryPointForUnitFromTacticalMap,
+  getLymphExitForMissionMap,
+  type TacticalMapDefinition,
+} from "../../data/tacticalMaps";
 import { treatmentDefinitions, type TreatmentId } from "../../data/treatments";
 import { unitDefinitions, type UnitTypeId } from "../../data/units";
 import { distance, type EntityId, type Vector2 } from "../../types/shared";
@@ -216,7 +221,10 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
   if (command.type === "orderReturnToLymphNode") {
     const next = cloneState(state);
     const mission = missionDefinitions[next.missionId];
-    const lymphTarget = mission.map.lymphExit ?? mission.map.lymphNode;
+    const lymphTarget =
+      getLymphExitForMissionMap(next.tacticalMap) ??
+      mission.map.lymphExit ??
+      mission.map.lymphNode;
 
     for (const entityId of next.selectedEntityIds) {
       const selected = next.entities[entityId];
@@ -267,7 +275,11 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
       const selected = next.entities[entityId];
 
       if (selected && isImmuneUnit(selected)) {
-        const target = getEntryPointForUnit(missionDefinitions[next.missionId].map, selected.unitTypeId);
+        const target = getEntryPointForUnit(
+          next.tacticalMap,
+          missionDefinitions[next.missionId].map,
+          selected.unitTypeId,
+        );
 
         selected.targetPosition = { ...target };
         selected.orderAnchor = { ...target };
@@ -340,7 +352,7 @@ function produceImmuneUnit(state: GameState, unitTypeId: UnitTypeId): GameState 
     0,
     next.resources.cytokines - definition.cytokineCost,
   );
-  const entryPoint = getEntryPointForUnit(mission.map, unitTypeId);
+  const entryPoint = getEntryPointForUnit(next.tacticalMap, mission.map, unitTypeId);
 
   next.entities[id] = {
     id,
@@ -443,7 +455,11 @@ function producePlasmocyte(state: GameState): GameState {
     0,
     next.resources.antigens - adaptive.plasmocyteAntigenCost,
   );
-  const entryPoint = getEntryPointForUnit(missionDefinitions[state.missionId].map, "plasmocyte");
+  const entryPoint = getEntryPointForUnit(
+    next.tacticalMap,
+    missionDefinitions[state.missionId].map,
+    "plasmocyte",
+  );
 
   next.entities[id] = {
     id,
@@ -479,20 +495,33 @@ function producePlasmocyte(state: GameState): GameState {
 }
 
 function getEntryPointForUnit(
+  tacticalMap: TacticalMapDefinition,
   map: MissionMapDefinition,
   unitTypeId: UnitTypeId,
 ): Vector2 {
   const entryPoints = map.immuneEntryPoints;
 
   if (unitTypeId === "dendriticCell") {
-    return entryPoints.find((entry) => entry.kind === "lymph")?.position ?? map.lymphExit;
+    return (
+      getEntryPointForUnitFromTacticalMap(tacticalMap, unitTypeId) ??
+      entryPoints.find((entry) => entry.kind === "lymph")?.position ??
+      map.lymphExit
+    );
   }
 
   if (unitTypeId === "neutrophil" || unitTypeId === "nkCell" || unitTypeId === "cytotoxicT") {
-    return entryPoints.find((entry) => entry.kind === "diapedesis")?.position ?? unitDefinitions[unitTypeId].spawnPosition;
+    return (
+      getEntryPointForUnitFromTacticalMap(tacticalMap, unitTypeId) ??
+      entryPoints.find((entry) => entry.kind === "diapedesis")?.position ??
+      unitDefinitions[unitTypeId].spawnPosition
+    );
   }
 
-  return entryPoints.find((entry) => entry.kind === "vessel")?.position ?? map.macrophageSpawn;
+  return (
+    getEntryPointForUnitFromTacticalMap(tacticalMap, unitTypeId) ??
+    entryPoints.find((entry) => entry.kind === "vessel")?.position ??
+    map.macrophageSpawn
+  );
 }
 
 function researchBacterialAnalysis(state: GameState): GameState {
@@ -588,6 +617,7 @@ function useMassiveNeutralization(state: GameState): GameState {
 function useAntiviralSignal(state: GameState): GameState {
   const antiviral = balanceValues.antiviral;
   const mission = missionDefinitions[state.missionId];
+  const focusPosition = getMissionFocusPosition(state);
 
   if (
     !mission.unlockedAbilities.includes("interferons") ||
@@ -604,7 +634,7 @@ function useAntiviralSignal(state: GameState): GameState {
     next.resources.cytokines - antiviral.cytokineCost,
   );
   next.antiviral.activeMs = antiviral.durationMs;
-  next.antiviral.position = { ...mission.map.tissueCore };
+  next.antiviral.position = { ...focusPosition };
   next.antiviral.radius = antiviral.radius;
   next.productionCooldowns.antiviralSignalMs = antiviral.cooldownMs;
   next.inflammation.value = Math.min(
@@ -617,7 +647,7 @@ function useAntiviralSignal(state: GameState): GameState {
   for (const cell of next.tissueCells) {
     if (
       (cell.status === "healthy" || cell.status === "infected") &&
-      distance(cell.position, mission.map.tissueCore) <= antiviral.radius
+      distance(cell.position, focusPosition) <= antiviral.radius
     ) {
       cell.antiviralProtectedMs = balanceValues.tissueCells.antiviralProtectionMs;
       next.effects.push({
@@ -669,7 +699,7 @@ function useTreatment(state: GameState, treatmentId: TreatmentId): GameState {
 
   if (treatmentId === "antiviralDrug") {
     next.treatments.activeMs.antiviralDrug = treatment.durationMs;
-    addTreatmentEffect(next, mission.map.tissueCore, treatment.radius);
+    addTreatmentEffect(next, getMissionFocusPosition(next), treatment.radius);
   }
 
   if (treatmentId === "antiInflammatory") {
@@ -680,15 +710,15 @@ function useTreatment(state: GameState, treatmentId: TreatmentId): GameState {
       intensity: zone.intensity * 0.48,
       ttlMs: zone.ttlMs * 0.62,
     }));
-    addTreatmentEffect(next, mission.map.tissueCore, 220);
+    addTreatmentEffect(next, getMissionFocusPosition(next), 220);
   }
 
   return next;
 }
 
 function applyAntibiotic(state: GameState): void {
-  const mission = missionDefinitions[state.missionId];
   const treatment = treatmentDefinitions.antibiotic;
+  const focusPosition = getMissionFocusPosition(state);
 
   for (const entity of Object.values(state.entities)) {
     const isAntibioticTarget =
@@ -699,7 +729,7 @@ function applyAntibiotic(state: GameState): void {
       continue;
     }
 
-    if (distance(entity.position, mission.map.tissueCore) > treatment.radius) {
+    if (distance(entity.position, focusPosition) > treatment.radius) {
       continue;
     }
 
@@ -718,6 +748,13 @@ function applyAntibiotic(state: GameState): void {
     entity.movementSpeed *= biofilmProtected ? 0.86 : 0.72;
     addTreatmentEffect(state, entity.position, entity.radius + 22);
   }
+}
+
+function getMissionFocusPosition(state: GameState): Vector2 {
+  return (
+    state.tacticalMap.combatSites[0]?.position ??
+    missionDefinitions[state.missionId].map.tissueCore
+  );
 }
 
 function addTreatmentEffect(

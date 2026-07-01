@@ -5,6 +5,7 @@ import type { PathogenTypeId } from "../data/pathogens";
 import type { MissionId } from "../data/missions";
 import type { TreatmentId } from "../data/treatments";
 import type { InfiniteRunInfo } from "../data/infiniteMode";
+import type { TacticalMapGenerationSummary } from "../data/tacticalMaps";
 import type { ObjectiveStatus } from "../campaign/objectives";
 
 export type ThreatSummaryItem = {
@@ -48,6 +49,7 @@ export type GameSnapshot = {
   destroyedTissueCells: number;
   threatSummary: ThreatSummaryItem[];
   selectedEntityIds: GameState["selectedEntityIds"];
+  tacticalMapSummary?: TacticalMapGenerationSummary;
   infinite?: InfiniteRunInfo;
 };
 

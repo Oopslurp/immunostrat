@@ -68,6 +68,8 @@ export function recordInfiniteRun(
         phase: runInfo.phase.id,
         difficulty: runInfo.difficulty,
         completedAt: new Date().toISOString(),
+        tacticalMapSeed: runInfo.tacticalMapSeed,
+        tacticalMapTemplateId: runInfo.tacticalMapTemplateId,
       },
     },
   });
@@ -119,5 +121,7 @@ function normalizeBest(
     phase: Math.max(1, best.phase),
     difficulty: best.difficulty,
     completedAt: best.completedAt,
+    tacticalMapSeed: best.tacticalMapSeed,
+    tacticalMapTemplateId: best.tacticalMapTemplateId,
   };
 }

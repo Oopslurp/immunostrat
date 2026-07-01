@@ -24,6 +24,7 @@ import type {
   BodyRegionId,
 } from "./game/bodyMap/bodyMapTypes";
 import type { InfiniteDifficulty } from "./game/data/infiniteMode";
+import { createRunSeed } from "./game/data/tacticalMapSeed";
 import {
   completeMission,
   loadCampaignProgress,
@@ -179,10 +180,18 @@ export default function App() {
   };
 
   const startInfiniteRun = (difficulty: InfiniteDifficulty) => {
+    const tacticalMapSeed = createRunSeed("infinite");
+
     setSelectedMissionId("infiniteSurvivalV8");
     setSelectedPreparation({
       infiniteDifficulty: difficulty,
       memoryProfiles: progress.immuneMemory.knownProfiles,
+      tacticalMapSeed,
+      tacticalMapTemplateId: "infinite_large_tissue_template",
+      tacticalMapMode: "infinite",
+      tacticalRegionType: "mixed",
+      tacticalThreatType: "mixed",
+      tacticalDifficulty: difficulty === "normal" ? "normal" : "hard",
     });
     setBodyBattleRegionId(null);
     setIsInfiniteRun(true);

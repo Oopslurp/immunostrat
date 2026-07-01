@@ -20,6 +20,10 @@ import {
   type MissionPreparation,
 } from "../../data/missions";
 import { pathogenDefinitions, type PathogenTypeId } from "../../data/pathogens";
+import {
+  getLymphExitForMissionMap,
+  type TacticalMapDefinition,
+} from "../../data/tacticalMaps";
 import type { GameBridge, GameSnapshot } from "../GameBridge";
 import { Simulation } from "../../simulation/core/Simulation";
 import type { GameCommand } from "../../simulation/core/commands";
@@ -70,10 +74,16 @@ export class MissionScene extends Phaser.Scene {
   }
 
   create() {
-    const mission = missionDefinitions[this.simulation.getState().missionId];
-    const map = mission.map;
+    const state = this.simulation.getState();
+    const mission = missionDefinitions[state.missionId];
+    const map = state.tacticalMap;
 
-    this.cameras.main.setBounds(0, 0, map.width, map.height);
+    this.cameras.main.setBounds(
+      map.cameraBounds.x,
+      map.cameraBounds.y,
+      map.cameraBounds.width,
+      map.cameraBounds.height,
+    );
     this.input.mouse?.disableContextMenu();
     this.dynamicLayer = this.add.graphics();
 
@@ -314,6 +324,13 @@ export class MissionScene extends Phaser.Scene {
       return;
     }
 
+    const combatSitePosition = this.findCombatSiteAnchorAtPosition(state, position);
+
+    if (combatSitePosition) {
+      this.handleCommand({ type: "orderMove", position: combatSitePosition });
+      return;
+    }
+
     this.handleCommand({ type: "orderMove", position });
   }
 
@@ -431,9 +448,27 @@ export class MissionScene extends Phaser.Scene {
     position: { x: number; y: number },
   ): boolean {
     const missionMap = missionDefinitions[state.missionId].map;
-    const lymphNode = missionMap.lymphExit ?? missionMap.lymphNode;
+    const tacticalExit = getLymphExitForMissionMap(state.tacticalMap);
+    const lymphNode = tacticalExit
+      ? { ...tacticalExit, radius: missionMap.lymphExit.radius }
+      : missionMap.lymphExit ?? missionMap.lymphNode;
 
     return distanceSquared(lymphNode, position) <= lymphNode.radius * lymphNode.radius;
+  }
+
+  private findCombatSiteAnchorAtPosition(
+    state: GameState,
+    position: { x: number; y: number },
+  ): { x: number; y: number } | null {
+    const tacticalMap = state.tacticalMap;
+
+    for (const site of tacticalMap.combatSites) {
+      if (distanceSquared(site.position, position) <= site.radius * site.radius) {
+        return { ...site.position };
+      }
+    }
+
+    return null;
   }
 
   private createCameraKeys(): CameraKeys | undefined {
@@ -487,10 +522,10 @@ export class MissionScene extends Phaser.Scene {
 
   private setCameraScroll(scrollX: number, scrollY: number): void {
     const state = this.simulation.getState();
-    const map = missionDefinitions[state.missionId].map;
+    const map = state.tacticalMap;
     const camera = this.cameras.main;
-    const maxX = Math.max(0, map.width - camera.width / camera.zoom);
-    const maxY = Math.max(0, map.height - camera.height / camera.zoom);
+    const maxX = Math.max(0, map.worldWidth - camera.width / camera.zoom);
+    const maxY = Math.max(0, map.worldHeight - camera.height / camera.zoom);
 
     camera.setScroll(
       Phaser.Math.Clamp(scrollX, 0, maxX),
@@ -520,6 +555,7 @@ export class MissionScene extends Phaser.Scene {
 
   private drawMap(graphics: Phaser.GameObjects.Graphics, state: GameState) {
     const mission = missionDefinitions[state.missionId];
+    const tacticalMap = state.tacticalMap;
     const map = mission.map;
     const playArea = map.playArea;
     const grid = map.grid;
@@ -528,7 +564,7 @@ export class MissionScene extends Phaser.Scene {
     const entryVisual = balanceValues.bacteriaEntryVisual;
 
     graphics.fillStyle(0x101820, 1);
-    graphics.fillRect(0, 0, map.width, map.height);
+    graphics.fillRect(0, 0, tacticalMap.worldWidth, tacticalMap.worldHeight);
 
     graphics.fillStyle(0x203141, 1);
     graphics.fillRoundedRect(
@@ -578,35 +614,172 @@ export class MissionScene extends Phaser.Scene {
       entryVisual.radius,
     );
 
-    graphics.fillStyle(0xffc76b, 0.72);
-    graphics.fillCircle(mission.map.macrophageSpawn.x, mission.map.macrophageSpawn.y, 10);
+    const defaultEntry =
+      tacticalMap.reinforcementEntryPoints[0] ?? tacticalMap.diapedesisPoints[0];
+    const defaultExit = tacticalMap.lymphaticExits[0];
 
-    graphics.fillStyle(0xb69cff, 0.22);
-    graphics.fillCircle(map.lymphNode.x, map.lymphNode.y, map.lymphNode.radius);
-    graphics.lineStyle(4, 0xb69cff, 0.65);
-    graphics.strokeCircle(map.lymphNode.x, map.lymphNode.y, map.lymphNode.radius);
+    if (defaultEntry) {
+      graphics.fillStyle(0xffc76b, 0.72);
+      graphics.fillCircle(defaultEntry.position.x, defaultEntry.position.y, 10);
+    }
 
-    graphics.fillStyle(0x62d3c8, 0.16);
-    graphics.fillCircle(map.lymphExit.x, map.lymphExit.y, map.lymphExit.radius);
-    graphics.lineStyle(3, 0x62d3c8, 0.58);
-    graphics.strokeCircle(map.lymphExit.x, map.lymphExit.y, map.lymphExit.radius);
+    if (defaultExit) {
+      graphics.fillStyle(0x62d3c8, 0.16);
+      graphics.fillCircle(defaultExit.position.x, defaultExit.position.y, defaultExit.radius);
+      graphics.lineStyle(3, 0x62d3c8, 0.58);
+      graphics.strokeCircle(defaultExit.position.x, defaultExit.position.y, defaultExit.radius);
+    }
+
+    this.drawTacticalMapTemplate(graphics, tacticalMap);
+  }
+
+  private drawTacticalMapTemplate(
+    graphics: Phaser.GameObjects.Graphics,
+    tacticalMap: TacticalMapDefinition,
+  ): void {
+    for (const zone of tacticalMap.tissueZones) {
+      const color =
+        zone.status === "infected"
+          ? 0x9fcf58
+          : zone.status === "inflamed"
+            ? 0xd7b75b
+            : zone.status === "fragile"
+              ? 0x78b96c
+              : 0x65b878;
+
+      this.drawTacticalShape(graphics, zone.shape, color, 0.14, 2, 0xceeaa2, 0.24);
+    }
+
+    for (const corridor of tacticalMap.corridors) {
+      this.drawPath(graphics, corridor.path, corridor.width, 0x54c875, 0.12);
+      this.drawPath(graphics, corridor.path, 3, 0x62d3c8, 0.3);
+    }
+
+    for (const vessel of tacticalMap.vesselPaths) {
+      this.drawPath(graphics, vessel.points, vessel.width, 0x79314d, 0.7);
+      this.drawPath(graphics, vessel.points, Math.max(4, vessel.width * 0.34), 0xd94f6a, 0.48);
+      this.drawPath(graphics, vessel.points, 2, 0xff9faf, 0.28);
+    }
+
+    for (const obstacle of tacticalMap.obstacles) {
+      this.drawTacticalShape(graphics, obstacle.shape, 0x071217, 0.24, 2, 0x9eb27f, 0.2);
+    }
+
+    for (const site of tacticalMap.combatSites) {
+      graphics.fillStyle(0xff7f33, 0.12);
+      graphics.fillCircle(site.position.x, site.position.y, site.radius);
+      graphics.lineStyle(4, site.initialStatus === "critical" ? 0xff4f5d : 0xff9f43, 0.62);
+      graphics.strokeCircle(site.position.x, site.position.y, site.radius);
+      graphics.fillStyle(0x9b243d, 0.78);
+      graphics.fillCircle(site.position.x, site.position.y, 18);
+      graphics.lineStyle(3, 0xffe18a, 0.84);
+      graphics.strokeCircle(site.position.x, site.position.y, 24);
+    }
+
+    for (const spawnZone of tacticalMap.pathogenSpawnZones) {
+      graphics.lineStyle(2, 0xff7f33, 0.2);
+      graphics.strokeCircle(spawnZone.position.x, spawnZone.position.y, spawnZone.radius);
+    }
+
+    for (const choke of tacticalMap.chokePoints) {
+      graphics.fillStyle(0xb69cff, 0.72);
+      graphics.fillRect(choke.position.x - 6, choke.position.y - 16, 12, 32);
+      graphics.fillRect(choke.position.x - 16, choke.position.y - 6, 32, 12);
+    }
+
+    for (const entryPoint of tacticalMap.diapedesisPoints) {
+      graphics.fillStyle(0x3fa7ff, 0.2);
+      graphics.fillCircle(entryPoint.position.x, entryPoint.position.y, entryPoint.spawnRadius);
+      graphics.lineStyle(entryPoint.isDefault ? 4 : 2, 0x8bd8ff, 0.82);
+      graphics.strokeCircle(entryPoint.position.x, entryPoint.position.y, entryPoint.spawnRadius);
+      graphics.fillStyle(0x8bd8ff, 0.9);
+      graphics.fillCircle(entryPoint.position.x, entryPoint.position.y, 7);
+    }
+
+    for (const exit of tacticalMap.lymphaticExits) {
+      graphics.fillStyle(0xf8d84a, 0.18);
+      graphics.fillCircle(exit.position.x, exit.position.y, exit.radius + 8);
+      graphics.lineStyle(4, 0xf8d84a, 0.8);
+      graphics.strokeCircle(exit.position.x, exit.position.y, exit.radius);
+      graphics.lineStyle(2, 0x99e27b, 0.58);
+      graphics.strokeCircle(exit.position.x, exit.position.y, exit.radius + 12);
+    }
+  }
+
+  private drawTacticalShape(
+    graphics: Phaser.GameObjects.Graphics,
+    shape: TacticalMapDefinition["tissueZones"][number]["shape"],
+    fillColor: number,
+    fillAlpha: number,
+    strokeWidth: number,
+    strokeColor: number,
+    strokeAlpha: number,
+  ): void {
+    graphics.fillStyle(fillColor, fillAlpha);
+    graphics.lineStyle(strokeWidth, strokeColor, strokeAlpha);
+
+    if (shape.kind === "circle") {
+      graphics.fillCircle(shape.position.x, shape.position.y, shape.radius);
+      graphics.strokeCircle(shape.position.x, shape.position.y, shape.radius);
+      return;
+    }
+
+    graphics.beginPath();
+    graphics.moveTo(shape.points[0].x, shape.points[0].y);
+    for (const point of shape.points.slice(1)) {
+      graphics.lineTo(point.x, point.y);
+    }
+    graphics.closePath();
+    graphics.fillPath();
+    graphics.strokePath();
+  }
+
+  private drawPath(
+    graphics: Phaser.GameObjects.Graphics,
+    points: Array<{ x: number; y: number }>,
+    width: number,
+    color: number,
+    alpha: number,
+  ): void {
+    if (points.length < 2) {
+      return;
+    }
+
+    graphics.lineStyle(width, color, alpha);
+    for (let index = 1; index < points.length; index += 1) {
+      const previous = points[index - 1];
+      const current = points[index];
+
+      graphics.lineBetween(previous.x, previous.y, current.x, current.y);
+    }
   }
 
   private drawEntryPoints(graphics: Phaser.GameObjects.Graphics, state: GameState) {
-    const mission = missionDefinitions[state.missionId];
+    const seen = new Set<string>();
+    const entryPoints = [
+      ...state.tacticalMap.reinforcementEntryPoints,
+      ...state.tacticalMap.diapedesisPoints,
+    ].filter((entryPoint) => {
+      if (seen.has(entryPoint.id)) {
+        return false;
+      }
 
-    for (const entryPoint of mission.map.immuneEntryPoints) {
-      const color =
-        entryPoint.kind === "vessel"
-          ? 0xffc76b
-          : entryPoint.kind === "diapedesis"
-            ? 0x62d3c8
-            : 0xb69cff;
+      seen.add(entryPoint.id);
+
+      return true;
+    });
+
+    for (const entryPoint of entryPoints) {
+      const color = entryPoint.allowedUnitTypes?.includes("dendriticCell")
+        ? 0xb69cff
+        : entryPoint.allowedUnitTypes?.includes("neutrophil")
+          ? 0x62d3c8
+          : 0xffc76b;
 
       graphics.fillStyle(color, 0.15);
-      graphics.fillCircle(entryPoint.position.x, entryPoint.position.y, entryPoint.radius);
+      graphics.fillCircle(entryPoint.position.x, entryPoint.position.y, entryPoint.spawnRadius);
       graphics.lineStyle(2, color, 0.62);
-      graphics.strokeCircle(entryPoint.position.x, entryPoint.position.y, entryPoint.radius);
+      graphics.strokeCircle(entryPoint.position.x, entryPoint.position.y, entryPoint.spawnRadius);
     }
   }
 
@@ -1043,6 +1216,7 @@ export class MissionScene extends Phaser.Scene {
       ).length,
       threatSummary: getThreatSummary(state),
       selectedEntityIds: state.selectedEntityIds,
+      tacticalMapSummary: state.tacticalMap.generationSummary,
       infinite: getInfiniteRunInfo(state),
     };
 
@@ -1093,6 +1267,8 @@ function getInfiniteRunInfo(state: GameState): InfiniteRunInfo | undefined {
     activeMutators: getActiveInfiniteMutators(cycle, difficulty),
     maxActivePathogens:
       infiniteDifficultySettings[difficulty].maxActivePathogens,
+    tacticalMapSeed: state.tacticalMap.generationSummary.seed,
+    tacticalMapTemplateId: state.tacticalMap.generationSummary.templateId,
   };
 }
 

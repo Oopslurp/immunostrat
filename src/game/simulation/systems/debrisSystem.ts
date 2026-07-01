@@ -1,5 +1,6 @@
 import { balanceValues } from "../../data/balance";
 import { missionDefinitions } from "../../data/missions";
+import { getLymphExitForMissionMap } from "../../data/tacticalMaps";
 import { pathogenDefinitions } from "../../data/pathogens";
 import { distance, stableHash } from "../../types/shared";
 import type { GameState, PathogenDebris } from "../core/GameState";
@@ -116,7 +117,10 @@ function createAdvancedThreatDebris(
 
 function processDendriticCells(state: GameState): void {
   const mission = missionDefinitions[state.missionId];
-  const lymphNode = mission.map.lymphExit ?? mission.map.lymphNode;
+  const lymphNode =
+    getLymphExitForMissionMap(state.tacticalMap) ??
+    mission.map.lymphExit ??
+    mission.map.lymphNode;
   const adaptive = balanceValues.adaptive;
 
   for (const entity of Object.values(state.entities)) {

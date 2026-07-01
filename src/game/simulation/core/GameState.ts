@@ -1,4 +1,5 @@
 import type { MissionId, MissionPreparation } from "../../data/missions";
+import type { GeneratedTacticalMapDefinition } from "../../data/tacticalMapGenerator";
 import type { PathogenTypeId } from "../../data/pathogens";
 import type { TreatmentId } from "../../data/treatments";
 import type { EntityId, GameStatus, Vector2 } from "../../types/shared";
@@ -116,6 +117,7 @@ export type CombatEffect = {
 export type GameState = {
   missionId: MissionId;
   preparation: MissionPreparation;
+  tacticalMap: GeneratedTacticalMapDefinition;
   elapsedMs: number;
   status: GameStatus;
   tissue: TissueState;

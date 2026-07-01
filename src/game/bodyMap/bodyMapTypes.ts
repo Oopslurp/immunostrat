@@ -1,5 +1,6 @@
 import type { MissionId, StartingUnitDefinition } from "../data/missions";
 import type { PathogenTypeId } from "../data/pathogens";
+import type { TacticalMapId, TacticalRegionType } from "../data/tacticalMaps";
 import type { UnitTypeId } from "../data/units";
 
 export type V11VisualIdentity = {
@@ -124,6 +125,7 @@ export type BodyRegionDefinition = {
   connections: BodyRegionId[];
   regionalNodeId: RegionalNodeId;
   linkedMissionId: MissionId;
+  tacticalMapId: TacticalMapId;
   preferredThreat: BodyThreatProfile;
   pedagogy: string;
   visualIdentity: V11VisualIdentity;
@@ -219,4 +221,9 @@ export type BodyBattlePreparation = {
   reinforcements: StartingUnitDefinition[];
   regionalNodeId: RegionalNodeId;
   regionalNodeActive: boolean;
+  tacticalMapSeed?: string;
+  tacticalMapTemplateId?: TacticalMapId;
+  tacticalRegionType?: TacticalRegionType;
+  tacticalThreatType?: BodyThreatProfile;
+  tacticalDifficulty?: BodyMapDifficulty;
 };

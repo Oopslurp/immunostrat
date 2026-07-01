@@ -1,5 +1,11 @@
 import { createInfiniteWaves, type InfiniteDifficulty } from "./infiniteMode";
 import type { PathogenTypeId } from "./pathogens";
+import {
+  tacticalMapDefinitions,
+  type TacticalMapId,
+  type TacticalMapMode,
+  type TacticalRegionType,
+} from "./tacticalMaps";
 import type { TreatmentId } from "./treatments";
 import type { UnitTypeId } from "./units";
 
@@ -93,7 +99,28 @@ export type TutorialHint = {
   text: string;
 };
 
-export type MissionMapDefinition = typeof baseMap;
+export type MissionMapDefinition = {
+  width: number;
+  height: number;
+  tacticalMapId?: TacticalMapId;
+  playArea: { x: number; y: number; width: number; height: number; radius: number };
+  grid: { startX: number; endX: number; startY: number; endY: number; stepX: number; skewX: number };
+  tissueZone: { x: number; y: number; width: number; height: number };
+  tissueCore: { x: number; y: number };
+  lymphNode: { x: number; y: number; radius: number };
+  lymphExit: { x: number; y: number; radius: number; localNodeId: string; regionalNodeId: string };
+  immuneEntryPoints: Array<{
+    id: string;
+    label: string;
+    kind: "vessel" | "diapedesis" | "lymph";
+    position: { x: number; y: number };
+    radius: number;
+  }>;
+  missionRegion: string;
+  tissueCells: Array<{ x: number; y: number }>;
+  bacteriaEntryZone: { x: number; yMin: number; yMax: number };
+  macrophageSpawn: { x: number; y: number };
+};
 
 export type VaccinationOption = {
   id: string;
@@ -117,6 +144,12 @@ export type MissionPreparation = {
     cytokineBonus: number;
   };
   infiniteDifficulty?: InfiniteDifficulty;
+  tacticalMapSeed?: string;
+  tacticalMapTemplateId?: TacticalMapId;
+  tacticalMapMode?: TacticalMapMode;
+  tacticalRegionType?: TacticalRegionType;
+  tacticalThreatType?: string;
+  tacticalDifficulty?: "easy" | "normal" | "hard";
 };
 
 export const campaignMissionOrder = [
@@ -181,9 +214,10 @@ export type MissionDefinition = {
   scoreReward?: number;
 };
 
-const baseMap = {
+const baseMap: MissionMapDefinition = {
   width: 1500,
   height: 820,
+  tacticalMapId: "skin_small_wound_fixed",
   playArea: {
     x: 92,
     y: 118,
@@ -252,7 +286,82 @@ const baseMap = {
     yMax: 625,
   },
   macrophageSpawn: { x: 280, y: 410 },
-} as const;
+};
+
+function mapWithTacticalMap(tacticalMapId: TacticalMapId): MissionMapDefinition {
+  const tacticalMap = tacticalMapDefinitions[tacticalMapId];
+  const firstCombatSite = tacticalMap.combatSites[0];
+  const firstEntryPoint =
+    tacticalMap.reinforcementEntryPoints[0] ?? tacticalMap.diapedesisPoints[0];
+  const firstLymphExit = tacticalMap.lymphaticExits[0];
+
+  return {
+    ...baseMap,
+    tacticalMapId,
+    width: tacticalMap.worldWidth,
+    height: tacticalMap.worldHeight,
+    playArea: {
+      x: 90,
+      y: 110,
+      width: Math.max(900, tacticalMap.worldWidth - 180),
+      height: Math.max(620, tacticalMap.worldHeight - 220),
+      radius: 30,
+    },
+    grid: {
+      ...baseMap.grid,
+      endX: tacticalMap.worldWidth - 150,
+      endY: tacticalMap.worldHeight - 140,
+    },
+    tissueCore: firstCombatSite?.position ?? baseMap.tissueCore,
+    lymphNode: firstLymphExit
+      ? {
+          x: firstLymphExit.position.x,
+          y: firstLymphExit.position.y,
+          radius: firstLymphExit.radius + 14,
+        }
+      : baseMap.lymphNode,
+    lymphExit: firstLymphExit
+      ? {
+          ...baseMap.lymphExit,
+          x: firstLymphExit.position.x,
+          y: firstLymphExit.position.y,
+          radius: firstLymphExit.radius,
+        }
+      : baseMap.lymphExit,
+    immuneEntryPoints: [
+      ...tacticalMap.reinforcementEntryPoints.map((entryPoint, index) => ({
+        id: entryPoint.id,
+        label: entryPoint.name,
+        kind: index === 0 ? "vessel" as const : "diapedesis" as const,
+        position: entryPoint.position,
+        radius: entryPoint.spawnRadius,
+      })),
+      ...tacticalMap.lymphaticExits.map((exit) => ({
+        id: exit.id,
+        label: exit.name,
+        kind: "lymph" as const,
+        position: exit.position,
+        radius: exit.radius,
+      })),
+    ],
+    bacteriaEntryZone: {
+      x:
+        tacticalMap.pathogenSpawnZones[0]?.position.x ??
+        tacticalMap.worldWidth - 155,
+      yMin: 180,
+      yMax: tacticalMap.worldHeight - 180,
+    },
+    macrophageSpawn: firstEntryPoint?.position ?? baseMap.macrophageSpawn,
+  };
+}
+
+const skinSmallWoundMap = mapWithTacticalMap("skin_small_wound_fixed");
+const skinMultiWoundMap = mapWithTacticalMap("skin_multi_wound_template");
+const lungBranchingMap = mapWithTacticalMap("lung_branching_vessels_template");
+const intestineClusteredMap = mapWithTacticalMap("intestine_clustered_sites_template");
+const bloodCrossroadsMap = mapWithTacticalMap("blood_vessel_crossroads_template");
+const lymphSignalMap = mapWithTacticalMap("lymph_node_signal_template");
+const infiniteLargeTissueMap = mapWithTacticalMap("infinite_large_tissue_template");
 
 const easyFailure: DefeatCondition[] = [
   { kind: "tissueHealthZero" },
@@ -328,7 +437,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
       "mixedOpportunistCluster",
     ],
     initialInfectedTissueCells: 0,
-    map: baseMap,
+    map: infiniteLargeTissueMap,
     waves: createInfiniteWaves("normal"),
     tutorialHints: [
       { text: "Mode infini : chaque cycle contient trois vagues, puis la phase progresse." },
@@ -359,7 +468,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedResearch: [],
     unlockedTreatments: [],
     allowedPathogens: ["cocciRapid"],
-    map: baseMap,
+    map: skinSmallWoundMap,
     waves: [
       { startsAtMs: 1200, pathogenTypeId: "cocciRapid", count: 4, spawnIntervalMs: 900 },
       { startsAtMs: 10000, pathogenTypeId: "cocciRapid", count: 5, spawnIntervalMs: 760 },
@@ -398,7 +507,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedResearch: [],
     unlockedTreatments: ["antiInflammatory"],
     allowedPathogens: ["cocciRapid", "proliferatingBacillus"],
-    map: baseMap,
+    map: skinSmallWoundMap,
     waves: [
       { startsAtMs: 1200, pathogenTypeId: "cocciRapid", count: 6, spawnIntervalMs: 650 },
       { startsAtMs: 12000, pathogenTypeId: "proliferatingBacillus", count: 4, spawnIntervalMs: 1100 },
@@ -436,7 +545,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedResearch: [],
     unlockedTreatments: ["antibiotic", "antiInflammatory"],
     allowedPathogens: ["cocciRapid", "proliferatingBacillus", "resistantBacterium", "biofilmColony"],
-    map: baseMap,
+    map: skinMultiWoundMap,
     waves: [
       { startsAtMs: 1500, pathogenTypeId: "proliferatingBacillus", count: 4, spawnIntervalMs: 1250 },
       { startsAtMs: 17000, pathogenTypeId: "resistantBacterium", count: 2, spawnIntervalMs: 1800 },
@@ -476,7 +585,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedTreatments: ["antibiotic", "antiInflammatory"],
     memoryHintProfiles: ["bacterial"],
     allowedPathogens: ["cocciRapid", "proliferatingBacillus", "resistantBacterium"],
-    map: baseMap,
+    map: lymphSignalMap,
     waves: [
       { startsAtMs: 1500, pathogenTypeId: "proliferatingBacillus", count: 5, spawnIntervalMs: 1100 },
       { startsAtMs: 19000, pathogenTypeId: "resistantBacterium", count: 2, spawnIntervalMs: 1900 },
@@ -516,7 +625,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedTreatments: ["antibiotic", "antiInflammatory"],
     memoryHintProfiles: ["bacterial"],
     allowedPathogens: ["cocciRapid", "proliferatingBacillus", "resistantBacterium", "biofilmColony", "toxicBacterium"],
-    map: baseMap,
+    map: lymphSignalMap,
     waves: [
       { startsAtMs: 1500, pathogenTypeId: "proliferatingBacillus", count: 5, spawnIntervalMs: 1100 },
       { startsAtMs: 17500, pathogenTypeId: "resistantBacterium", count: 3, spawnIntervalMs: 1600 },
@@ -566,7 +675,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     ],
     memoryHintProfiles: ["viral"],
     allowedPathogens: ["respiratoryVirus"],
-    map: baseMap,
+    map: lungBranchingMap,
     waves: [
       { startsAtMs: 2500, pathogenTypeId: "respiratoryVirus", count: 2, spawnIntervalMs: 1800 },
       { startsAtMs: 23000, pathogenTypeId: "respiratoryVirus", count: 3, spawnIntervalMs: 1700 },
@@ -618,7 +727,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     memoryHintProfiles: ["viral"],
     allowedPathogens: ["respiratoryVirus"],
     initialInfectedTissueCells: 2,
-    map: baseMap,
+    map: lungBranchingMap,
     waves: [
       { startsAtMs: 2500, pathogenTypeId: "respiratoryVirus", count: 5, spawnIntervalMs: 1200 },
       { startsAtMs: 21000, pathogenTypeId: "respiratoryVirus", count: 7, spawnIntervalMs: 900 },
@@ -680,7 +789,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     memoryHintProfiles: ["bacterial", "viral"],
     allowedPathogens: ["cocciRapid", "proliferatingBacillus", "resistantBacterium", "biofilmColony", "toxicBacterium", "respiratoryVirus"],
     initialInfectedTissueCells: 1,
-    map: baseMap,
+    map: infiniteLargeTissueMap,
     waves: [
       { startsAtMs: 1500, pathogenTypeId: "cocciRapid", count: 7, spawnIntervalMs: 560 },
       { startsAtMs: 12000, pathogenTypeId: "respiratoryVirus", count: 5, spawnIntervalMs: 1100 },
@@ -721,7 +830,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedTreatments: ["antibiotic", "antiInflammatory"],
     memoryHintProfiles: ["bacterial"],
     allowedPathogens: ["cocciRapid", "proliferatingBacillus"],
-    map: baseMap,
+    map: skinMultiWoundMap,
     waves: [
       { startsAtMs: 1300, pathogenTypeId: "cocciRapid", count: 5, spawnIntervalMs: 650 },
       { startsAtMs: 14500, pathogenTypeId: "proliferatingBacillus", count: 4, spawnIntervalMs: 1150 },
@@ -760,7 +869,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedTreatments: ["antibiotic", "antiInflammatory"],
     memoryHintProfiles: ["bacterial"],
     allowedPathogens: ["resistantBacterium", "biofilmColony", "cocciRapid"],
-    map: baseMap,
+    map: skinMultiWoundMap,
     waves: [
       { startsAtMs: 1600, pathogenTypeId: "resistantBacterium", count: 2, spawnIntervalMs: 1800 },
       { startsAtMs: 17000, pathogenTypeId: "biofilmColony", count: 1, spawnIntervalMs: 1000 },
@@ -798,7 +907,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedTreatments: ["antiInflammatory"],
     memoryHintProfiles: ["bacterial"],
     allowedPathogens: ["fungalColony", "fungalSpore", "cutaneousFungus", "sporeMold", "yeastOpportunist"],
-    map: baseMap,
+    map: skinMultiWoundMap,
     waves: [
       { startsAtMs: 1800, pathogenTypeId: "fungalSpore", count: 4, spawnIntervalMs: 950 },
       { startsAtMs: 17000, pathogenTypeId: "cutaneousFungus", count: 1, spawnIntervalMs: 1000 },
@@ -839,7 +948,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     memoryHintProfiles: ["viral"],
     allowedPathogens: ["respiratoryVirus"],
     initialInfectedTissueCells: 1,
-    map: baseMap,
+    map: lungBranchingMap,
     waves: [
       { startsAtMs: 2600, pathogenTypeId: "respiratoryVirus", count: 3, spawnIntervalMs: 1650 },
       { startsAtMs: 24500, pathogenTypeId: "respiratoryVirus", count: 4, spawnIntervalMs: 1400 },
@@ -882,7 +991,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
       "proliferativeCancerCell",
       "inflammatoryCancerCell",
     ],
-    map: baseMap,
+    map: lungBranchingMap,
     waves: [
       { startsAtMs: 2500, pathogenTypeId: "discreetAbnormalCell", count: 1, spawnIntervalMs: 1000 },
       { startsAtMs: 21000, pathogenTypeId: "proliferativeCancerCell", count: 2, spawnIntervalMs: 3400 },
@@ -921,7 +1030,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedTreatments: ["antibiotic", "antiInflammatory"],
     memoryHintProfiles: ["bacterial"],
     allowedPathogens: ["proliferatingBacillus", "resistantBacterium", "toxicBacterium"],
-    map: baseMap,
+    map: intestineClusteredMap,
     waves: [
       { startsAtMs: 1500, pathogenTypeId: "proliferatingBacillus", count: 5, spawnIntervalMs: 950 },
       { startsAtMs: 18500, pathogenTypeId: "proliferatingBacillus", count: 6, spawnIntervalMs: 820 },
@@ -960,7 +1069,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedTreatments: ["antiInflammatory"],
     memoryHintProfiles: ["bacterial"],
     allowedPathogens: ["parasiteHelminth", "bloodProtozoan", "migratoryLarva", "secondaryBacterium"],
-    map: baseMap,
+    map: intestineClusteredMap,
     waves: [
       { startsAtMs: 2200, pathogenTypeId: "secondaryBacterium", count: 4, spawnIntervalMs: 900 },
       { startsAtMs: 18000, pathogenTypeId: "parasiteHelminth", count: 1, spawnIntervalMs: 1000 },
@@ -1002,7 +1111,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     memoryHintProfiles: ["bacterial", "viral"],
     allowedPathogens: ["cocciRapid", "proliferatingBacillus", "respiratoryVirus"],
     initialInfectedTissueCells: 1,
-    map: baseMap,
+    map: bloodCrossroadsMap,
     waves: [
       { startsAtMs: 1600, pathogenTypeId: "cocciRapid", count: 5, spawnIntervalMs: 620 },
       { startsAtMs: 13500, pathogenTypeId: "respiratoryVirus", count: 3, spawnIntervalMs: 1400 },
@@ -1051,7 +1160,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
       "fungalSpore",
     ],
     initialInfectedTissueCells: 1,
-    map: baseMap,
+    map: infiniteLargeTissueMap,
     waves: [
       { startsAtMs: 1600, pathogenTypeId: "secondaryBacterium", count: 5, spawnIntervalMs: 720 },
       { startsAtMs: 17000, pathogenTypeId: "reactivatedLatentVirus", count: 3, spawnIntervalMs: 1350 },
@@ -1090,7 +1199,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedTreatments: ["antibiotic", "antiviralDrug", "antiInflammatory"],
     memoryHintProfiles: ["bacterial", "viral"],
     allowedPathogens: ["cocciRapid", "respiratoryVirus", "proliferatingBacillus"],
-    map: baseMap,
+    map: lymphSignalMap,
     waves: [
       { startsAtMs: 1800, pathogenTypeId: "cocciRapid", count: 4, spawnIntervalMs: 720 },
       { startsAtMs: 18000, pathogenTypeId: "respiratoryVirus", count: 3, spawnIntervalMs: 1500 },
@@ -1128,7 +1237,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedTreatments: ["antibiotic", "antiviralDrug", "antiInflammatory"],
     memoryHintProfiles: ["bacterial", "viral"],
     allowedPathogens: ["cocciRapid", "respiratoryVirus", "resistantBacterium"],
-    map: baseMap,
+    map: bloodCrossroadsMap,
     waves: [
       { startsAtMs: 1400, pathogenTypeId: "cocciRapid", count: 4, spawnIntervalMs: 680 },
       { startsAtMs: 15500, pathogenTypeId: "respiratoryVirus", count: 3, spawnIntervalMs: 1450 },
@@ -1165,7 +1274,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     unlockedTreatments: ["antibiotic", "antiInflammatory"],
     memoryHintProfiles: ["bacterial"],
     allowedPathogens: ["cocciRapid", "resistantBacterium"],
-    map: baseMap,
+    map: bloodCrossroadsMap,
     waves: [
       { startsAtMs: 1700, pathogenTypeId: "cocciRapid", count: 5, spawnIntervalMs: 760 },
       { startsAtMs: 18500, pathogenTypeId: "resistantBacterium", count: 2, spawnIntervalMs: 1800 },
@@ -1210,7 +1319,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
       "mixedOpportunistCluster",
       "opportunistBacterium",
     ],
-    map: baseMap,
+    map: bloodCrossroadsMap,
     waves: [
       { startsAtMs: 2200, pathogenTypeId: "discreetAbnormalCell", count: 1, spawnIntervalMs: 1000 },
       { startsAtMs: 19000, pathogenTypeId: "mixedOpportunistCluster", count: 1, spawnIntervalMs: 1000 },
