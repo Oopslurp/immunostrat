@@ -4,9 +4,11 @@ import { pathogenDefinitions } from "../../data/pathogens";
 import { distance, stableHash } from "../../types/shared";
 import type { GameState, PathogenDebris } from "../core/GameState";
 import {
+  isAdvancedThreat,
   isBacterium,
   isDendriticCell,
   isVirus,
+  type AdvancedThreatEntity,
   type BacteriumEntity,
   type VirusEntity,
 } from "../entities";
@@ -15,6 +17,7 @@ export function applyDebrisSystem(state: GameState, deltaMs: number): void {
   decayDebris(state, deltaMs);
   convertDeadBacteriaToDebris(state);
   convertDeadVirusesToDebris(state);
+  convertDeadAdvancedThreatsToDebris(state);
   processDendriticCells(state);
 }
 
@@ -37,6 +40,7 @@ function convertDeadVirusesToDebris(state: GameState): void {
       state.debris.push(createVirusDebris(state, entity));
     }
 
+    addThreatScoreBonus(state, entity.pathogenTypeId);
     delete state.entities[id];
   }
 }
@@ -51,6 +55,22 @@ function convertDeadBacteriaToDebris(state: GameState): void {
       state.debris.push(createDebris(state, entity));
     }
 
+    addThreatScoreBonus(state, entity.pathogenTypeId);
+    delete state.entities[id];
+  }
+}
+
+function convertDeadAdvancedThreatsToDebris(state: GameState): void {
+  for (const [id, entity] of Object.entries(state.entities)) {
+    if (!isAdvancedThreat(entity) || entity.health > 0) {
+      continue;
+    }
+
+    if (shouldDropAdvancedThreatDebris(state, entity, id)) {
+      state.debris.push(createAdvancedThreatDebris(state, entity));
+    }
+
+    addThreatScoreBonus(state, entity.pathogenTypeId);
     delete state.entities[id];
   }
 }
@@ -70,6 +90,25 @@ function createVirusDebris(
     pathogenTypeId: virus.pathogenTypeId,
     antigenProfileId: definition.antigenProfileId,
     antigenValue: virus.antigenValue,
+    ttlMs: balanceValues.debris.ttlMs,
+  };
+}
+
+function createAdvancedThreatDebris(
+  state: GameState,
+  entity: AdvancedThreatEntity,
+): PathogenDebris {
+  const id = `debris-${state.nextDebrisNumber}`;
+  const definition = pathogenDefinitions[entity.pathogenTypeId];
+
+  state.nextDebrisNumber += 1;
+
+  return {
+    id,
+    position: { ...entity.position },
+    pathogenTypeId: entity.pathogenTypeId,
+    antigenProfileId: definition.antigenProfileId,
+    antigenValue: entity.antigenValue,
     ttlMs: balanceValues.debris.ttlMs,
   };
 }
@@ -207,4 +246,26 @@ function shouldDropVirusDebris(
   const hash = stableHash(`${entityId}-${state.elapsedMs}`);
 
   return (hash % 1000) / 1000 <= virus.debrisDropChance;
+}
+
+function shouldDropAdvancedThreatDebris(
+  state: GameState,
+  entity: AdvancedThreatEntity,
+  entityId: string,
+): boolean {
+  if (entity.debrisDropChance >= 1) {
+    return true;
+  }
+
+  const hash = stableHash(`${entityId}-${state.elapsedMs}`);
+
+  return (hash % 1000) / 1000 <= entity.debrisDropChance;
+}
+
+function addThreatScoreBonus(
+  state: GameState,
+  pathogenTypeId: keyof typeof pathogenDefinitions,
+): void {
+  state.missionStats.threatScoreBonus +=
+    pathogenDefinitions[pathogenTypeId].scoreValue ?? 0;
 }

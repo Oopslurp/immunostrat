@@ -534,6 +534,12 @@
   gap: 0.75rem;
 }
 
+.body-victory-panel,
+.body-final-panel {
+  display: grid;
+  gap: 0.75rem;
+}
+
 .body-metric,
 .body-resource-row {
   border: 1px solid rgba(245, 251, 255, 0.12);
@@ -674,7 +680,9 @@
 }
 
 .body-node-infected,
-.body-node-weakened {
+.body-node-weakened,
+.body-node-critical,
+.body-node-lost {
   background: rgba(255, 127, 143, 0.2);
 }
 
@@ -803,8 +811,15 @@
 }
 
 .body-status-infected,
-.body-status-weakened {
+.body-status-weakened,
+.body-status-critical,
+.body-status-lost,
+.body-status-defeat {
   color: #ff9aa7;
+}
+
+.body-status-victory {
+  color: #7ee28a;
 }
 
 @media (max-width: 820px) {

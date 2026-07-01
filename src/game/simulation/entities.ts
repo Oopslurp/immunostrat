@@ -1,4 +1,4 @@
-import type { PathogenTypeId } from "../data/pathogens";
+import type { PathogenClass, PathogenTypeId } from "../data/pathogens";
 import type { UnitTypeId } from "../data/units";
 import type { ImmuneUnitKind } from "../types/immune";
 import type { EntityId, Vector2 } from "../types/shared";
@@ -85,7 +85,7 @@ export type BacteriumEntity = {
 export type VirusEntity = {
   id: EntityId;
   kind: "virus";
-  pathogenTypeId: "respiratoryVirus";
+  pathogenTypeId: PathogenTypeId;
   position: Vector2;
   health: number;
   maxHealth: number;
@@ -98,7 +98,31 @@ export type VirusEntity = {
   lifeRemainingMs: number;
 };
 
-export type GameEntity = ImmuneUnitEntity | BacteriumEntity | VirusEntity;
+export type AdvancedThreatEntity = {
+  id: EntityId;
+  kind: "advancedThreat";
+  pathogenTypeId: PathogenTypeId;
+  category: Exclude<PathogenClass, "bacterium" | "virus">;
+  position: Vector2;
+  health: number;
+  maxHealth: number;
+  radius: number;
+  movementSpeed: number;
+  tissueDamage: number;
+  tissueAttackRange: number;
+  attackCooldownMs: number;
+  attackCooldownRemainingMs: number;
+  armor: number;
+  antigenValue: number;
+  debrisDropChance: number;
+  inflammationPressureMultiplier: number;
+  targetPriority: number;
+  specialCooldownRemainingMs: number;
+  spawnedChildrenCount: number;
+  detected: boolean;
+};
+
+export type GameEntity = ImmuneUnitEntity | BacteriumEntity | VirusEntity | AdvancedThreatEntity;
 
 export function isMacrophage(entity: GameEntity): entity is MacrophageEntity {
   return entity.kind === "macrophage";
@@ -145,8 +169,18 @@ export function isVirus(entity: GameEntity): entity is VirusEntity {
   return entity.kind === "virus";
 }
 
+export function isAdvancedThreat(
+  entity: GameEntity,
+): entity is AdvancedThreatEntity {
+  return entity.kind === "advancedThreat";
+}
+
 export function isHostilePathogen(
   entity: GameEntity,
-): entity is BacteriumEntity | VirusEntity {
-  return entity.kind === "bacterium" || entity.kind === "virus";
+): entity is BacteriumEntity | VirusEntity | AdvancedThreatEntity {
+  return (
+    entity.kind === "bacterium" ||
+    entity.kind === "virus" ||
+    entity.kind === "advancedThreat"
+  );
 }

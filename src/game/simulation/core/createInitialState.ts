@@ -76,6 +76,7 @@ export function createInitialState(
         maxHealth: balanceValues.tissueCells.maxHealth,
         radius: balanceValues.tissueCells.radius,
         status: infected ? "infected" : "healthy",
+        infectedByPathogenTypeId: infected ? "respiratoryVirus" : undefined,
         infectedElapsedMs: infected ? balanceValues.tissueCells.infectedInitialDelayMs : 0,
         nextVirusBurstMs: balanceValues.tissueCells.infectedInitialDelayMs,
         antiviralProtectedMs: 0,
@@ -107,6 +108,7 @@ export function createInitialState(
       peakInflammation: balanceValues.inflammation.startingValue,
       antigensCollected: 0,
       lymphSignalsDelivered: 0,
+      threatScoreBonus: 0,
     },
     inflammation: {
       value: balanceValues.inflammation.startingValue,

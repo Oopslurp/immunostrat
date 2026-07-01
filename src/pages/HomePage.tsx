@@ -19,21 +19,20 @@ export function HomePage({
   return (
     <div className="page home-layout">
       <section className="hero-copy" aria-labelledby="home-title">
-        <span className="eyebrow">Prototype jouable V8</span>
+        <span className="eyebrow">Prototype jouable V9</span>
         <h1 className="hero-title" id="home-title">
           Immunostrat
         </h1>
         <p className="hero-text">
-          Apprends les mecaniques en campagne, lance une partie normale sur la
-          carte du corps, ou tente le mode infini pour survivre le plus
-          longtemps possible.
+          Campagne pour apprendre, partie normale sur carte du corps pour
+          stabiliser l'organisme, mode infini pour survivre et scorer.
         </p>
         <div className="home-actions">
           <Button variant="primary" onClick={onPlay}>
             Campagne guidee
           </Button>
           <Button disabled={!bodyMapUnlocked} onClick={onStartNormalGame}>
-            Nouvelle partie normale
+            Partie normale
           </Button>
           <Button disabled={!bodyMapUnlocked} onClick={onOpenBodyMap}>
             Continuer carte du corps
@@ -55,7 +54,7 @@ export function HomePage({
           </div>
           <div className="stat-item">
             <span className="stat-label">Gameplay</span>
-            <span className="stat-value">Campagne / Carte du corps</span>
+            <span className="stat-value">Campagne / Normal / Infini</span>
           </div>
           <div className="stat-item">
             <span className="stat-label">Carte du corps</span>
@@ -65,7 +64,7 @@ export function HomePage({
           </div>
           <div className="stat-item">
             <span className="stat-label">Mode infini</span>
-            <span className="stat-value">Disponible, difficile</span>
+            <span className="stat-value">Survie sans victoire finale</span>
           </div>
           <div className="stat-item">
             <span className="stat-label">Science</span>

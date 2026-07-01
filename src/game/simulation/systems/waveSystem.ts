@@ -8,7 +8,13 @@ import {
 import { missionDefinitions } from "../../data/missions";
 import { pathogenDefinitions } from "../../data/pathogens";
 import type { GameState } from "../core/GameState";
-import { isHostilePathogen, type BacteriumEntity, type VirusEntity } from "../entities";
+import {
+  isHostilePathogen,
+  type AdvancedThreatEntity,
+  type BacteriumEntity,
+  type VirusEntity,
+} from "../entities";
+import { spawnAdvancedThreat } from "../pathogens/createAdvancedThreat";
 import { spawnBacterium } from "../pathogens/createBacterium";
 import { spawnVirus } from "../pathogens/createVirus";
 
@@ -62,6 +68,14 @@ export function applyWaveSystem(state: GameState): void {
     return;
   }
 
+  if (pathogenDefinitions[wave.pathogenTypeId].pathogenClass !== "bacterium") {
+    applyInfiniteSpawnModifiers(
+      state,
+      spawnAdvancedThreat(state, wave.pathogenTypeId, { x: entryZone.x, y }),
+    );
+    return;
+  }
+
   applyInfiniteSpawnModifiers(
     state,
     spawnBacterium(state, wave.pathogenTypeId, { x: entryZone.x, y }),
@@ -79,7 +93,7 @@ function isInfinitePathogenLimitReached(state: GameState): boolean {
 
 function applyInfiniteSpawnModifiers(
   state: GameState,
-  entity: BacteriumEntity | VirusEntity,
+  entity: BacteriumEntity | VirusEntity | AdvancedThreatEntity,
 ): void {
   const mission = missionDefinitions[state.missionId];
 
@@ -113,8 +127,17 @@ function applyInfiniteSpawnModifiers(
       entity.lifeRemainingMs *= 1 + mutator.intensity;
     }
 
-    if (entity.kind === "bacterium" && mutator.id === "tissueFragilityUp") {
+    if (
+      (entity.kind === "bacterium" || entity.kind === "advancedThreat") &&
+      mutator.id === "tissueFragilityUp"
+    ) {
       entity.tissueDamage *= 1 + mutator.intensity;
+    }
+
+    if (entity.kind === "advancedThreat" && mutator.id === "advancedThreatPressure") {
+      entity.maxHealth *= 1 + mutator.intensity;
+      entity.health = entity.maxHealth;
+      entity.tissueDamage *= 1 + mutator.intensity * 0.6;
     }
   }
 }

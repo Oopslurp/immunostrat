@@ -20,7 +20,7 @@ export type InfiniteMutatorId =
   | "resourceProductionDown"
   | "tissueFragilityUp"
   | "adaptiveResearchCostUp"
-  | "advancedThreatsPlaceholder";
+  | "advancedThreatPressure";
 
 export type InfiniteMutatorDefinition = {
   id: InfiniteMutatorId;
@@ -114,35 +114,57 @@ export const infinitePhases: InfinitePhaseDefinition[] = [
   {
     id: 4,
     name: "Infection virale",
-    description: "Virus libres, cellules infectees, interferons.",
+    description: "Virus respiratoire et cytolytique, cellules infectees, interferons.",
     startsAtCycle: 7,
-    threatPool: ["respiratoryVirus", "cocciRapid"],
+    threatPool: ["respiratoryVirus", "cytolyticVirus", "cocciRapid"],
   },
   {
     id: 5,
     name: "Infection mixte",
-    description: "Priorisation entre bacteries, virus et inflammation.",
+    description: "Priorisation entre bacteries, virus et opportunistes simples.",
     startsAtCycle: 9,
-    threatPool: ["respiratoryVirus", "proliferatingBacillus", "resistantBacterium"],
+    threatPool: [
+      "respiratoryVirus",
+      "proliferatingBacillus",
+      "resistantBacterium",
+      "secondaryBacterium",
+      "reactivatedLatentVirus",
+    ],
   },
   {
     id: 6,
     name: "Mutation",
-    description: "Affixes qui cassent les automatismes.",
+    description: "Affixes qui cassent les automatismes et premiers foyers avances.",
     startsAtCycle: 11,
-    threatPool: ["respiratoryVirus", "biofilmColony", "toxicBacterium"],
+    threatPool: [
+      "immuneEvasiveVirus",
+      "latentVirus",
+      "biofilmColony",
+      "toxicBacterium",
+      "fungalSpore",
+    ],
   },
   {
     id: 7,
     name: "Crise systemique",
-    description: "Inflammation et ressources deviennent instables.",
+    description: "Inflammation, opportunistes et ressources deviennent instables.",
     startsAtCycle: 13,
-    threatPool: ["toxicBacterium", "resistantBacterium", "respiratoryVirus"],
+    threatPool: [
+      "toxicBacterium",
+      "resistantBacterium",
+      "respiratoryVirus",
+      "opportunistBacterium",
+      "fungalColony",
+      "yeastOpportunist",
+      "sporeMold",
+      "opportunistYeastFlare",
+      "mixedOpportunistCluster",
+    ],
   },
   {
     id: 8,
     name: "Nightmare",
-    description: "Menaces combinees, hooks V9 sans nouveaux ennemis complets.",
+    description: "Menaces combinees avec champignons, parasites et cellules anormales.",
     startsAtCycle: 15,
     threatPool: [
       "respiratoryVirus",
@@ -150,6 +172,19 @@ export const infinitePhases: InfinitePhaseDefinition[] = [
       "toxicBacterium",
       "resistantBacterium",
       "proliferatingBacillus",
+      "fungalColony",
+      "sporeMold",
+      "parasiteHelminth",
+      "bloodProtozoan",
+      "migratoryLarva",
+      "cancerCellCluster",
+      "discreetAbnormalCell",
+      "proliferativeCancerCell",
+      "inflammatoryCancerCell",
+      "invasiveCancerCell",
+      "opportunistBacterium",
+      "immuneEvasiveVirus",
+      "mixedOpportunistCluster",
     ],
   },
 ];
@@ -228,13 +263,13 @@ export const infiniteMutators: InfiniteMutatorDefinition[] = [
     tags: ["adaptive"],
   },
   {
-    id: "advancedThreatsPlaceholder",
-    name: "Menace avancee inconnue",
-    description: "Hook pour V9 : champignons, parasites ou cancer plus tard.",
+    id: "advancedThreatPressure",
+    name: "Menaces avancees",
+    description: "Champignons, parasites, cellules anormales ou opportunistes encaissent mieux.",
     phaseMin: 8,
-    intensity: 0.12,
+    intensity: 0.16,
     weight: 3,
-    tags: ["futureThreats"],
+    tags: ["advanced", "fungus", "parasite", "cancer"],
   },
 ];
 
@@ -305,10 +340,24 @@ export function getActiveInfiniteMutators(
     return [];
   }
 
-  return infiniteMutators
-    .filter((mutator) => mutator.phaseMin <= phase.id)
-    .filter((_, index) => (index + cycle + phase.id) % 2 === 0)
-    .slice(0, maxMutators);
+  const availableMutators = infiniteMutators.filter(
+    (mutator) => mutator.phaseMin <= phase.id,
+  );
+  const selectedMutators = availableMutators.filter(
+    (_, index) => (index + cycle + phase.id) % 2 === 0,
+  );
+  const advancedThreatMutator = availableMutators.find(
+    (mutator) => mutator.id === "advancedThreatPressure",
+  );
+
+  if (
+    advancedThreatMutator &&
+    !selectedMutators.some((mutator) => mutator.id === advancedThreatMutator.id)
+  ) {
+    selectedMutators.unshift(advancedThreatMutator);
+  }
+
+  return selectedMutators.slice(0, maxMutators);
 }
 
 export function calculateInfiniteScore(
@@ -321,6 +370,7 @@ export function calculateInfiniteScore(
     infectedCells: number;
     peakInflammation: number;
     antigensCollected: number;
+    threatScoreBonus?: number;
   },
   difficulty: InfiniteDifficulty,
 ): number {
@@ -330,7 +380,8 @@ export function calculateInfiniteScore(
     params.cycle * 140 +
     params.tissueHealth * 2 +
     params.healthyCells * 18 +
-    params.antigensCollected * 8;
+    params.antigensCollected * 8 +
+    (params.threatScoreBonus ?? 0);
   const penalties =
     params.destroyedCells * 45 +
     params.infectedCells * 22 +

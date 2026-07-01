@@ -2,7 +2,12 @@
 
 Immunostrat est un prototype web de strategie 2D inspire du systeme immunitaire.
 
-La V8 ajoute un mode infini separe, avec phases, mutateurs, score et records locaux.
+La V9.1 ajoute des sous-types data-driven pour bacteries, virus, champignons,
+parasites, cellules anormales et opportunistes, avec metadata science/gameplay
+et hooks visuels pour preparer V11.
+
+La V9.2 ferme la structure de partie normale : carte du corps gagnable,
+defaite globale, score de stabilisation, ecran final et sauvegarde des resultats.
 
 ## Stack
 
@@ -190,13 +195,53 @@ npm run dev -- --port 5175
 - score infini base sur vague, cycle, tissu, cellules, inflammation et antigenes ;
 - meilleurs scores sauvegardes par difficulte en localStorage ;
 - limites de performance sur les pathogenes actifs ;
-- hooks V9 pour menaces avancees sans les coder.
+- hooks devenus la base des menaces avancees V9.
+
+## Gameplay V9
+
+- nouvelles familles de menaces data-driven : champignons, spores, parasite mini-boss, cellules anormales, opportunistes ;
+- entite de simulation `advancedThreat` separee du rendu Phaser ;
+- champignons lents qui produisent des spores ;
+- parasite rare, robuste et inflammatoire ;
+- cellules anormales peu visibles, mieux gerees par NK et T cytotoxiques ;
+- opportunistes qui servent de pression secondaire dans les crises mixtes ;
+- cinq nouveaux presets de batailles locales pour la carte du corps ;
+- generation de foyers V9 selon la difficulte de la partie normale ;
+- mode infini enrichi avec menaces V9 et mutateur `Menaces avancees` ;
+- entrees science vs gameplay pour expliquer les simplifications.
+
+## Patch V9.1
+
+- sous-types explicites par menace : `subtype`, inspiration, role gameplay, note de simplification ;
+- virus supplementaires : cytolytique, latent/reactivation, immuno-evasif ;
+- champignons supplementaires : levure opportuniste, moisissure a spores, champignon cutane lent ;
+- parasites supplementaires : protozoaire sanguin et larve migratrice ;
+- cellules anormales : discrete, proliferative, inflammatoire, invasive ;
+- opportunistes : bacterie secondaire, flare fongique, reactivation virale, infection mixte opportuniste ;
+- `visualIdentity` pour preparer silhouettes, couleurs, mouvements et VFX V11 sans creer les sprites finaux ;
+- carte du corps enrichie avec pools regionaux plus varies ;
+- mode infini mis a jour pour introduire les sous-types progressivement ;
+- score bonus data-driven via `scoreValue` pour les menaces rares eliminees.
+
+## Patch V9.2
+
+- clarification des trois modes : campagne guidee, partie normale finie, mode infini ;
+- ecran d'entree pour la partie normale, avec difficulte et meilleurs resultats ;
+- victoire globale de la carte du corps apres plusieurs tours de stabilisation ;
+- defaite globale par effondrement de sante, infection, inflammation ou regions critiques ;
+- progression de stabilisation visible dans l'UI de carte du corps ;
+- ecran final separe pour victoire/defaite de partie normale ;
+- score et rang de stabilisation distincts du score infini ;
+- sauvegarde locale des meilleurs resultats de partie normale ;
+- blocage des actions incoherentes quand une partie normale est terminee.
 
 ## Qualite
 
 - `npm run test` teste la simulation pure avec Vitest.
 - `npm run build` verifie TypeScript et genere le build Vite.
 
-## Hors scope V8
+## Hors scope V9.1
 
-Pas de vrais champignons, parasites, cellules cancereuses, factions pathogenes jouables, boss complexe, arbre strategique pathogene, multijoueur, pixel art final, animations finales ou polish visuel avance.
+Pas de factions pathogenes jouables, arbre strategique pathogene, multijoueur,
+boss complexe final, antifongique dedie, immunologie antiparasitaire avancee,
+oncologie realiste, pixel art final, animations finales ou polish visuel avance.

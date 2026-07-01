@@ -21,7 +21,7 @@ export function spawnVirus(
   const virus: VirusEntity = {
     id,
     kind: "virus",
-    pathogenTypeId: "respiratoryVirus",
+    pathogenTypeId,
     position: { ...position },
     health: definition.maxHealth,
     maxHealth: definition.maxHealth,

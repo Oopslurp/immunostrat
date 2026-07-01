@@ -39,13 +39,20 @@ export function calculateMissionScore(state: GameState): number {
   const tissueScore = Math.round(state.tissue.health * 3);
   const cellScore = healthyCells * 25;
   const objectiveScore = completedObjectives * 60;
+  const threatBonus = state.missionStats.threatScoreBonus;
   const victoryBonus = state.status === "victory" ? mission.scoreReward ?? 100 : 0;
   const inflammationPenalty = Math.round(state.missionStats.peakInflammation * 1.4);
   const timePenalty = Math.floor(state.elapsedMs / 1000);
 
   return Math.max(
     0,
-    tissueScore + cellScore + objectiveScore + victoryBonus - inflammationPenalty - timePenalty,
+    tissueScore +
+      cellScore +
+      objectiveScore +
+      threatBonus +
+      victoryBonus -
+      inflammationPenalty -
+      timePenalty,
   );
 }
 

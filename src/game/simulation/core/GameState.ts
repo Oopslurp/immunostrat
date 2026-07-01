@@ -1,4 +1,5 @@
 import type { MissionId, MissionPreparation } from "../../data/missions";
+import type { PathogenTypeId } from "../../data/pathogens";
 import type { TreatmentId } from "../../data/treatments";
 import type { EntityId, GameStatus, Vector2 } from "../../types/shared";
 import type { GameEntity } from "../entities";
@@ -15,6 +16,7 @@ export type MissionRuntimeStats = {
   peakInflammation: number;
   antigensCollected: number;
   lymphSignalsDelivered: number;
+  threatScoreBonus: number;
 };
 
 export type TreatmentState = {
@@ -34,6 +36,7 @@ export type TissueCellState = {
   maxHealth: number;
   radius: number;
   status: "healthy" | "infected" | "destroyed";
+  infectedByPathogenTypeId?: PathogenTypeId;
   infectedElapsedMs: number;
   nextVirusBurstMs: number;
   antiviralProtectedMs: number;

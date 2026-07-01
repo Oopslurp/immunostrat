@@ -27,6 +27,7 @@ import type { GameState } from "../../simulation/core/GameState";
 import { distanceSquared } from "../../types/shared";
 import {
   isBacterium,
+  isAdvancedThreat,
   isCytotoxicT,
   isDendriticCell,
   isHostilePathogen,
@@ -780,6 +781,50 @@ export class MissionScene extends Phaser.Scene {
           entity.maxHealth,
         );
       }
+
+      if (isAdvancedThreat(entity)) {
+        const definition = pathogenDefinitions[entity.pathogenTypeId];
+        const alpha = entity.detected ? 0.95 : 0.48;
+
+        graphics.fillStyle(definition.color, alpha);
+        drawPathogenShape(
+          graphics,
+          entity.position.x,
+          entity.position.y,
+          entity.radius,
+          definition.shape,
+        );
+        graphics.lineStyle(
+          entity.category === "parasite" ? 4 : 2,
+          definition.outlineColor,
+          entity.detected ? 0.74 : 0.35,
+        );
+        strokePathogenShape(
+          graphics,
+          entity.position.x,
+          entity.position.y,
+          entity.radius,
+          definition.shape,
+        );
+
+        if (entity.category === "fungus") {
+          graphics.lineStyle(2, 0xc7ed8a, 0.28);
+          graphics.strokeCircle(entity.position.x, entity.position.y, entity.radius + 22);
+        }
+
+        if (entity.category === "cancerCell" && !entity.detected) {
+          graphics.lineStyle(2, 0xd18cff, 0.22);
+          graphics.strokeCircle(entity.position.x, entity.position.y, entity.radius + 10);
+        }
+
+        this.drawHealthBar(
+          graphics,
+          entity.position.x,
+          entity.position.y - entity.radius - 16,
+          entity.health,
+          entity.maxHealth,
+        );
+      }
     }
   }
 
@@ -1003,6 +1048,7 @@ function getInfiniteRunInfo(state: GameState): InfiniteRunInfo | undefined {
         infectedCells,
         peakInflammation: state.missionStats.peakInflammation,
         antigensCollected: state.missionStats.antigensCollected,
+        threatScoreBonus: state.missionStats.threatScoreBonus,
       },
       difficulty,
     ),

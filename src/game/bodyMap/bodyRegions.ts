@@ -109,8 +109,8 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     mapPosition: { x: 72, y: 75 },
     connections: ["blood", "intestine", "spleen"],
     regionalNodeId: "bloodNode",
-    linkedMissionId: "bloodMixedAlert",
-    preferredThreat: "mixed",
+    linkedMissionId: "liverAbnormalGrowth",
+    preferredThreat: "cancer",
     pedagogy:
       "Le foie est une zone de stabilisation simplifiee. Une infection systemique le met sous pression.",
   },

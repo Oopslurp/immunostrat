@@ -2,6 +2,7 @@ import { cloneState } from "./cloneState";
 import type { GameState } from "./GameState";
 import { applyCombatSystem } from "../systems/combatSystem";
 import { applyBiofilmSystem } from "../systems/biofilmSystem";
+import { applyAdvancedThreatSystem } from "../systems/advancedThreatSystem";
 import { applyDebrisSystem } from "../systems/debrisSystem";
 import { applyEndConditionSystem } from "../systems/endConditionSystem";
 import { applyEffectSystem } from "../systems/effectSystem";
@@ -28,6 +29,7 @@ export function stepSimulation(state: GameState, deltaMs: number): GameState {
   applyEffectSystem(next, deltaMs);
   applyWaveSystem(next);
   applyPathogenSystem(next, deltaMs);
+  applyAdvancedThreatSystem(next, deltaMs);
   applyBiofilmSystem(next);
   applyVirusSystem(next, deltaMs);
   applyMovementSystem(next, deltaMs);

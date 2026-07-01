@@ -87,7 +87,10 @@ export function GamePage({
       civilianCellsLost: snapshot.destroyedTissueCells,
       infectedCellsRemaining: snapshot.infectedTissueCells,
       enemiesRemaining: snapshot.entities.filter(
-        (entity) => entity.kind === "bacterium" || entity.kind === "virus",
+        (entity) =>
+          entity.kind === "bacterium" ||
+          entity.kind === "virus" ||
+          entity.kind === "advancedThreat",
       ).length,
       inflammationPeak: snapshot.peakInflammation,
       antigensCollected: snapshot.antigensCollected,
@@ -191,9 +194,9 @@ export function GamePage({
         <div>
           <span className="eyebrow">
             {battleSource === "infinite"
-              ? "Mode infini V8"
+              ? "Mode infini V9"
               : battleSource === "bodyMap"
-                ? "Carte du corps V7"
+                ? "Carte du corps V9"
                 : "Campagne V6"}
           </span>
           <h1>{mission.title}</h1>
@@ -482,6 +485,11 @@ export function GamePage({
             0}
         </span>
         <span className="hud-item">
+          Avancees:{" "}
+          {snapshot?.entities.filter((entity) => entity.kind === "advancedThreat")
+            .length ?? 0}
+        </span>
+        <span className="hud-item">
           Cellules: {snapshot?.healthyTissueCells ?? 0} saines /{" "}
           {snapshot?.infectedTissueCells ?? 0} infectees /{" "}
           {snapshot?.destroyedTissueCells ?? 0} detruites
@@ -559,7 +567,17 @@ export function GamePage({
                   style={{ backgroundColor: `#${definition.color.toString(16).padStart(6, "0")}` }}
                 />
                 {definition.displayName} x{item.count}
-                <em>{definition.archetype}</em>
+                <em
+                  title={[
+                    definition.gameplayRole,
+                    definition.realLifeInspiration,
+                    definition.simplificationNote,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  {definition.subtype ?? definition.archetype}
+                </em>
               </span>
             );
           })

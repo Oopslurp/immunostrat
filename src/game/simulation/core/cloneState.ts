@@ -28,6 +28,7 @@ export function cloneState(state: GameState): GameState {
       peakInflammation: state.missionStats.peakInflammation,
       antigensCollected: state.missionStats.antigensCollected,
       lymphSignalsDelivered: state.missionStats.lymphSignalsDelivered,
+      threatScoreBonus: state.missionStats.threatScoreBonus,
     },
     treatments: {
       cooldowns: { ...state.treatments.cooldowns },

@@ -4,6 +4,7 @@ import { distance, distanceSquared } from "../../types/shared";
 import type { GameState, TissueCellState } from "../core/GameState";
 import {
   isBacterium,
+  isAdvancedThreat,
   isCytotoxicT,
   isHostilePathogen,
   isImmuneUnit,
@@ -13,6 +14,7 @@ import {
   isPlasmocyte,
   isVirus,
   type BacteriumEntity,
+  type AdvancedThreatEntity,
   type GameEntity,
   type ImmuneUnitEntity,
   type VirusEntity,
@@ -151,7 +153,9 @@ function attackInfectedCell(
   }
 
   cell.health = 0;
-  cell.status = "destroyed";
+    cell.status = "destroyed";
+  const exposedPathogenTypeId = cell.infectedByPathogenTypeId ?? "respiratoryVirus";
+  cell.infectedByPathogenTypeId = undefined;
   cell.infectedElapsedMs = 0;
   cell.nextVirusBurstMs = balanceValues.tissueCells.infectedVirusProductionIntervalMs;
   state.tissue.health = Math.max(
@@ -161,8 +165,8 @@ function attackInfectedCell(
   state.debris.push({
     id: `debris-${state.nextDebrisNumber}`,
     position: { ...cell.position },
-    pathogenTypeId: "respiratoryVirus",
-    antigenProfileId: pathogenDefinitions.respiratoryVirus.antigenProfileId,
+    pathogenTypeId: exposedPathogenTypeId,
+    antigenProfileId: pathogenDefinitions[exposedPathogenTypeId].antigenProfileId,
     antigenValue: balanceValues.tissueCells.infectedCellAntigenValue,
     ttlMs: balanceValues.debris.ttlMs,
   });
@@ -239,9 +243,9 @@ function startPhagocytosis(
 
 function findNearestPathogenInRange(
   immuneUnit: ImmuneUnitEntity,
-  pathogens: Array<BacteriumEntity | VirusEntity>,
-): BacteriumEntity | VirusEntity | null {
-  let nearest: BacteriumEntity | VirusEntity | null = null;
+  pathogens: Array<BacteriumEntity | VirusEntity | AdvancedThreatEntity>,
+): BacteriumEntity | VirusEntity | AdvancedThreatEntity | null {
+  let nearest: BacteriumEntity | VirusEntity | AdvancedThreatEntity | null = null;
   let nearestDistance = Number.POSITIVE_INFINITY;
   let nearestPriority = Number.NEGATIVE_INFINITY;
   const maxDistanceSquared = immuneUnit.attackRange * immuneUnit.attackRange;
@@ -272,13 +276,19 @@ function findNearestPathogenInRange(
 function calculateDamage(
   state: GameState,
   immuneUnit: ImmuneUnitEntity,
-  target: BacteriumEntity | VirusEntity,
+  target: BacteriumEntity | VirusEntity | AdvancedThreatEntity,
 ): number {
   const definition = pathogenDefinitions[target.pathogenTypeId];
   const unitMultiplier = definition.damageMultipliers[immuneUnit.kind] ?? 1;
-  const analysisMultiplier = state.adaptiveResearch.bacterialAnalysisComplete
+  const analysisMultiplier = getAnalysisMultiplier(state, target)
     ? balanceValues.adaptive.bacterialAnalysisDamageMultiplier
     : 1;
+  const cancerResponderMultiplier =
+    isAdvancedThreat(target) &&
+    target.category === "cancerCell" &&
+    (isNkCell(immuneUnit) || isCytotoxicT(immuneUnit))
+      ? 1.2
+      : 1;
   const inflammationMultiplier = getInflammationDamageMultiplier(state, immuneUnit);
   const rawDamage =
     immuneUnit.attackDamage *
@@ -287,16 +297,35 @@ function calculateDamage(
       ? balanceValues.combat.macrophageCleanupDamageMultiplier
       : 1) *
     analysisMultiplier *
+    cancerResponderMultiplier *
     inflammationMultiplier;
   const armoredDamage = Math.max(
     balanceValues.combat.minimumDamageAfterArmor,
-    rawDamage - (isBacterium(target) ? target.armor ?? definition.armor : 0),
+    rawDamage -
+      (isBacterium(target) || isAdvancedThreat(target)
+        ? target.armor ?? definition.armor
+        : 0),
   );
 
   return (
     armoredDamage *
     (isBacterium(target) ? getBiofilmDamageMultiplier(state, target) : 1)
   );
+}
+
+function getAnalysisMultiplier(
+  state: GameState,
+  target: BacteriumEntity | VirusEntity | AdvancedThreatEntity,
+): boolean {
+  if (isVirus(target)) {
+    return state.adaptiveResearch.viralAnalysisComplete;
+  }
+
+  if (isAdvancedThreat(target) && target.category === "cancerCell") {
+    return state.adaptiveResearch.viralAnalysisComplete;
+  }
+
+  return state.adaptiveResearch.bacterialAnalysisComplete;
 }
 
 function getBiofilmDamageMultiplier(

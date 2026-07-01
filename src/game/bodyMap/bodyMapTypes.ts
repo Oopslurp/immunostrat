@@ -22,14 +22,59 @@ export type BodyRegionStatus =
   | "healthy"
   | "alert"
   | "infected"
+  | "critical"
   | "highInflammation"
   | "inBattle"
   | "controlled"
-  | "weakened";
+  | "weakened"
+  | "lost";
 
-export type BodyThreatProfile = "none" | "bacterial" | "viral" | "mixed";
+export type BodyThreatProfile =
+  | "none"
+  | "bacterial"
+  | "viral"
+  | "fungal"
+  | "parasite"
+  | "cancer"
+  | "opportunist"
+  | "mixed";
 export type BodyMapDifficulty = "easy" | "normal" | "hard";
 export type BodyBattleQuality = "clean" | "strained" | "lost";
+export type BodyMapRunStatus = "running" | "victory" | "defeat";
+export type BodyMapDefeatCause =
+  | "globalHealthCollapsed"
+  | "globalInfectionOverrun"
+  | "systemicInflammationRunaway"
+  | "tooManyCriticalRegions"
+  | "bloodCrisis";
+
+export type BodyMapBattleStats = {
+  won: number;
+  lost: number;
+  cleanVictories: number;
+  treatmentsUsed: number;
+  civilianCellsSaved: number;
+  civilianCellsLost: number;
+  advancedThreatsEncountered: number;
+};
+
+export type BodyMapFinalSummary = {
+  status: Exclude<BodyMapRunStatus, "running">;
+  title: string;
+  cause: string;
+  score: number;
+  rank: "C" | "B" | "A" | "S";
+  completedAt: string;
+  difficulty: BodyMapDifficulty;
+  strategicTurn: number;
+  globalHealth: number;
+  globalInfection: number;
+  systemicInflammation: number;
+  stabilizedRegions: number;
+  criticalRegions: number;
+  lostRegions: number;
+  battleStats: BodyMapBattleStats;
+};
 
 export type BodyRegionDefinition = {
   id: BodyRegionId;
@@ -90,7 +135,11 @@ export type BodyMapState = {
   version: number;
   seed: string;
   difficulty: BodyMapDifficulty;
+  runStatus: BodyMapRunStatus;
   strategicTurn: number;
+  stabilizationStreak: number;
+  defeatPressureTurns: number;
+  finalSummary?: BodyMapFinalSummary;
   globalHealth: number;
   globalInfection: number;
   systemicInflammation: number;
@@ -100,6 +149,7 @@ export type BodyMapState = {
   alerts: string[];
   history: string[];
   treatedRegionIds: BodyRegionId[];
+  battleStats: BodyMapBattleStats;
 };
 
 export type BodyBattleOutcome = {

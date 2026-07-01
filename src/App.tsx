@@ -11,6 +11,12 @@ import {
   resetBodyMapState,
   saveBodyMapState,
 } from "./game/bodyMap/bodyMapSave";
+import {
+  loadBodyMapProgress,
+  recordBodyMapRun,
+  resetBodyMapProgress,
+  saveBodyMapProgress,
+} from "./game/bodyMap/bodyMapProgress";
 import type {
   BodyMapDifficulty,
   BodyMapState,
@@ -35,11 +41,15 @@ import { CampaignPage } from "./pages/CampaignPage";
 import { GamePage } from "./pages/GamePage";
 import { HomePage } from "./pages/HomePage";
 import { InfinitePage } from "./pages/InfinitePage";
+import { NormalGamePage } from "./pages/NormalGamePage";
 
 export default function App() {
   const [route, setRoute] = useState<AppRoute>(routes.home);
   const [progress, setProgress] = useState(() => loadCampaignProgress());
   const [bodyMapState, setBodyMapState] = useState(() => loadBodyMapState());
+  const [bodyMapProgress, setBodyMapProgress] = useState(() =>
+    loadBodyMapProgress(),
+  );
   const [infiniteProgress, setInfiniteProgress] = useState(() =>
     loadInfiniteProgress(),
   );
@@ -71,6 +81,7 @@ export default function App() {
 
   const updateBodyMapState = (nextState: BodyMapState) => {
     saveBodyMapState(nextState);
+    maybeRecordBodyMapResult(bodyMapState, nextState);
     setBodyMapState(nextState);
   };
 
@@ -101,6 +112,18 @@ export default function App() {
     setRoute(routes.bodyMap);
   };
 
+  const resetBodyMap = () => {
+    const nextState = resetBodyMapState();
+
+    setBodyMapState(nextState);
+  };
+
+  const resetNormalResults = () => {
+    const nextProgress = resetBodyMapProgress();
+
+    setBodyMapProgress(nextProgress);
+  };
+
   const handleBodyBattleComplete = (result: MissionRunResultSummary) => {
     if (!bodyBattleRegionId) {
       return;
@@ -116,8 +139,33 @@ export default function App() {
       });
 
       saveBodyMapState(nextState);
+      maybeRecordBodyMapResult(currentState, nextState);
 
       return nextState;
+    });
+  };
+
+  const maybeRecordBodyMapResult = (
+    previousState: BodyMapState,
+    nextState: BodyMapState,
+  ) => {
+    if (
+      previousState.runStatus !== "running" ||
+      nextState.runStatus === "running" ||
+      !nextState.finalSummary
+    ) {
+      return;
+    }
+
+    setBodyMapProgress((currentProgress) => {
+      const nextProgress = recordBodyMapRun(
+        currentProgress,
+        nextState.finalSummary!,
+      );
+
+      saveBodyMapProgress(nextProgress);
+
+      return nextProgress;
     });
   };
 
@@ -165,8 +213,18 @@ export default function App() {
           bodyMapUnlocked={bodyMapUnlocked}
           onOpenBodyMap={() => setRoute(routes.bodyMap)}
           onOpenInfinite={() => setRoute(routes.infinite)}
-          onStartNormalGame={() => startNewBodyMapGame("normal")}
+          onStartNormalGame={() => setRoute(routes.normal)}
           onPlay={() => setRoute(routes.campaign)}
+        />
+      ) : null}
+      {route === routes.normal ? (
+        <NormalGamePage
+          hasRunningMap={bodyMapState.runStatus === "running"}
+          progress={bodyMapProgress}
+          onBackHome={() => setRoute(routes.home)}
+          onContinue={() => setRoute(routes.bodyMap)}
+          onResetResults={resetNormalResults}
+          onStart={startNewBodyMapGame}
         />
       ) : null}
       {route === routes.campaign ? (
@@ -183,7 +241,8 @@ export default function App() {
           state={bodyMapState}
           onLaunchBattle={launchBodyBattle}
           onNewBodyMapGame={startNewBodyMapGame}
-          onResetBodyMap={() => setBodyMapState(resetBodyMapState())}
+          onResetBodyMap={resetBodyMap}
+          onBackHome={() => setRoute(routes.home)}
           onSelectRegion={setSelectedBodyRegionId}
           onUpdateState={updateBodyMapState}
         />

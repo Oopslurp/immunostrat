@@ -4,6 +4,7 @@ import { treatmentDefinitions, type TreatmentId } from "../../data/treatments";
 import { unitDefinitions, type UnitTypeId } from "../../data/units";
 import { distance, type EntityId, type Vector2 } from "../../types/shared";
 import {
+  isAdvancedThreat,
   isBacterium,
   isDendriticCell,
   isHostilePathogen,
@@ -474,7 +475,10 @@ function useMassiveNeutralization(state: GameState): GameState {
     (next.missionStats.usedAbilities.massiveNeutralization ?? 0) + 1;
 
   for (const entity of Object.values(next.entities)) {
-    if (entity.kind === "bacterium") {
+    if (
+      entity.kind === "bacterium" ||
+      (isAdvancedThreat(entity) && entity.category !== "cancerCell")
+    ) {
       entity.health -= adaptive.massiveNeutralizationDamage;
       next.effects.push({
         id: `effect-${next.nextEffectNumber}`,
@@ -596,7 +600,11 @@ function applyAntibiotic(state: GameState): void {
   const treatment = treatmentDefinitions.antibiotic;
 
   for (const entity of Object.values(state.entities)) {
-    if (!isBacterium(entity)) {
+    const isAntibioticTarget =
+      isBacterium(entity) ||
+      (isAdvancedThreat(entity) && entity.category === "opportunist");
+
+    if (!isAntibioticTarget) {
       continue;
     }
 
@@ -607,7 +615,13 @@ function applyAntibiotic(state: GameState): void {
     const biofilmProtected = state.biofilmZones.some(
       (zone) => distance(zone.position, entity.position) <= zone.radius,
     );
-    const damage = biofilmProtected ? 14 : 28;
+    const damage = isAdvancedThreat(entity)
+      ? biofilmProtected
+        ? 8
+        : 16
+      : biofilmProtected
+        ? 14
+        : 28;
 
     entity.health -= damage;
     entity.movementSpeed *= biofilmProtected ? 0.86 : 0.72;

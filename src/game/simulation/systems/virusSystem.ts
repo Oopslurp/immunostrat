@@ -119,6 +119,7 @@ function infectCell(
   virus: VirusEntity,
 ): void {
   cell.status = "infected";
+  cell.infectedByPathogenTypeId = virus.pathogenTypeId;
   cell.infectedElapsedMs = 0;
   cell.nextVirusBurstMs = balanceValues.tissueCells.infectedInitialDelayMs;
   state.tissue.health = Math.max(
@@ -143,7 +144,7 @@ function releaseVirusBurst(state: GameState, cell: TissueCellState): void {
   ) {
     spawnVirus(
       state,
-      "respiratoryVirus",
+      cell.infectedByPathogenTypeId ?? "respiratoryVirus",
       jitterPosition(cell.position, `${cell.id}-${cell.infectedElapsedMs}-${index}`),
     );
   }

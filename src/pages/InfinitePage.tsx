@@ -27,7 +27,7 @@ export function InfinitePage({
     <div className="page infinite-page">
       <header className="campaign-header">
         <div>
-          <span className="eyebrow">V8 - Mode infini</span>
+          <span className="eyebrow">V9 - Mode infini</span>
           <h1>Survie immunitaire</h1>
           <p>
             Un mode separe, avance et difficile : vagues progressives, phases,
@@ -119,7 +119,7 @@ export function InfinitePage({
           <p>5. Infection mixte</p>
           <p>6. Mutation</p>
           <p>7. Crise systemique</p>
-          <p>8. Nightmare, avec hooks V9 uniquement</p>
+          <p>8. Nightmare, avec champignons, parasites, opportunistes et cellules anormales</p>
         </Panel>
       </section>
     </div>

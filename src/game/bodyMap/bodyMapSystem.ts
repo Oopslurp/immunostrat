@@ -1,5 +1,6 @@
 import type { CampaignProgress } from "../campaign/progress";
 import type { MissionPreparation, StartingUnitDefinition } from "../data/missions";
+import { pathogenDefinitions } from "../data/pathogens";
 import { unitDefinitions, type UnitTypeId } from "../data/units";
 import {
   bodyRegionDefinitions,
@@ -9,9 +10,13 @@ import {
 } from "./bodyRegions";
 import type {
   BodyBattleOutcome,
+  BodyMapBattleStats,
+  BodyMapDefeatCause,
   BodyBattlePreparation,
   BodyBattleQuality,
+  BodyMapFinalSummary,
   BodyMapDifficulty,
+  BodyMapRunStatus,
   BodyMapState,
   BodyRegionId,
   BodyRegionState,
@@ -22,6 +27,19 @@ import type {
 } from "./bodyMapTypes";
 
 export const BODY_MAP_SAVE_VERSION = 1;
+
+export const bodyMapEndingRules = {
+  victoryRequiredStableTurns: 2,
+  victoryMaxRegionInfection: 10,
+  victoryMaxGlobalInfection: 15,
+  victoryMaxSystemicInflammation: 60,
+  victoryMinGlobalHealth: 40,
+  defeatMaxGlobalInfection: 100,
+  defeatMaxSystemicInflammation: 95,
+  defeatInflammationTurns: 2,
+  defeatCriticalRegions: 4,
+  defeatBloodGlobalHealth: 30,
+};
 
 export const reinforcementCosts: Record<UnitTypeId, ReinforcementCost> = {
   macrophage: { unitTypeId: "macrophage", atp: 12, cytokines: 0, antigens: 0 },
@@ -37,7 +55,10 @@ export function createDefaultBodyMapState(): BodyMapState {
     version: BODY_MAP_SAVE_VERSION,
     seed: "v7-default",
     difficulty: "normal",
+    runStatus: "running",
     strategicTurn: 1,
+    stabilizationStreak: 0,
+    defeatPressureTurns: 0,
     globalHealth: 90,
     globalInfection: 0,
     systemicInflammation: 0,
@@ -83,6 +104,7 @@ export function createDefaultBodyMapState(): BodyMapState {
       "Tour 1 : infection detectee dans la peau.",
     ],
     treatedRegionIds: [],
+    battleStats: createEmptyBattleStats(),
   });
 }
 
@@ -129,7 +151,14 @@ export function normalizeBodyMapState(
     version: BODY_MAP_SAVE_VERSION,
     seed: partial.seed ?? defaults.seed,
     difficulty: sanitizeDifficulty(partial.difficulty),
+    runStatus:
+      partial.runStatus === "victory" || partial.runStatus === "defeat"
+        ? partial.runStatus
+        : "running",
     strategicTurn: Math.max(1, partial.strategicTurn ?? defaults.strategicTurn),
+    stabilizationStreak: Math.max(0, partial.stabilizationStreak ?? 0),
+    defeatPressureTurns: Math.max(0, partial.defeatPressureTurns ?? 0),
+    finalSummary: sanitizeFinalSummary(partial.finalSummary),
     globalHealth: clamp(partial.globalHealth ?? defaults.globalHealth, 0, 100),
     globalInfection: clamp(
       partial.globalInfection ?? defaults.globalInfection,
@@ -159,6 +188,7 @@ export function normalizeBodyMapState(
     treatedRegionIds: (partial.treatedRegionIds ?? []).filter(
       (regionId): regionId is BodyRegionId => regionId in bodyRegionDefinitions,
     ),
+    battleStats: sanitizeBattleStats(partial.battleStats),
   });
 }
 
@@ -167,6 +197,10 @@ export function assignReinforcement(
   regionId: BodyRegionId,
   unitTypeId: UnitTypeId,
 ): BodyMapState {
+  if (state.runStatus !== "running") {
+    return state;
+  }
+
   const cost = reinforcementCosts[unitTypeId];
 
   if (
@@ -203,6 +237,10 @@ export function activateRegionalNode(
   state: BodyMapState,
   nodeId: RegionalNodeId,
 ): BodyMapState {
+  if (state.runStatus !== "running") {
+    return state;
+  }
+
   if (
     state.regionalNodes[nodeId].active ||
     state.globalResources.cytokines < 14 ||
@@ -264,6 +302,10 @@ export function applyBodyBattleOutcome(
   state: BodyMapState,
   outcome: BodyBattleOutcome,
 ): BodyMapState {
+  if (state.runStatus !== "running") {
+    return state;
+  }
+
   const next = cloneBodyMapState(state);
   const region = next.regions[outcome.regionId];
   const definition = bodyRegionDefinitions[outcome.regionId];
@@ -273,6 +315,7 @@ export function applyBodyBattleOutcome(
   region.lastBattleQuality = getBattleQuality(outcome);
   region.treatedCount = (region.treatedCount ?? 0) + 1;
   region.assignedReinforcements = {};
+  addBattleStats(next, outcome);
 
   if (outcome.status === "victory") {
     const quality = getBattleQuality(outcome);
@@ -283,11 +326,18 @@ export function applyBodyBattleOutcome(
     const infectionDrop =
       quality === "clean" ? 56 : quality === "strained" ? 36 : 20;
     const healthDelta = quality === "clean" ? 12 : tissueRatio >= 0.45 ? 4 : -7;
+    const inflammationPeak = outcome.inflammationPeak ?? 0;
     const inflammationDelta =
-      (outcome.inflammationPeak ?? 0) >= 82 ? -4 : quality === "clean" ? -22 : -12;
+      inflammationPeak >= 82 ? -4 : quality === "clean" ? -22 : -12;
 
     region.infection = clamp(region.infection - infectionDrop, 0, 100);
     region.inflammation = clamp(region.inflammation + inflammationDelta, 0, 100);
+    next.systemicInflammation = clamp(
+      next.systemicInflammation +
+        (inflammationPeak >= 85 ? 5 : quality === "clean" ? -6 : -2),
+      0,
+      100,
+    );
     region.localHealth = clamp(
       region.localHealth + healthDelta - (outcome.civilianCellsLost ?? 0) * 1.5,
       0,
@@ -345,6 +395,10 @@ export function applyBodyBattleOutcome(
 }
 
 export function advanceStrategicTurn(state: BodyMapState): BodyMapState {
+  if (state.runStatus !== "running") {
+    return state;
+  }
+
   const next = cloneBodyMapState(state);
   const spreadAlerts: string[] = [];
 
@@ -388,7 +442,11 @@ export function advanceStrategicTurn(state: BodyMapState): BodyMapState {
 
         target.infection = clamp(target.infection + intensity, 0, 100);
         target.inflammation = clamp(target.inflammation + intensity * 0.45, 0, 100);
-        target.threat = inheritThreat(target.threat, region.threat);
+        if (target.status !== "controlled" && target.status !== "healthy") {
+          target.threat = inheritThreat(target.threat, region.threat);
+        } else {
+          target.threat = region.threat;
+        }
         target.pathogens = Array.from(
           new Set([...target.pathogens, ...region.pathogens]),
         );
@@ -414,7 +472,7 @@ export function advanceStrategicTurn(state: BodyMapState): BodyMapState {
     ...next.history,
   ].slice(0, 12);
 
-  return recalculateGlobalMetrics(next);
+  return updateBodyMapEndState(recalculateGlobalMetrics(next));
 }
 
 export function getDifficultyConfig(difficulty: BodyMapDifficulty): {
@@ -481,6 +539,97 @@ export function getAvailableReinforcements(
   return available;
 }
 
+export function getBodyMapVictoryProgress(state: BodyMapState): {
+  stableTurns: number;
+  requiredStableTurns: number;
+  infectedRegions: number;
+  criticalRegions: number;
+  lostRegions: number;
+  ready: boolean;
+  blockers: string[];
+} {
+  const regions = bodyRegionOrder.map((regionId) => state.regions[regionId]);
+  const infectedRegions = regions.filter(
+    (region) => region.infection > bodyMapEndingRules.victoryMaxRegionInfection,
+  ).length;
+  const criticalRegions = regions.filter((region) => isCriticalRegion(region)).length;
+  const lostRegions = regions.filter((region) => region.status === "lost").length;
+  const blockers: string[] = [];
+
+  if (infectedRegions > 0) {
+    blockers.push(`${infectedRegions} region(s) encore infectee(s)`);
+  }
+
+  if (state.globalInfection > bodyMapEndingRules.victoryMaxGlobalInfection) {
+    blockers.push("infection globale trop haute");
+  }
+
+  if (state.systemicInflammation > bodyMapEndingRules.victoryMaxSystemicInflammation) {
+    blockers.push("inflammation systemique trop haute");
+  }
+
+  if (state.globalHealth < bodyMapEndingRules.victoryMinGlobalHealth) {
+    blockers.push("sante globale trop basse");
+  }
+
+  if (criticalRegions > 0 || lostRegions > 0) {
+    blockers.push("region critique ou perdue");
+  }
+
+  return {
+    stableTurns: state.stabilizationStreak,
+    requiredStableTurns: bodyMapEndingRules.victoryRequiredStableTurns,
+    infectedRegions,
+    criticalRegions,
+    lostRegions,
+    ready: blockers.length === 0,
+    blockers,
+  };
+}
+
+export function calculateBodyMapScore(state: BodyMapState): number {
+  const regions = bodyRegionOrder.map((regionId) => state.regions[regionId]);
+  const stabilizedRegions = regions.filter(
+    (region) => region.status === "healthy" || region.status === "controlled",
+  ).length;
+  const criticalRegions = regions.filter((region) => isCriticalRegion(region)).length;
+  const difficultyMultiplier =
+    state.difficulty === "hard" ? 1.3 : state.difficulty === "easy" ? 0.85 : 1;
+  const base =
+    state.globalHealth * 9 +
+    (100 - state.globalInfection) * 6 +
+    (100 - state.systemicInflammation) * 4 +
+    stabilizedRegions * 95 +
+    state.battleStats.won * 70 +
+    state.battleStats.cleanVictories * 45 +
+    state.battleStats.civilianCellsSaved * 4 +
+    state.battleStats.advancedThreatsEncountered * 18;
+  const penalties =
+    state.strategicTurn * 18 +
+    criticalRegions * 130 +
+    state.battleStats.lost * 120 +
+    state.battleStats.civilianCellsLost * 8 +
+    state.battleStats.treatmentsUsed * 8;
+
+  return Math.max(0, Math.round((base - penalties) * difficultyMultiplier));
+}
+
+export function getBodyMapRank(score: number): "C" | "B" | "A" | "S" {
+  if (score >= 1500) {
+    return "S";
+  }
+
+  if (score >= 1150) {
+    return "A";
+  }
+
+  if (score >= 780) {
+    return "B";
+  }
+
+  return "C";
+}
+
 function toStartingUnits(
   assigned: Partial<Record<UnitTypeId, number>>,
 ): StartingUnitDefinition[] {
@@ -519,12 +668,19 @@ function shouldAttemptSpread(
   const node = state.regionalNodes[bodyRegionDefinitions[regionId].regionalNodeId];
   const bloodBonus = regionId === "blood" || state.regions.blood.infection >= 45 ? 18 : 0;
   const viralBonus = region.threat === "viral" ? 8 : region.threat === "mixed" ? 12 : 0;
+  const advancedBonus =
+    region.threat === "parasite" || region.threat === "cancer"
+      ? 10
+      : region.threat === "fungal" || region.threat === "opportunist"
+        ? 6
+        : 0;
   const localRisk =
     region.infection * 0.55 +
     region.inflammation * 0.18 +
     (100 - region.localHealth) * 0.12 +
     bloodBonus +
-    viralBonus;
+    viralBonus +
+    advancedBonus;
   const nodePenalty = node.active ? 14 : 0;
   const recentPenalty = region.lastBattleQuality === "clean" ? 12 : 0;
   const recentBonus = region.lastBattleQuality === "lost" ? 14 : 0;
@@ -541,7 +697,17 @@ function getSpreadIntensity(
   difficulty: BodyMapDifficulty,
 ): number {
   const base =
-    threat === "viral" ? 15 : threat === "mixed" ? 18 : threat === "bacterial" ? 14 : 10;
+    threat === "viral"
+      ? 15
+      : threat === "mixed"
+        ? 18
+        : threat === "parasite" || threat === "cancer"
+          ? 16
+          : threat === "fungal" || threat === "opportunist"
+            ? 15
+            : threat === "bacterial"
+              ? 14
+              : 10;
   const bloodBonus = sourceRegionId === "blood" ? 6 : 0;
   const difficultyBonus = difficulty === "hard" ? 4 : difficulty === "easy" ? -3 : 0;
 
@@ -613,6 +779,14 @@ function recalculateGlobalMetrics(state: BodyMapState): BodyMapState {
 }
 
 function getRegionStatus(region: BodyRegionState): BodyRegionStatus {
+  if (region.localHealth <= 0) {
+    return "lost";
+  }
+
+  if (region.localHealth <= 22 || region.infection >= 82) {
+    return "critical";
+  }
+
   if (region.localHealth <= 35) {
     return "weakened";
   }
@@ -642,7 +816,7 @@ function sanitizeRegion(
 ): BodyRegionState {
   return {
     id: fallback.id,
-    status: region.status ?? fallback.status,
+    status: sanitizeRegionStatus(region.status, fallback.status),
     localHealth: clamp(region.localHealth, 0, 100),
     infection: clamp(region.infection, 0, 100),
     inflammation: clamp(region.inflammation, 0, 100),
@@ -667,6 +841,13 @@ function cloneBodyMapState(state: BodyMapState): BodyMapState {
     alerts: [...state.alerts],
     history: [...state.history],
     treatedRegionIds: [...state.treatedRegionIds],
+    battleStats: { ...state.battleStats },
+    finalSummary: state.finalSummary
+      ? {
+          ...state.finalSummary,
+          battleStats: { ...state.finalSummary.battleStats },
+        }
+      : undefined,
   };
 }
 
@@ -733,6 +914,22 @@ function formatThreat(threat: BodyThreatProfile): string {
     return "virale";
   }
 
+  if (threat === "fungal") {
+    return "fongique";
+  }
+
+  if (threat === "parasite") {
+    return "parasitaire";
+  }
+
+  if (threat === "cancer") {
+    return "cellulaire anormale";
+  }
+
+  if (threat === "opportunist") {
+    return "opportuniste";
+  }
+
   if (threat === "bacterial") {
     return "bacterienne";
   }
@@ -742,6 +939,228 @@ function formatThreat(threat: BodyThreatProfile): string {
   }
 
   return "locale";
+}
+
+function updateBodyMapEndState(state: BodyMapState): BodyMapState {
+  if (state.runStatus !== "running") {
+    return state;
+  }
+
+  const next = cloneBodyMapState(state);
+  const defeatCause = getDefeatCause(next);
+
+  if (defeatCause) {
+    next.runStatus = "defeat";
+    next.finalSummary = createFinalSummary(next, "defeat", defeatCause);
+    next.alerts = pushAlert(next.alerts, next.finalSummary.cause);
+    next.history = pushHistory(
+      next.history,
+      `Tour ${next.strategicTurn} : defaite globale - ${next.finalSummary.cause}.`,
+    );
+    return next;
+  }
+
+  const progress = getBodyMapVictoryProgress(next);
+  next.stabilizationStreak = progress.ready ? next.stabilizationStreak + 1 : 0;
+  next.defeatPressureTurns =
+    next.systemicInflammation >= bodyMapEndingRules.defeatMaxSystemicInflammation
+      ? next.defeatPressureTurns + 1
+      : 0;
+
+  if (next.stabilizationStreak >= bodyMapEndingRules.victoryRequiredStableTurns) {
+    next.runStatus = "victory";
+    next.finalSummary = createFinalSummary(next, "victory");
+    next.alerts = pushAlert(next.alerts, "Organisme stabilise : partie normale gagnee.");
+    next.history = pushHistory(
+      next.history,
+      `Tour ${next.strategicTurn} : victoire globale, organisme stabilise.`,
+    );
+  }
+
+  return next;
+}
+
+function getDefeatCause(state: BodyMapState): BodyMapDefeatCause | null {
+  const regions = bodyRegionOrder.map((regionId) => state.regions[regionId]);
+  const criticalRegions = regions.filter((region) => isCriticalRegion(region)).length;
+  const blood = state.regions.blood;
+
+  if (state.globalHealth <= 0) {
+    return "globalHealthCollapsed";
+  }
+
+  if (state.globalInfection >= bodyMapEndingRules.defeatMaxGlobalInfection) {
+    return "globalInfectionOverrun";
+  }
+
+  if (
+    state.systemicInflammation >= bodyMapEndingRules.defeatMaxSystemicInflammation &&
+    state.defeatPressureTurns + 1 >= bodyMapEndingRules.defeatInflammationTurns
+  ) {
+    return "systemicInflammationRunaway";
+  }
+
+  if (criticalRegions >= bodyMapEndingRules.defeatCriticalRegions) {
+    return "tooManyCriticalRegions";
+  }
+
+  if (
+    isCriticalRegion(blood) &&
+    state.globalHealth < bodyMapEndingRules.defeatBloodGlobalHealth
+  ) {
+    return "bloodCrisis";
+  }
+
+  return null;
+}
+
+function createFinalSummary(
+  state: BodyMapState,
+  status: Exclude<BodyMapRunStatus, "running">,
+  defeatCause?: BodyMapDefeatCause,
+): BodyMapFinalSummary {
+  const regions = bodyRegionOrder.map((regionId) => state.regions[regionId]);
+  const score = calculateBodyMapScore(state);
+
+  return {
+    status,
+    title: status === "victory" ? "Organisme stabilise" : "Organisme submerge",
+    cause:
+      status === "victory"
+        ? "Stabilisation maintenue sur plusieurs tours strategiques"
+        : formatDefeatCause(defeatCause ?? "globalHealthCollapsed"),
+    score,
+    rank: getBodyMapRank(score),
+    completedAt: new Date().toISOString(),
+    difficulty: state.difficulty,
+    strategicTurn: state.strategicTurn,
+    globalHealth: Math.round(state.globalHealth),
+    globalInfection: Math.round(state.globalInfection),
+    systemicInflammation: Math.round(state.systemicInflammation),
+    stabilizedRegions: regions.filter(
+      (region) => region.status === "healthy" || region.status === "controlled",
+    ).length,
+    criticalRegions: regions.filter((region) => isCriticalRegion(region)).length,
+    lostRegions: regions.filter((region) => region.status === "lost").length,
+    battleStats: { ...state.battleStats },
+  };
+}
+
+function formatDefeatCause(cause: BodyMapDefeatCause): string {
+  const labels: Record<BodyMapDefeatCause, string> = {
+    globalHealthCollapsed: "Sante globale effondree",
+    globalInfectionOverrun: "Propagation systemique incontrolee",
+    systemicInflammationRunaway: "Inflammation systemique excessive",
+    tooManyCriticalRegions: "Trop de regions critiques",
+    bloodCrisis: "Infection du sang non controlee",
+  };
+
+  return labels[cause];
+}
+
+function addBattleStats(state: BodyMapState, outcome: BodyBattleOutcome): void {
+  if (outcome.status === "victory") {
+    state.battleStats.won += 1;
+  } else {
+    state.battleStats.lost += 1;
+  }
+
+  if (getBattleQuality(outcome) === "clean") {
+    state.battleStats.cleanVictories += 1;
+  }
+
+  const treatmentUses = Object.values(outcome.treatmentsUsed ?? {}).reduce<number>(
+    (sum, count) => sum + (count ?? 0),
+    0,
+  );
+
+  state.battleStats.treatmentsUsed += treatmentUses;
+  state.battleStats.civilianCellsSaved += outcome.civilianCellsSaved ?? 0;
+  state.battleStats.civilianCellsLost += outcome.civilianCellsLost ?? 0;
+  state.battleStats.advancedThreatsEncountered += (
+    outcome.pathogenTypesEncountered ?? []
+  ).filter((pathogenTypeId) =>
+    (pathogenDefinitions[pathogenTypeId]?.tags ?? []).includes("advanced"),
+  ).length;
+}
+
+function createEmptyBattleStats(): BodyMapBattleStats {
+  return {
+    won: 0,
+    lost: 0,
+    cleanVictories: 0,
+    treatmentsUsed: 0,
+    civilianCellsSaved: 0,
+    civilianCellsLost: 0,
+    advancedThreatsEncountered: 0,
+  };
+}
+
+function sanitizeBattleStats(
+  stats: Partial<BodyMapBattleStats> | undefined,
+): BodyMapBattleStats {
+  const defaults = createEmptyBattleStats();
+
+  return {
+    won: Math.max(0, stats?.won ?? defaults.won),
+    lost: Math.max(0, stats?.lost ?? defaults.lost),
+    cleanVictories: Math.max(0, stats?.cleanVictories ?? defaults.cleanVictories),
+    treatmentsUsed: Math.max(0, stats?.treatmentsUsed ?? defaults.treatmentsUsed),
+    civilianCellsSaved: Math.max(
+      0,
+      stats?.civilianCellsSaved ?? defaults.civilianCellsSaved,
+    ),
+    civilianCellsLost: Math.max(
+      0,
+      stats?.civilianCellsLost ?? defaults.civilianCellsLost,
+    ),
+    advancedThreatsEncountered: Math.max(
+      0,
+      stats?.advancedThreatsEncountered ?? defaults.advancedThreatsEncountered,
+    ),
+  };
+}
+
+function sanitizeFinalSummary(
+  summary: BodyMapFinalSummary | undefined,
+): BodyMapFinalSummary | undefined {
+  if (!summary || (summary.status !== "victory" && summary.status !== "defeat")) {
+    return undefined;
+  }
+
+  return {
+    ...summary,
+    score: Math.max(0, summary.score),
+    battleStats: sanitizeBattleStats(summary.battleStats),
+  };
+}
+
+function sanitizeRegionStatus(
+  status: BodyRegionStatus | undefined,
+  fallback: BodyRegionStatus,
+): BodyRegionStatus {
+  const validStatuses: BodyRegionStatus[] = [
+    "healthy",
+    "alert",
+    "infected",
+    "critical",
+    "highInflammation",
+    "inBattle",
+    "controlled",
+    "weakened",
+    "lost",
+  ];
+
+  return status && validStatuses.includes(status) ? status : fallback;
+}
+
+function isCriticalRegion(region: BodyRegionState): boolean {
+  return (
+    region.status === "critical" ||
+    region.status === "lost" ||
+    region.localHealth <= 22 ||
+    region.infection >= 82
+  );
 }
 
 function clamp(value: number, min: number, max: number): number {

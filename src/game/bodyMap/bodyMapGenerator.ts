@@ -19,6 +19,7 @@ type CrisisTemplate = {
   threat: BodyThreatProfile;
   pathogens: PathogenTypeId[];
   battleMissionId: BodyBattleMissionId;
+  minDifficulty?: BodyMapDifficulty;
   infectionRange: [number, number];
   inflammationRange: [number, number];
   healthRange: [number, number];
@@ -49,10 +50,21 @@ const crisisTemplates: CrisisTemplate[] = [
     alert: "Biofilm cutane en formation.",
   },
   {
+    id: "skin-fungus",
+    regionId: "skin",
+    threat: "fungal",
+    pathogens: ["cutaneousFungus", "fungalSpore"],
+    battleMissionId: "skinFungalOutbreak",
+    infectionRange: [38, 58],
+    inflammationRange: [26, 48],
+    healthRange: [70, 88],
+    alert: "Foyer fongique cutane detecte.",
+  },
+  {
     id: "lung-virus",
     regionId: "lungs",
     threat: "viral",
-    pathogens: ["respiratoryVirus"],
+    pathogens: ["respiratoryVirus", "cytolyticVirus"],
     battleMissionId: "lungViralSpread",
     infectionRange: [40, 64],
     inflammationRange: [18, 36],
@@ -60,15 +72,75 @@ const crisisTemplates: CrisisTemplate[] = [
     alert: "Foyer viral respiratoire detecte.",
   },
   {
+    id: "lung-cancer",
+    regionId: "lungs",
+    threat: "cancer",
+    pathogens: ["discreetAbnormalCell", "inflammatoryCancerCell"],
+    battleMissionId: "lungCancerSuspectCells",
+    minDifficulty: "hard",
+    infectionRange: [28, 44],
+    inflammationRange: [16, 34],
+    healthRange: [74, 90],
+    alert: "Cellules pulmonaires anormales detectees.",
+  },
+  {
+    id: "lung-mold",
+    regionId: "lungs",
+    threat: "fungal",
+    pathogens: ["sporeMold", "fungalSpore"],
+    battleMissionId: "skinFungalOutbreak",
+    minDifficulty: "normal",
+    infectionRange: [34, 54],
+    inflammationRange: [24, 46],
+    healthRange: [70, 88],
+    alert: "Moisissure a spores detectee dans les poumons.",
+  },
+  {
+    id: "lung-evasive-virus",
+    regionId: "lungs",
+    threat: "viral",
+    pathogens: ["immuneEvasiveVirus"],
+    battleMissionId: "lungViralSpread",
+    minDifficulty: "hard",
+    infectionRange: [38, 58],
+    inflammationRange: [20, 42],
+    healthRange: [70, 88],
+    alert: "Virus immuno-evasif respiratoire detecte.",
+  },
+  {
     id: "intestine-bacillus",
     regionId: "intestine",
     threat: "bacterial",
-    pathogens: ["proliferatingBacillus", "resistantBacterium"],
+    pathogens: ["proliferatingBacillus", "resistantBacterium", "secondaryBacterium"],
     battleMissionId: "intestineBacillusSwarm",
     infectionRange: [42, 68],
     inflammationRange: [24, 50],
     healthRange: [70, 88],
     alert: "Essaim de bacilles dans l'intestin.",
+  },
+  {
+    id: "intestine-yeast",
+    regionId: "intestine",
+    threat: "fungal",
+    pathogens: ["yeastOpportunist"],
+    battleMissionId: "skinFungalOutbreak",
+    minDifficulty: "normal",
+    infectionRange: [32, 52],
+    inflammationRange: [20, 42],
+    healthRange: [72, 90],
+    alert: "Levure opportuniste intestinale en croissance.",
+  },
+  {
+    id: "intestine-parasite",
+    regionId: "intestine",
+    threat: "parasite",
+    pathogens: ["parasiteHelminth", "bloodProtozoan"],
+    battleMissionId: "intestineParasiteBoss",
+    minDifficulty: "hard",
+    infectionRange: [44, 62],
+    inflammationRange: [32, 58],
+    healthRange: [66, 84],
+    alert: "Parasite intestinal rare signale.",
   },
   {
     id: "blood-mixed",
@@ -82,6 +154,29 @@ const crisisTemplates: CrisisTemplate[] = [
     alert: "Alerte mixte dans la circulation sanguine.",
   },
   {
+    id: "blood-opportunist",
+    regionId: "blood",
+    threat: "opportunist",
+    pathogens: ["secondaryBacterium", "reactivatedLatentVirus"],
+    battleMissionId: "opportunisticMixedFlare",
+    infectionRange: [34, 58],
+    inflammationRange: [22, 44],
+    healthRange: [72, 90],
+    alert: "Flare opportuniste dans la circulation.",
+  },
+  {
+    id: "blood-protozoan",
+    regionId: "blood",
+    threat: "parasite",
+    pathogens: ["bloodProtozoan", "migratoryLarva"],
+    battleMissionId: "intestineParasiteBoss",
+    minDifficulty: "hard",
+    infectionRange: [36, 58],
+    inflammationRange: [24, 46],
+    healthRange: [70, 88],
+    alert: "Protozoaire sanguin mobile signale.",
+  },
+  {
     id: "lymph-signal",
     regionId: "lymphNodes",
     threat: "mixed",
@@ -91,6 +186,18 @@ const crisisTemplates: CrisisTemplate[] = [
     inflammationRange: [22, 40],
     healthRange: [78, 92],
     alert: "Ganglion regional surcharge de signaux.",
+  },
+  {
+    id: "liver-abnormal",
+    regionId: "liver",
+    threat: "cancer",
+    pathogens: ["invasiveCancerCell", "mixedOpportunistCluster"],
+    battleMissionId: "liverAbnormalGrowth",
+    minDifficulty: "normal",
+    infectionRange: [30, 50],
+    inflammationRange: [18, 38],
+    healthRange: [72, 90],
+    alert: "Croissance anormale hepatique sous surveillance.",
   },
   {
     id: "spleen-filter",
@@ -156,6 +263,7 @@ export function createGeneratedBodyMapState(
   const selectedTemplates = pickCrisisTemplates(
     config.infectedRegionCount,
     random,
+    difficulty,
   );
 
   for (const template of selectedTemplates) {
@@ -172,7 +280,7 @@ export function createGeneratedBodyMapState(
   }
 
   state.alerts.push(
-    "Chaque partie normale genere des foyers differents. Le mode infini reste pour V8.",
+    "Chaque partie normale genere des foyers differents. Les menaces V9 apparaissent selon la difficulte.",
   );
 
   return normalizeBodyMapState(state);
@@ -189,8 +297,11 @@ export function hasBodyMapSave(): boolean {
 function pickCrisisTemplates(
   count: number,
   random: () => number,
+  difficulty: BodyMapDifficulty,
 ): CrisisTemplate[] {
-  const pool = [...crisisTemplates];
+  const pool = crisisTemplates.filter((template) =>
+    isDifficultyAllowed(template.minDifficulty, difficulty),
+  );
   const picked: CrisisTemplate[] = [];
   const usedRegions = new Set<BodyRegionId>();
 
@@ -207,6 +318,23 @@ function pickCrisisTemplates(
   }
 
   return picked;
+}
+
+function isDifficultyAllowed(
+  minDifficulty: BodyMapDifficulty | undefined,
+  currentDifficulty: BodyMapDifficulty,
+): boolean {
+  if (!minDifficulty) {
+    return true;
+  }
+
+  const ranks: Record<BodyMapDifficulty, number> = {
+    easy: 1,
+    normal: 2,
+    hard: 3,
+  };
+
+  return ranks[currentDifficulty] >= ranks[minDifficulty];
 }
 
 function randomInRange(range: [number, number], random: () => number): number {

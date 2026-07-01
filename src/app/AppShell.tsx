@@ -42,18 +42,20 @@ export function AppShell({
           </button>
           <button
             className={`nav-button ${
-              currentRoute === routes.bodyMap ? "nav-button-active" : ""
+            currentRoute === routes.normal || currentRoute === routes.bodyMap
+              ? "nav-button-active"
+              : ""
             }`}
             disabled={!bodyMapUnlocked}
             title={
               bodyMapUnlocked
-                ? "Ouvrir la carte du corps"
+                ? "Ouvrir la partie normale"
                 : "Debloque apres la mission 7"
             }
             type="button"
-            onClick={() => onNavigate(routes.bodyMap)}
+            onClick={() => onNavigate(routes.normal)}
           >
-            Carte du corps
+            Partie normale
           </button>
           <button
             className={`nav-button ${
