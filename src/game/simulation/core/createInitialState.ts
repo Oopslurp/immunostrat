@@ -135,6 +135,7 @@ export function createInitialState(
       producedUnits: {},
       usedAbilities: {},
       pathogenKills: {},
+      infectedCellsEliminated: 0,
       peakInflammation: balanceValues.inflammation.startingValue,
       antigensCollected: 0,
       lymphSignalsDelivered: 0,

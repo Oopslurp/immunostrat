@@ -41,6 +41,7 @@ export type MissionObjective =
       id: string;
       label: string;
       kind: "allWavesSpawned";
+      value?: number;
       required?: boolean;
     }
   | {
@@ -68,6 +69,13 @@ export type MissionObjective =
       id: string;
       label: string;
       kind: "infectedCellsAtMost";
+      value: number;
+      required?: boolean;
+    }
+  | {
+      id: string;
+      label: string;
+      kind: "infectedCellsEliminatedAtLeast";
       value: number;
       required?: boolean;
     }
@@ -661,9 +669,8 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
       "Les interferons ralentissent la propagation, mais ne nettoient pas tout seuls.",
     ],
     objectives: [
-      { id: "waves", label: "Tenir jusqu'a la fin des vagues virales", kind: "allWavesSpawned", required: true },
+      { id: "waves", label: "Tenir 2 vagues virales", kind: "allWavesSpawned", value: 2, required: true },
       { id: "virusKills3", label: "Eliminer 3 virus libres", kind: "pathogenKillsAtLeast", pathogenTypeId: "respiratoryVirus", value: 3, required: true },
-      { id: "infected4", label: "Garder moins de 5 cellules infectees", kind: "infectedCellsAtMost", value: 4 },
       { id: "interferons", label: "Utiliser les interferons", kind: "abilityUsed", abilityId: "interferons" },
     ],
     victoryConditions: [{ kind: "requiredObjectivesComplete" }],
@@ -713,10 +720,9 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     ],
     objectives: [
       { id: "viralAnalysis", label: "Completer l'analyse virale", kind: "researchComplete", researchId: "viralAnalysis", required: true },
-      { id: "clear", label: "Eliminer les virus et cellules infectees", kind: "clearThreats", required: true },
-      { id: "infected3", label: "Finir avec moins de 4 cellules infectees", kind: "infectedCellsAtMost", value: 3 },
+      { id: "infectedEliminated5", label: "Eliminer 5 cellules infectees", kind: "infectedCellsEliminatedAtLeast", value: 5, required: true },
     ],
-    victoryConditions: [{ kind: "allWavesCleared" }, { kind: "requiredObjectivesComplete" }],
+    victoryConditions: [{ kind: "requiredObjectivesComplete" }],
     defeatConditions: easyFailure,
     startingResources: { atp: 145, cytokines: 70, antigens: 12 },
     startingUnits: [
@@ -744,9 +750,7 @@ export const missionDefinitions: Record<MissionId, MissionDefinition> = {
     initialInfectedTissueCells: 2,
     map: lungBranchingMap,
     waves: [
-      { startsAtMs: 2500, pathogenTypeId: "respiratoryVirus", count: 5, spawnIntervalMs: 1200 },
-      { startsAtMs: 21000, pathogenTypeId: "respiratoryVirus", count: 7, spawnIntervalMs: 900 },
-      { startsAtMs: 42000, pathogenTypeId: "respiratoryVirus", count: 8, spawnIntervalMs: 820 },
+      { startsAtMs: 3500, pathogenTypeId: "respiratoryVirus", count: 3, spawnIntervalMs: 1850 },
     ],
     nextMissionId: "mixedInfectionV8",
     scoreReward: 220,

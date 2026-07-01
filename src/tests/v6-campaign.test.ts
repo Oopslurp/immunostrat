@@ -87,16 +87,20 @@ describe("V6 campaign", () => {
         },
       },
       waves: {
-        currentWaveIndex: missionDefinitions.viralInfectionV6.waves.length,
+        currentWaveIndex: 2,
         spawnedInCurrentWave: 0,
       },
     };
     const objectives = evaluateMissionObjectives(state);
 
-    expect(areAllWavesSpawned(state)).toBe(true);
+    expect(areAllWavesSpawned(state)).toBe(false);
+    expect(objectives.find((objective) => objective.id === "waves")?.complete).toBe(
+      true,
+    );
     expect(objectives.find((objective) => objective.id === "virusKills3")?.complete).toBe(
       true,
     );
+    expect(objectives.some((objective) => objective.id === "infected4")).toBe(false);
     expect(areRequiredObjectivesComplete(state)).toBe(true);
   });
 });

@@ -95,7 +95,7 @@ function isObjectiveComplete(
   }
 
   if (objective.kind === "allWavesSpawned") {
-    return areAllWavesSpawned(state);
+    return getSpawnedWaveCount(state) >= getRequiredWaveCount(state, objective.value);
   }
 
   if (objective.kind === "tissueHealthAtLeast") {
@@ -114,6 +114,10 @@ function isObjectiveComplete(
 
   if (objective.kind === "infectedCellsAtMost") {
     return getInfectedCellCount(state) <= objective.value;
+  }
+
+  if (objective.kind === "infectedCellsEliminatedAtLeast") {
+    return state.missionStats.infectedCellsEliminated >= objective.value;
   }
 
   if (objective.kind === "inflammationBelow") {
@@ -144,10 +148,10 @@ function getObjectiveProgressLabel(
   }
 
   if (objective.kind === "allWavesSpawned") {
-    const mission = missionDefinitions[state.missionId];
-    const spawnedWaves = Math.min(state.waves.currentWaveIndex, mission.waves.length);
+    const requiredWaves = getRequiredWaveCount(state, objective.value);
+    const spawnedWaves = Math.min(getSpawnedWaveCount(state), requiredWaves);
 
-    return `${spawnedWaves}/${mission.waves.length}`;
+    return `${spawnedWaves}/${requiredWaves}`;
   }
 
   if (objective.kind === "tissueHealthAtLeast") {
@@ -164,6 +168,10 @@ function getObjectiveProgressLabel(
 
   if (objective.kind === "infectedCellsAtMost") {
     return `${getInfectedCellCount(state)}/${objective.value}`;
+  }
+
+  if (objective.kind === "infectedCellsEliminatedAtLeast") {
+    return `${state.missionStats.infectedCellsEliminated}/${objective.value}`;
   }
 
   if (objective.kind === "inflammationBelow") {
@@ -198,4 +206,17 @@ function getPathogenKillCount(
   pathogenTypeId: string,
 ): number {
   return state.missionStats.pathogenKills[pathogenTypeId] ?? 0;
+}
+
+function getSpawnedWaveCount(state: GameState): number {
+  return state.waves.currentWaveIndex;
+}
+
+function getRequiredWaveCount(
+  state: GameState,
+  objectiveValue: number | undefined,
+): number {
+  const mission = missionDefinitions[state.missionId];
+
+  return Math.max(0, Math.min(objectiveValue ?? mission.waves.length, mission.waves.length));
 }

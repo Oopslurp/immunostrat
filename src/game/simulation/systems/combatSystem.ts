@@ -176,7 +176,8 @@ function attackInfectedCell(
   }
 
   cell.health = 0;
-    cell.status = "destroyed";
+  cell.status = "destroyed";
+  state.missionStats.infectedCellsEliminated += 1;
   const exposedPathogenTypeId = cell.infectedByPathogenTypeId ?? "respiratoryVirus";
   cell.infectedByPathogenTypeId = undefined;
   cell.infectedElapsedMs = 0;

@@ -15,6 +15,7 @@ export type MissionRuntimeStats = {
   producedUnits: Partial<Record<string, number>>;
   usedAbilities: Partial<Record<string, number>>;
   pathogenKills: Partial<Record<string, number>>;
+  infectedCellsEliminated: number;
   peakInflammation: number;
   antigensCollected: number;
   lymphSignalsDelivered: number;
