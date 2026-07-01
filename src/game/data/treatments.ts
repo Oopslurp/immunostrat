@@ -13,6 +13,18 @@ export type TreatmentDefinition = {
   cooldownMs: number;
   durationMs: number;
   radius: number;
+  visualIdentity: {
+    shapeHint: string;
+    colorHint: string;
+    silhouetteHint: string;
+    animationHint: string;
+    effectHint: string;
+    sizeClass: "small" | "medium" | "large" | "systemic";
+    movementStyle: string;
+    vfxTags: string[];
+    futureSpriteKey?: string;
+    futureSoundHint?: string;
+  };
 };
 
 export const treatmentDefinitions: Record<TreatmentId, TreatmentDefinition> = {
@@ -32,6 +44,18 @@ export const treatmentDefinitions: Record<TreatmentId, TreatmentDefinition> = {
     cooldownMs: 24000,
     durationMs: 0,
     radius: 360,
+    visualIdentity: {
+      shapeHint: "capsule tactique stylisee",
+      colorHint: "bleu medical et blanc",
+      silhouetteHint: "onde circulaire antibacterienne",
+      animationHint: "pulse bref sur les bacteries",
+      effectHint: "marques antibacteriennes",
+      sizeClass: "systemic",
+      movementStyle: "instant_pulse",
+      vfxTags: ["treatment", "antibiotic", "bacteria"],
+      futureSpriteKey: "treatment_antibiotic",
+      futureSoundHint: "clean_medical_pulse",
+    },
   },
   antiviralDrug: {
     id: "antiviralDrug",
@@ -49,6 +73,18 @@ export const treatmentDefinitions: Record<TreatmentId, TreatmentDefinition> = {
     cooldownMs: 26000,
     durationMs: 14000,
     radius: 520,
+    visualIdentity: {
+      shapeHint: "signal antiviral radial",
+      colorHint: "cyan et bleu clair",
+      silhouetteHint: "champ protecteur",
+      animationHint: "aura persistante qui ralentit les virus",
+      effectHint: "particules bleues autour des cellules",
+      sizeClass: "systemic",
+      movementStyle: "persistent_field",
+      vfxTags: ["treatment", "antiviral", "virus"],
+      futureSpriteKey: "treatment_antiviral",
+      futureSoundHint: "viral_slow_field",
+    },
   },
   antiInflammatory: {
     id: "antiInflammatory",
@@ -66,5 +102,17 @@ export const treatmentDefinitions: Record<TreatmentId, TreatmentDefinition> = {
     cooldownMs: 22000,
     durationMs: 12000,
     radius: 0,
+    visualIdentity: {
+      shapeHint: "vague douce de refroidissement",
+      colorHint: "vert pale et cyan",
+      silhouetteHint: "filtre calme",
+      animationHint: "diminution progressive des halos rouges",
+      effectHint: "brume apaisante",
+      sizeClass: "systemic",
+      movementStyle: "cooldown_wave",
+      vfxTags: ["treatment", "inflammation", "calm"],
+      futureSpriteKey: "treatment_anti_inflammatory",
+      futureSoundHint: "inflammation_cooldown",
+    },
   },
 };

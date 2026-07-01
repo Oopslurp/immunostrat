@@ -29,6 +29,18 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     preferredThreat: "bacterial",
     pedagogy:
       "La peau est une barriere. Une plaie peut laisser entrer des bacteries vers la lymphe puis le sang.",
+    visualIdentity: {
+      shapeHint: "surface protectrice avec fissure",
+      colorHint: "rose corail et turquoise de soin",
+      silhouetteHint: "plaque externe lisible",
+      animationHint: "pulsation de plaie et cicatrisation lente",
+      effectHint: "particules de debris cutanes",
+      sizeClass: "large",
+      movementStyle: "static_region",
+      vfxTags: ["barrier", "wound", "bacteria"],
+      futureSpriteKey: "region_skin",
+      futureSoundHint: "soft_skin_pulse",
+    },
   },
   lungs: {
     id: "lungs",
@@ -41,6 +53,18 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     preferredThreat: "viral",
     pedagogy:
       "Les poumons exposent beaucoup de cellules aux virus respiratoires. Les interferons ralentissent la propagation.",
+    visualIdentity: {
+      shapeHint: "deux lobes respiratoires stylises",
+      colorHint: "bleu clair et violet viral",
+      silhouetteHint: "double poche aerienne",
+      animationHint: "respiration lente avec nuages viraux",
+      effectHint: "souffle d'interferons",
+      sizeClass: "large",
+      movementStyle: "breathing_region",
+      vfxTags: ["lungs", "virus", "airflow"],
+      futureSpriteKey: "region_lungs",
+      futureSoundHint: "breath_soft",
+    },
   },
   intestine: {
     id: "intestine",
@@ -53,6 +77,18 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     preferredThreat: "bacterial",
     pedagogy:
       "L'intestin concentre beaucoup de microbes. Le gameplay le simplifie en foyer bacterien dense.",
+    visualIdentity: {
+      shapeHint: "courbe digestive segmente",
+      colorHint: "orange biologique et vert microbien",
+      silhouetteHint: "tube replie",
+      animationHint: "peristaltisme discret",
+      effectHint: "microbes en essaim",
+      sizeClass: "large",
+      movementStyle: "looping_region",
+      vfxTags: ["gut", "bacteria", "dense"],
+      futureSpriteKey: "region_intestine",
+      futureSoundHint: "gut_low_pulse",
+    },
   },
   blood: {
     id: "blood",
@@ -65,6 +101,18 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     preferredThreat: "mixed",
     pedagogy:
       "Le sang transporte les cellules immunitaires, mais il peut aussi accelerer une propagation systemique.",
+    visualIdentity: {
+      shapeHint: "reseau de vaisseaux",
+      colorHint: "rouge profond et cyan immunitaire",
+      silhouetteHint: "carrefour circulatoire",
+      animationHint: "flux continu",
+      effectHint: "trainees de propagation",
+      sizeClass: "systemic",
+      movementStyle: "flow_region",
+      vfxTags: ["blood", "systemic", "spread"],
+      futureSpriteKey: "region_blood",
+      futureSoundHint: "vascular_flow",
+    },
   },
   lymphNodes: {
     id: "lymphNodes",
@@ -77,6 +125,18 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     preferredThreat: "mixed",
     pedagogy:
       "La lymphe transporte les informations antigeniques vers les ganglions regionaux.",
+    visualIdentity: {
+      shapeHint: "chaine de ganglions connectes",
+      colorHint: "violet clair et cyan signal",
+      silhouetteHint: "grappes de noeuds",
+      animationHint: "impulsions de signaux antigeniques",
+      effectHint: "lignes lumineuses de lymphe",
+      sizeClass: "medium",
+      movementStyle: "signal_region",
+      vfxTags: ["lymph", "antigen", "signal"],
+      futureSpriteKey: "region_lymph_nodes",
+      futureSoundHint: "signal_chime",
+    },
   },
   spleen: {
     id: "spleen",
@@ -89,6 +149,18 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     preferredThreat: "mixed",
     pedagogy:
       "La rate surveille le sang. Dans V7, elle sert surtout de relais strategique immunitaire.",
+    visualIdentity: {
+      shapeHint: "filtre organique arrondi",
+      colorHint: "pourpre sombre et rouge filtre",
+      silhouetteHint: "organe compact",
+      animationHint: "filtrage par vagues",
+      effectHint: "particules capturees",
+      sizeClass: "medium",
+      movementStyle: "filter_region",
+      vfxTags: ["spleen", "filter", "blood"],
+      futureSpriteKey: "region_spleen",
+      futureSoundHint: "filter_pulse",
+    },
   },
   boneMarrow: {
     id: "boneMarrow",
@@ -101,6 +173,18 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     preferredThreat: "none",
     pedagogy:
       "La moelle osseuse produit des cellules immunitaires. Si elle reste saine, les renforts restent accessibles.",
+    visualIdentity: {
+      shapeHint: "noyau de production cellulaire",
+      colorHint: "jaune chaud et blanc cellulaire",
+      silhouetteHint: "cavite lumineuse",
+      animationHint: "apparition douce de nouvelles cellules",
+      effectHint: "bulles de production",
+      sizeClass: "medium",
+      movementStyle: "production_region",
+      vfxTags: ["marrow", "production", "reinforcement"],
+      futureSpriteKey: "region_bone_marrow",
+      futureSoundHint: "cell_spawn_soft",
+    },
   },
   liver: {
     id: "liver",
@@ -113,6 +197,18 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     preferredThreat: "cancer",
     pedagogy:
       "Le foie est une zone de stabilisation simplifiee. Une infection systemique le met sous pression.",
+    visualIdentity: {
+      shapeHint: "grand organe de stabilisation",
+      colorHint: "ambre et violet d'alerte",
+      silhouetteHint: "masse organique lisse",
+      animationHint: "detoxification lente",
+      effectHint: "halo metabolique",
+      sizeClass: "large",
+      movementStyle: "metabolic_region",
+      vfxTags: ["liver", "metabolic", "abnormal"],
+      futureSpriteKey: "region_liver",
+      futureSoundHint: "low_metabolic_hum",
+    },
   },
 };
 

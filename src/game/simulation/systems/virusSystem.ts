@@ -3,6 +3,7 @@ import { distance, moveToward, stableHash, type Vector2 } from "../../types/shar
 import type { GameState, TissueCellState } from "../core/GameState";
 import { isVirus, type VirusEntity } from "../entities";
 import { spawnVirus } from "../pathogens/createVirus";
+import { canSpawnPathogen } from "./entityLimitSystem";
 import { isTreatmentActive } from "./treatmentSystem";
 
 export function applyVirusSystem(state: GameState, deltaMs: number): void {
@@ -142,9 +143,15 @@ function releaseVirusBurst(state: GameState, cell: TissueCellState): void {
     index < balanceValues.tissueCells.infectedVirusBurstCount;
     index += 1
   ) {
+    const pathogenTypeId = cell.infectedByPathogenTypeId ?? "respiratoryVirus";
+
+    if (!canSpawnPathogen(state, pathogenTypeId)) {
+      return;
+    }
+
     spawnVirus(
       state,
-      cell.infectedByPathogenTypeId ?? "respiratoryVirus",
+      pathogenTypeId,
       jitterPosition(cell.position, `${cell.id}-${cell.infectedElapsedMs}-${index}`),
     );
   }

@@ -2,6 +2,19 @@ import type { MissionId, StartingUnitDefinition } from "../data/missions";
 import type { PathogenTypeId } from "../data/pathogens";
 import type { UnitTypeId } from "../data/units";
 
+export type V11VisualIdentity = {
+  shapeHint: string;
+  colorHint: string;
+  silhouetteHint: string;
+  animationHint: string;
+  effectHint: string;
+  sizeClass: "tiny" | "small" | "medium" | "large" | "boss" | "systemic";
+  movementStyle: string;
+  vfxTags: string[];
+  futureSpriteKey?: string;
+  futureSoundHint?: string;
+};
+
 export type BodyRegionId =
   | "skin"
   | "lungs"
@@ -76,6 +89,25 @@ export type BodyMapFinalSummary = {
   battleStats: BodyMapBattleStats;
 };
 
+export type BodyMapVictoryBlocker = {
+  id: string;
+  type:
+    | "regionInfection"
+    | "regionCritical"
+    | "regionLost"
+    | "globalInfection"
+    | "systemicInflammation"
+    | "globalHealth"
+    | "activeCrisis"
+    | "stabilizationTurns";
+  regionId?: BodyRegionId;
+  regionName?: string;
+  currentValue?: number;
+  requiredValue?: number;
+  message: string;
+  severity: "info" | "warning" | "danger";
+};
+
 export type BodyRegionDefinition = {
   id: BodyRegionId;
   name: string;
@@ -94,6 +126,7 @@ export type BodyRegionDefinition = {
   linkedMissionId: MissionId;
   preferredThreat: BodyThreatProfile;
   pedagogy: string;
+  visualIdentity: V11VisualIdentity;
 };
 
 export type RegionalNodeDefinition = {

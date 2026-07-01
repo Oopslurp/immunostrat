@@ -1,5 +1,5 @@
 import { balanceValues } from "../../data/balance";
-import { missionDefinitions } from "../../data/missions";
+import { missionDefinitions, type MissionMapDefinition } from "../../data/missions";
 import { treatmentDefinitions, type TreatmentId } from "../../data/treatments";
 import { unitDefinitions, type UnitTypeId } from "../../data/units";
 import { distance, type EntityId, type Vector2 } from "../../types/shared";
@@ -33,6 +33,8 @@ export type GameCommand =
   | { type: "orderAttackTissueCell"; tissueCellId: string }
   | { type: "orderCollectDebris"; debrisId: string }
   | { type: "orderReturnToLymphNode" }
+  | { type: "orderHoldPosition" }
+  | { type: "orderRetreat" }
   | { type: "restart" };
 
 export function applyCommand(state: GameState, command: GameCommand): GameState {
@@ -127,7 +129,11 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
           index,
           selectedIds.length,
         );
+        selected.orderAnchor = { ...selected.targetPosition };
         selected.idleTargetPosition = null;
+        selected.explicitTargetEntityId = null;
+        selected.tacticalState = "movingToPoint";
+        selected.lastOrderFeedback = "Unite envoyee en garde locale";
       }
     });
 
@@ -146,8 +152,12 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
       const selected = next.entities[entityId];
 
       if (selected && isImmuneUnit(selected) && selected.attackDamage > 0) {
+        selected.orderAnchor = selected.orderAnchor ?? { ...selected.position };
         selected.targetPosition = { ...target.position };
         selected.idleTargetPosition = null;
+        selected.explicitTargetEntityId = target.id;
+        selected.tacticalState = "engagingNearbyTarget";
+        selected.lastOrderFeedback = "Engagement local";
       }
     }
 
@@ -163,7 +173,11 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
 
     if (debris && dendritic && isDendriticCell(dendritic)) {
       dendritic.targetPosition = { ...debris.position };
+      dendritic.orderAnchor = { ...debris.position };
       dendritic.idleTargetPosition = null;
+      dendritic.explicitTargetEntityId = null;
+      dendritic.tacticalState = "collectingAntigen";
+      dendritic.lastOrderFeedback = "Dendritique envoyee collecter";
     }
 
     return next;
@@ -188,7 +202,11 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
         (selected.kind === "nkCell" || selected.kind === "cytotoxicT")
       ) {
         selected.targetPosition = { ...cell.position };
+        selected.orderAnchor = selected.orderAnchor ?? { ...selected.position };
         selected.idleTargetPosition = null;
+        selected.explicitTargetEntityId = null;
+        selected.tacticalState = "engagingNearbyTarget";
+        selected.lastOrderFeedback = "Cible infectee indiquee";
       }
     }
 
@@ -212,7 +230,51 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
           x: lymphTarget.x,
           y: lymphTarget.y,
         };
+        selected.orderAnchor = { ...selected.targetPosition };
         selected.idleTargetPosition = null;
+        selected.explicitTargetEntityId = null;
+        selected.tacticalState = "deliveringToLymph";
+        selected.lastOrderFeedback = "Dendritique livre un signal lymphatique";
+      }
+    }
+
+    return next;
+  }
+
+  if (command.type === "orderHoldPosition") {
+    const next = cloneState(state);
+
+    for (const entityId of next.selectedEntityIds) {
+      const selected = next.entities[entityId];
+
+      if (selected && isImmuneUnit(selected)) {
+        selected.targetPosition = null;
+        selected.idleTargetPosition = null;
+        selected.explicitTargetEntityId = null;
+        selected.orderAnchor = { ...selected.position };
+        selected.tacticalState = "holdingPosition";
+        selected.lastOrderFeedback = "Position tenue";
+      }
+    }
+
+    return next;
+  }
+
+  if (command.type === "orderRetreat") {
+    const next = cloneState(state);
+
+    for (const entityId of next.selectedEntityIds) {
+      const selected = next.entities[entityId];
+
+      if (selected && isImmuneUnit(selected)) {
+        const target = getEntryPointForUnit(missionDefinitions[next.missionId].map, selected.unitTypeId);
+
+        selected.targetPosition = { ...target };
+        selected.orderAnchor = { ...target };
+        selected.idleTargetPosition = null;
+        selected.explicitTargetEntityId = null;
+        selected.tacticalState = "retreating";
+        selected.lastOrderFeedback = "Unite en repli";
       }
     }
 
@@ -278,17 +340,13 @@ function produceImmuneUnit(state: GameState, unitTypeId: UnitTypeId): GameState 
     0,
     next.resources.cytokines - definition.cytokineCost,
   );
+  const entryPoint = getEntryPointForUnit(mission.map, unitTypeId);
+
   next.entities[id] = {
     id,
     kind: unitTypeId,
     unitTypeId,
-    position: {
-      ...(unitTypeId === "neutrophil" ||
-      unitTypeId === "nkCell" ||
-      unitTypeId === "cytotoxicT"
-        ? definition.spawnPosition
-        : mission.map.macrophageSpawn),
-    },
+    position: { ...entryPoint },
     targetPosition: null,
     idleTargetPosition: null,
     nextIdleRetargetMs: state.elapsedMs + 1200,
@@ -301,6 +359,13 @@ function produceImmuneUnit(state: GameState, unitTypeId: UnitTypeId): GameState 
     attackDamage: definition.attackDamage,
     attackCooldownMs: definition.attackCooldownMs,
     attackCooldownRemainingMs: 0,
+    tacticalState: "guardingArea",
+    orderAnchor: { ...entryPoint },
+    engagementRadius: definition.engagementRadius,
+    leashRadius: definition.leashRadius,
+    guardRadius: definition.guardRadius,
+    explicitTargetEntityId: null,
+    lastOrderFeedback: `${definition.displayName} arrive par diapedese`,
     lifeRemainingMs:
       "lifetimeMs" in definition ? definition.lifetimeMs : undefined,
     carriedAntigenValue: 0,
@@ -378,11 +443,13 @@ function producePlasmocyte(state: GameState): GameState {
     0,
     next.resources.antigens - adaptive.plasmocyteAntigenCost,
   );
+  const entryPoint = getEntryPointForUnit(missionDefinitions[state.missionId].map, "plasmocyte");
+
   next.entities[id] = {
     id,
     kind: "plasmocyte",
     unitTypeId: "plasmocyte",
-    position: { ...definition.spawnPosition },
+    position: { ...entryPoint },
     targetPosition: null,
     idleTargetPosition: null,
     nextIdleRetargetMs: state.elapsedMs + balanceValues.idleRetargetBaseMs,
@@ -395,6 +462,13 @@ function producePlasmocyte(state: GameState): GameState {
     attackDamage: definition.attackDamage,
     attackCooldownMs: definition.attackCooldownMs,
     attackCooldownRemainingMs: 0,
+    tacticalState: "guardingArea",
+    orderAnchor: { ...entryPoint },
+    engagementRadius: definition.engagementRadius,
+    leashRadius: definition.leashRadius,
+    guardRadius: definition.guardRadius,
+    explicitTargetEntityId: null,
+    lastOrderFeedback: "Plasmocyte arrive par relais immunitaire",
     lifeRemainingMs: undefined,
     carriedAntigenValue: 0,
     carriedDebrisCount: 0,
@@ -402,6 +476,23 @@ function producePlasmocyte(state: GameState): GameState {
   next.selectedEntityIds = [id];
 
   return next;
+}
+
+function getEntryPointForUnit(
+  map: MissionMapDefinition,
+  unitTypeId: UnitTypeId,
+): Vector2 {
+  const entryPoints = map.immuneEntryPoints;
+
+  if (unitTypeId === "dendriticCell") {
+    return entryPoints.find((entry) => entry.kind === "lymph")?.position ?? map.lymphExit;
+  }
+
+  if (unitTypeId === "neutrophil" || unitTypeId === "nkCell" || unitTypeId === "cytotoxicT") {
+    return entryPoints.find((entry) => entry.kind === "diapedesis")?.position ?? unitDefinitions[unitTypeId].spawnPosition;
+  }
+
+  return entryPoints.find((entry) => entry.kind === "vessel")?.position ?? map.macrophageSpawn;
 }
 
 function researchBacterialAnalysis(state: GameState): GameState {

@@ -13,14 +13,7 @@ import {
 import { spawnAdvancedThreat } from "../pathogens/createAdvancedThreat";
 import { spawnBacterium } from "../pathogens/createBacterium";
 import { spawnVirus } from "../pathogens/createVirus";
-
-const ADVANCED_LIMITS = {
-  fungalSpores: 18,
-  fungalColonies: 5,
-  cancerCells: 10,
-  parasites: 2,
-  opportunists: 24,
-};
+import { canSpawnPathogen } from "./entityLimitSystem";
 
 export function applyAdvancedThreatSystem(
   state: GameState,
@@ -247,26 +240,7 @@ function canSpawnAdvancedChild(
   state: GameState,
   pathogenTypeId: PathogenTypeId,
 ): boolean {
-  const definition = pathogenDefinitions[pathogenTypeId];
-  const advanced = Object.values(state.entities).filter(isAdvancedThreat);
-
-  if (definition.pathogenClass === "fungus") {
-    const limit =
-      pathogenTypeId === "fungalSpore"
-        ? ADVANCED_LIMITS.fungalSpores
-        : ADVANCED_LIMITS.fungalColonies;
-
-    return advanced.filter((entity) => entity.pathogenTypeId === pathogenTypeId).length < limit;
-  }
-
-  if (definition.pathogenClass === "cancerCell") {
-    return (
-      advanced.filter((entity) => entity.category === "cancerCell").length <
-      ADVANCED_LIMITS.cancerCells
-    );
-  }
-
-  return true;
+  return canSpawnPathogen(state, pathogenTypeId);
 }
 
 function spawnChild(

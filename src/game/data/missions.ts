@@ -208,6 +208,29 @@ const baseMap = {
   tissueCore: { x: 235, y: 410 },
   lymphNode: { x: 410, y: 650, radius: 46 },
   lymphExit: { x: 350, y: 675, radius: 28, localNodeId: "skin-local-node", regionalNodeId: "future-skin-region" },
+  immuneEntryPoints: [
+    {
+      id: "vessel-entry-left",
+      label: "Vaisseau local",
+      kind: "vessel",
+      position: { x: 185, y: 384 },
+      radius: 28,
+    },
+    {
+      id: "diapedesis-upper",
+      label: "Diapedese haute",
+      kind: "diapedesis",
+      position: { x: 255, y: 265 },
+      radius: 24,
+    },
+    {
+      id: "lymph-entry-lower",
+      label: "Sortie lymphatique basse",
+      kind: "lymph",
+      position: { x: 330, y: 630 },
+      radius: 24,
+    },
+  ],
   missionRegion: "skin-local",
   tissueCells: [
     { x: 210, y: 315 },

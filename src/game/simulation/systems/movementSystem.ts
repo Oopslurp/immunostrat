@@ -10,6 +10,20 @@ export function applyMovementSystem(state: GameState, deltaMs: number): void {
 
   for (const entity of Object.values(state.entities)) {
     if (isImmuneUnit(entity)) {
+      const anchor = entity.orderAnchor ?? entity.targetPosition ?? entity.position;
+      const leashRadius = entity.leashRadius ?? entity.attackRange + 120;
+
+      if (
+        entity.tacticalState === "engagingNearbyTarget" &&
+        distance(entity.position, anchor) > leashRadius
+      ) {
+        entity.targetPosition = { ...anchor };
+        entity.explicitTargetEntityId = null;
+        entity.idleTargetPosition = null;
+        entity.tacticalState = "movingToPoint";
+        entity.lastOrderFeedback = "Retour a la zone d'ordre";
+      }
+
       if (entity.targetPosition) {
         const biofilmSlowMultiplier = getBiofilmSlowMultiplier(state, entity.position);
         entity.position = moveToward(
@@ -20,10 +34,22 @@ export function applyMovementSystem(state: GameState, deltaMs: number): void {
 
         if (distance(entity.position, entity.targetPosition) <= 2) {
           entity.targetPosition = null;
-          entity.nextIdleRetargetMs =
-            state.elapsedMs + balanceValues.idleRetargetAfterMoveMs;
+          entity.nextIdleRetargetMs = state.elapsedMs + balanceValues.idleRetargetAfterMoveMs;
+          if (entity.tacticalState === "retreating") {
+            entity.tacticalState = "holdingPosition";
+          } else if (
+            entity.tacticalState === "movingToPoint" ||
+            entity.tacticalState === "movingToSite" ||
+            entity.tacticalState === "engagingNearbyTarget"
+          ) {
+            entity.tacticalState = "guardingArea";
+          }
         }
-      } else {
+      } else if (
+        entity.tacticalState !== "holdingPosition" &&
+        entity.tacticalState !== "deliveringToLymph" &&
+        entity.tacticalState !== "collectingAntigen"
+      ) {
         applyIdleMovement(state, entity, maxMoveScale);
       }
     }
@@ -65,7 +91,7 @@ function applyIdleMovement(
     state.elapsedMs >= immuneUnit.nextIdleRetargetMs ||
     distance(immuneUnit.position, immuneUnit.idleTargetPosition) <= 3
   ) {
-    immuneUnit.idleTargetPosition = createIdleTarget(state, immuneUnit.id);
+    immuneUnit.idleTargetPosition = createIdleTarget(state, immuneUnit);
     immuneUnit.nextIdleRetargetMs =
       state.elapsedMs +
       balanceValues.idleRetargetBaseMs +
@@ -97,24 +123,28 @@ function isInInflammatoryZone(state: GameState, position: Vector2): boolean {
   );
 }
 
-function createIdleTarget(state: GameState, entityId: string): Vector2 {
+function createIdleTarget(state: GameState, entity: ImmuneUnitEntity): Vector2 {
   const mission = missionDefinitions[state.missionId];
-  const seed = stableHash(`${entityId}-${Math.floor(state.elapsedMs / 1000)}`);
+  const seed = stableHash(`${entity.id}-${Math.floor(state.elapsedMs / 1000)}`);
   const angle = (seed % 360) * (Math.PI / 180);
   const radius =
-    balanceValues.idleMinRadius + (seed % balanceValues.idleRadiusSpread);
-  const entity = state.entities[entityId];
-  const current = entity.position;
+    entity.tacticalState === "guardingArea"
+      ? Math.max(8, seed % (entity.guardRadius ?? 42))
+      : balanceValues.idleMinRadius + (seed % balanceValues.idleRadiusSpread);
+  const anchor =
+    entity.tacticalState === "guardingArea" && entity.orderAnchor
+      ? entity.orderAnchor
+      : entity.position;
   const bounds = balanceValues.idleBoundsPadding;
 
   return {
     x: clamp(
-      current.x + Math.cos(angle) * radius,
+      anchor.x + Math.cos(angle) * radius,
       bounds.left,
       mission.map.bacteriaEntryZone.x - bounds.rightFromEntry,
     ),
     y: clamp(
-      current.y + Math.sin(angle) * radius,
+      anchor.y + Math.sin(angle) * radius,
       bounds.top,
       mission.map.height - bounds.bottom,
     ),

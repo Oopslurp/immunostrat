@@ -7,8 +7,9 @@ import {
 } from "./game/bodyMap/bodyMapSystem";
 import { createGeneratedBodyMapState } from "./game/bodyMap/bodyMapGenerator";
 import {
+  clearBodyMapState,
+  hasRunningBodyMapState,
   loadBodyMapState,
-  resetBodyMapState,
   saveBodyMapState,
 } from "./game/bodyMap/bodyMapSave";
 import {
@@ -47,6 +48,9 @@ export default function App() {
   const [route, setRoute] = useState<AppRoute>(routes.home);
   const [progress, setProgress] = useState(() => loadCampaignProgress());
   const [bodyMapState, setBodyMapState] = useState(() => loadBodyMapState());
+  const [hasActiveBodyMapRun, setHasActiveBodyMapRun] = useState(() =>
+    hasRunningBodyMapState(),
+  );
   const [bodyMapProgress, setBodyMapProgress] = useState(() =>
     loadBodyMapProgress(),
   );
@@ -82,6 +86,7 @@ export default function App() {
   const updateBodyMapState = (nextState: BodyMapState) => {
     saveBodyMapState(nextState);
     maybeRecordBodyMapResult(bodyMapState, nextState);
+    setHasActiveBodyMapRun(nextState.runStatus === "running");
     setBodyMapState(nextState);
   };
 
@@ -103,6 +108,7 @@ export default function App() {
 
     saveBodyMapState(nextState);
     setBodyMapState(nextState);
+    setHasActiveBodyMapRun(true);
     setSelectedBodyRegionId(
       Object.values(nextState.regions).find((region) => region.infection >= 35)?.id ??
         "skin",
@@ -113,9 +119,11 @@ export default function App() {
   };
 
   const resetBodyMap = () => {
-    const nextState = resetBodyMapState();
+    const nextState = clearBodyMapState();
 
     setBodyMapState(nextState);
+    setHasActiveBodyMapRun(false);
+    setSelectedBodyRegionId("skin");
   };
 
   const resetNormalResults = () => {
@@ -140,6 +148,7 @@ export default function App() {
 
       saveBodyMapState(nextState);
       maybeRecordBodyMapResult(currentState, nextState);
+      setHasActiveBodyMapRun(nextState.runStatus === "running");
 
       return nextState;
     });
@@ -219,10 +228,14 @@ export default function App() {
       ) : null}
       {route === routes.normal ? (
         <NormalGamePage
-          hasRunningMap={bodyMapState.runStatus === "running"}
+          hasRunningMap={hasActiveBodyMapRun}
           progress={bodyMapProgress}
           onBackHome={() => setRoute(routes.home)}
-          onContinue={() => setRoute(routes.bodyMap)}
+          onContinue={() => {
+            if (hasActiveBodyMapRun) {
+              setRoute(routes.bodyMap);
+            }
+          }}
           onResetResults={resetNormalResults}
           onStart={startNewBodyMapGame}
         />

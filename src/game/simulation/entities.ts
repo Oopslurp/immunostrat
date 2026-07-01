@@ -22,6 +22,22 @@ export type ImmuneUnitEntity = {
   attackDamage: number;
   attackCooldownMs: number;
   attackCooldownRemainingMs: number;
+  tacticalState?:
+    | "idle"
+    | "movingToPoint"
+    | "movingToSite"
+    | "guardingArea"
+    | "engagingNearbyTarget"
+    | "collectingAntigen"
+    | "deliveringToLymph"
+    | "retreating"
+    | "holdingPosition";
+  orderAnchor?: Vector2 | null;
+  engagementRadius?: number;
+  leashRadius?: number;
+  guardRadius?: number;
+  explicitTargetEntityId?: EntityId | null;
+  lastOrderFeedback?: string;
   lifeRemainingMs?: number;
   carriedAntigenValue: number;
   carriedDebrisCount: number;

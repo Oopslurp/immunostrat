@@ -114,7 +114,7 @@ export function BodyMapPage({
           >
             Avancer un tour
           </Button>
-          <Button onClick={onResetBodyMap}>Reinitialiser carte</Button>
+          <Button onClick={onResetBodyMap}>Abandonner run</Button>
         </div>
       </header>
 
@@ -159,9 +159,12 @@ export function BodyMapPage({
           </div>
           {victoryProgress.blockers.length ? (
             <div className="body-loadout">
-              {victoryProgress.blockers.map((blocker) => (
-                <span className="body-alert" key={blocker}>
-                  {blocker}
+              {victoryProgress.blockerDetails.slice(0, 5).map((blocker) => (
+                <span
+                  className={`body-alert body-alert-${blocker.severity}`}
+                  key={blocker.id}
+                >
+                  {blocker.message}
                 </span>
               ))}
             </div>

@@ -21,6 +21,7 @@ import type {
 } from "../game/campaign/progress";
 import { GameBridge, type GameSnapshot } from "../game/phaser/GameBridge";
 import { PhaserGame } from "../game/phaser/PhaserGame";
+import { isImmuneUnit, type ImmuneUnitEntity } from "../game/simulation/entities";
 import { Button } from "../ui/Button";
 
 type GamePageProps = {
@@ -53,6 +54,12 @@ export function GamePage({
   const nextMissionId = mission.nextMissionId;
   const playableNextMissionId =
     nextMissionId && isMissionId(nextMissionId) ? nextMissionId : null;
+  const selectedUnits =
+    snapshot?.entities.filter(
+      (entity): entity is ImmuneUnitEntity =>
+        snapshot.selectedEntityIds.includes(entity.id) &&
+        isImmuneUnit(entity),
+    ) ?? [];
 
   useEffect(() => bridge.subscribeSnapshot(setSnapshot), [bridge]);
   useEffect(() => {
@@ -497,6 +504,13 @@ export function GamePage({
         <span className="hud-item">
           Selection: {snapshot?.selectedEntityIds.length ?? 0}
         </span>
+        {selectedUnits[0] ? (
+          <span className="hud-item">
+            Etat: {formatTacticalState(selectedUnits[0].tacticalState)} -
+            engagement {Math.round(selectedUnits[0].engagementRadius ?? 0)} -
+            {selectedUnits[0].lastOrderFeedback ?? "garde locale"}
+          </span>
+        ) : null}
         <span className="hud-item">
           NK/T:{" "}
           {snapshot?.entities.filter((entity) => entity.kind === "nkCell").length ??
@@ -647,4 +661,20 @@ function formatCooldown(value: number | undefined): string {
   const ms = Math.max(0, value ?? 0);
 
   return ms === 0 ? "pret" : `${Math.ceil(ms / 1000)}s`;
+}
+
+function formatTacticalState(state: string | undefined): string {
+  const labels: Record<string, string> = {
+    idle: "idle",
+    movingToPoint: "deplacement",
+    movingToSite: "site",
+    guardingArea: "garde locale",
+    engagingNearbyTarget: "engagement",
+    collectingAntigen: "collecte",
+    deliveringToLymph: "livraison lymphe",
+    retreating: "repli",
+    holdingPosition: "position tenue",
+  };
+
+  return labels[state ?? ""] ?? "garde locale";
 }

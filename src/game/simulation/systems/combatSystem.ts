@@ -54,6 +54,8 @@ export function applyCombatSystem(state: GameState, deltaMs: number): void {
       } else {
         entity.targetPosition = { ...infectedCellTarget.position };
         entity.idleTargetPosition = null;
+        entity.tacticalState = "engagingNearbyTarget";
+        entity.lastOrderFeedback = "Engagement local";
       }
 
       continue;
@@ -62,6 +64,23 @@ export function applyCombatSystem(state: GameState, deltaMs: number): void {
     const target = findNearestPathogenInRange(entity, pathogens);
 
     if (!target) {
+      if (entity.tacticalState === "engagingNearbyTarget") {
+        entity.explicitTargetEntityId = null;
+        entity.targetPosition = entity.orderAnchor ? { ...entity.orderAnchor } : null;
+        entity.tacticalState = entity.targetPosition ? "movingToPoint" : "guardingArea";
+        entity.lastOrderFeedback = "Cible trop eloignee";
+      }
+      continue;
+    }
+
+    if (
+      distance(entity.position, target.position) >
+      entity.attackRange + target.radius
+    ) {
+      entity.targetPosition = { ...target.position };
+      entity.idleTargetPosition = null;
+      entity.tacticalState = "engagingNearbyTarget";
+      entity.lastOrderFeedback = "Engagement local";
       continue;
     }
 
@@ -107,7 +126,7 @@ function findInfectedCellTarget(
   let nearest: TissueCellState | null = null;
   let nearestDistance = Number.POSITIVE_INFINITY;
   const maxDistance =
-    immuneUnit.attackRange + balanceValues.combat.infectedCellSeekRange;
+    immuneUnit.engagementRadius ?? immuneUnit.attackRange + 40;
 
   for (const cell of state.tissueCells) {
     if (cell.status !== "infected") {
@@ -116,7 +135,11 @@ function findInfectedCellTarget(
 
     const currentDistance = distance(immuneUnit.position, cell.position);
 
-    if (currentDistance <= maxDistance && currentDistance < nearestDistance) {
+    if (
+      currentDistance <= maxDistance &&
+      isWithinLeash(immuneUnit, cell.position) &&
+      currentDistance < nearestDistance
+    ) {
       nearest = cell;
       nearestDistance = currentDistance;
     }
@@ -248,7 +271,8 @@ function findNearestPathogenInRange(
   let nearest: BacteriumEntity | VirusEntity | AdvancedThreatEntity | null = null;
   let nearestDistance = Number.POSITIVE_INFINITY;
   let nearestPriority = Number.NEGATIVE_INFINITY;
-  const maxDistanceSquared = immuneUnit.attackRange * immuneUnit.attackRange;
+  const engagementRadius = immuneUnit.engagementRadius ?? immuneUnit.attackRange;
+  const maxDistanceSquared = engagementRadius * engagementRadius;
 
   for (const pathogen of pathogens) {
     if (isBacterium(pathogen) && pathogen.phagocytosedByEntityId) {
@@ -256,12 +280,18 @@ function findNearestPathogenInRange(
     }
 
     const currentDistance = distanceSquared(immuneUnit.position, pathogen.position);
+    if (currentDistance > maxDistanceSquared || !isWithinLeash(immuneUnit, pathogen.position)) {
+      continue;
+    }
+
     const definition = pathogenDefinitions[pathogen.pathogenTypeId];
-    const currentPriority = pathogen.targetPriority ?? definition.targetPriority;
+    const currentPriority =
+      getRoleTargetPriority(immuneUnit, pathogen) +
+      (pathogen.targetPriority ?? definition.targetPriority);
 
     if (
-      currentDistance <= maxDistanceSquared &&
-      (currentPriority > nearestPriority ||
+      (pathogen.id === immuneUnit.explicitTargetEntityId ||
+        currentPriority > nearestPriority ||
         (currentPriority === nearestPriority && currentDistance < nearestDistance))
     ) {
       nearest = pathogen;
@@ -271,6 +301,67 @@ function findNearestPathogenInRange(
   }
 
   return nearest;
+}
+
+function isWithinLeash(
+  immuneUnit: ImmuneUnitEntity,
+  position: { x: number; y: number },
+): boolean {
+  const anchor = immuneUnit.orderAnchor ?? immuneUnit.position;
+  const leashRadius = immuneUnit.leashRadius ?? immuneUnit.attackRange + 120;
+
+  return distance(anchor, position) <= leashRadius;
+}
+
+function getRoleTargetPriority(
+  immuneUnit: ImmuneUnitEntity,
+  target: BacteriumEntity | VirusEntity | AdvancedThreatEntity,
+): number {
+  if (isMacrophage(immuneUnit)) {
+    if (isBacterium(target)) {
+      return 80;
+    }
+
+    if (isAdvancedThreat(target) && target.pathogenTypeId === "fungalSpore") {
+      return 65;
+    }
+
+    return 18;
+  }
+
+  if (isNeutrophil(immuneUnit)) {
+    if (isBacterium(target)) {
+      return 85;
+    }
+
+    if (isAdvancedThreat(target) && target.pathogenTypeId === "fungalSpore") {
+      return 70;
+    }
+
+    return 12;
+  }
+
+  if (isNkCell(immuneUnit) || isCytotoxicT(immuneUnit)) {
+    if (isAdvancedThreat(target) && target.category === "cancerCell" && target.detected) {
+      return 95;
+    }
+
+    if (isVirus(target)) {
+      return 45;
+    }
+
+    return 16;
+  }
+
+  if (isPlasmocyte(immuneUnit)) {
+    if (isBacterium(target) || isVirus(target)) {
+      return 72;
+    }
+
+    return 24;
+  }
+
+  return 0;
 }
 
 function calculateDamage(

@@ -42,3 +42,39 @@ export function resetBodyMapState(): BodyMapState {
 
   return state;
 }
+
+export function clearBodyMapState(): BodyMapState {
+  const state = createDefaultBodyMapState();
+
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(BODY_MAP_SAVE_KEY);
+  }
+
+  return state;
+}
+
+export function hasSavedBodyMapState(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.localStorage.getItem(BODY_MAP_SAVE_KEY) !== null;
+}
+
+export function hasRunningBodyMapState(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(BODY_MAP_SAVE_KEY);
+
+    if (!raw) {
+      return false;
+    }
+
+    return normalizeBodyMapState(JSON.parse(raw) as Partial<BodyMapState>).runStatus === "running";
+  } catch {
+    return false;
+  }
+}

@@ -507,6 +507,7 @@ export class MissionScene extends Phaser.Scene {
 
     graphics.clear();
     this.drawMap(graphics, state);
+    this.drawEntryPoints(graphics, state);
     this.drawTissueCells(graphics, state);
     this.drawAntiviralZone(graphics, state);
     this.drawInflammatoryZones(graphics, state);
@@ -589,6 +590,24 @@ export class MissionScene extends Phaser.Scene {
     graphics.fillCircle(map.lymphExit.x, map.lymphExit.y, map.lymphExit.radius);
     graphics.lineStyle(3, 0x62d3c8, 0.58);
     graphics.strokeCircle(map.lymphExit.x, map.lymphExit.y, map.lymphExit.radius);
+  }
+
+  private drawEntryPoints(graphics: Phaser.GameObjects.Graphics, state: GameState) {
+    const mission = missionDefinitions[state.missionId];
+
+    for (const entryPoint of mission.map.immuneEntryPoints) {
+      const color =
+        entryPoint.kind === "vessel"
+          ? 0xffc76b
+          : entryPoint.kind === "diapedesis"
+            ? 0x62d3c8
+            : 0xb69cff;
+
+      graphics.fillStyle(color, 0.15);
+      graphics.fillCircle(entryPoint.position.x, entryPoint.position.y, entryPoint.radius);
+      graphics.lineStyle(2, color, 0.62);
+      graphics.strokeCircle(entryPoint.position.x, entryPoint.position.y, entryPoint.radius);
+    }
   }
 
   private drawTissueCells(graphics: Phaser.GameObjects.Graphics, state: GameState) {
@@ -692,6 +711,21 @@ export class MissionScene extends Phaser.Scene {
         if (state.selectedEntityIds.includes(entity.id)) {
           graphics.lineStyle(4, 0xffc76b, 0.95);
           graphics.strokeCircle(entity.position.x, entity.position.y, entity.radius + 10);
+
+          if (entity.orderAnchor) {
+            graphics.lineStyle(2, 0xffc76b, 0.32);
+            graphics.strokeCircle(
+              entity.orderAnchor.x,
+              entity.orderAnchor.y,
+              entity.engagementRadius ?? entity.attackRange,
+            );
+            graphics.lineStyle(1, 0xf5fbff, 0.18);
+            graphics.strokeCircle(
+              entity.orderAnchor.x,
+              entity.orderAnchor.y,
+              entity.leashRadius ?? entity.attackRange + 120,
+            );
+          }
         }
 
         if (entity.targetPosition) {

@@ -66,6 +66,9 @@ export function cloneState(state: GameState): GameState {
           ...(isImmuneUnit(entity) && entity.idleTargetPosition
             ? { idleTargetPosition: { ...entity.idleTargetPosition } }
             : {}),
+          ...(isImmuneUnit(entity) && entity.orderAnchor
+            ? { orderAnchor: { ...entity.orderAnchor } }
+            : {}),
         },
       ]),
     ),

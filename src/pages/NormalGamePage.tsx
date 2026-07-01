@@ -37,7 +37,7 @@ export function NormalGamePage({
         </div>
         <div className="game-actions">
           <Button onClick={onBackHome}>Retour menu</Button>
-          <Button onClick={onResetResults}>Reinitialiser resultats</Button>
+          <Button onClick={onResetResults}>Effacer statistiques</Button>
         </div>
       </header>
 
@@ -71,7 +71,7 @@ export function NormalGamePage({
             Generer la carte
           </Button>
           <Button disabled={!hasRunningMap} onClick={onContinue}>
-            Continuer partie en cours
+            {hasRunningMap ? "Continuer run active" : "Aucune run active"}
           </Button>
         </Panel>
 
@@ -96,6 +96,12 @@ export function NormalGamePage({
             <span className="body-alert">
               Meilleure difficulte : {progress.highestDifficultyWon ?? "aucune"}
             </span>
+            {progress.lastRun ? (
+              <span className="body-alert">
+                Derniere run : {progress.lastRun.status === "victory" ? "victoire" : "defaite"} -
+                score {progress.lastRun.score}
+              </span>
+            ) : null}
           </div>
         </Panel>
 

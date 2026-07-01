@@ -5,6 +5,7 @@ import { applyBiofilmSystem } from "../systems/biofilmSystem";
 import { applyAdvancedThreatSystem } from "../systems/advancedThreatSystem";
 import { applyDebrisSystem } from "../systems/debrisSystem";
 import { applyEndConditionSystem } from "../systems/endConditionSystem";
+import { trimTransientCollections } from "../systems/entityLimitSystem";
 import { applyEffectSystem } from "../systems/effectSystem";
 import { applyInflammationSystem } from "../systems/inflammationSystem";
 import { applyImmuneLifecycleSystem } from "../systems/immuneLifecycleSystem";
@@ -43,6 +44,7 @@ export function stepSimulation(state: GameState, deltaMs: number): GameState {
     next.inflammation.value,
   );
   applyImmuneLifecycleSystem(next, deltaMs);
+  trimTransientCollections(next);
   applyEndConditionSystem(next);
 
   next.selectedEntityIds = next.selectedEntityIds.filter(

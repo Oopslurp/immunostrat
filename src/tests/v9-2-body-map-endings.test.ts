@@ -17,9 +17,15 @@ describe("V9.2 body map endings", () => {
   it("wins the normal body-map mode after enough stable strategic turns", () => {
     let state = makeStableBodyMapState();
 
-    state = advanceStrategicTurn(state);
-    expect(state.runStatus).toBe("running");
-    expect(state.stabilizationStreak).toBe(1);
+    for (
+      let turn = 1;
+      turn < bodyMapEndingRules.victoryRequiredStableTurns;
+      turn += 1
+    ) {
+      state = advanceStrategicTurn(state);
+      expect(state.runStatus).toBe("running");
+      expect(state.stabilizationStreak).toBe(turn);
+    }
 
     state = advanceStrategicTurn(state);
 

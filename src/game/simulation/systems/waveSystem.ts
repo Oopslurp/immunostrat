@@ -17,6 +17,7 @@ import {
 import { spawnAdvancedThreat } from "../pathogens/createAdvancedThreat";
 import { spawnBacterium } from "../pathogens/createBacterium";
 import { spawnVirus } from "../pathogens/createVirus";
+import { canSpawnPathogen } from "./entityLimitSystem";
 
 export function applyWaveSystem(state: GameState): void {
   const mission = missionDefinitions[state.missionId];
@@ -48,6 +49,10 @@ export function applyWaveSystem(state: GameState): void {
   }
 
   if (mission.mode === "infinite" && isInfinitePathogenLimitReached(state)) {
+    return;
+  }
+
+  if (!canSpawnPathogen(state, wave.pathogenTypeId)) {
     return;
   }
 

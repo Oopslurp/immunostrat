@@ -12,6 +12,7 @@ import {
   type BacteriumEntity,
   type VirusEntity,
 } from "../entities";
+import { canCreateDebris } from "./entityLimitSystem";
 
 export function applyDebrisSystem(state: GameState, deltaMs: number): void {
   decayDebris(state, deltaMs);
@@ -36,7 +37,7 @@ function convertDeadVirusesToDebris(state: GameState): void {
       continue;
     }
 
-    if (shouldDropVirusDebris(state, entity, id)) {
+    if (canCreateDebris(state) && shouldDropVirusDebris(state, entity, id)) {
       state.debris.push(createVirusDebris(state, entity));
     }
 
@@ -51,7 +52,7 @@ function convertDeadBacteriaToDebris(state: GameState): void {
       continue;
     }
 
-    if (shouldDropDebris(state, entity, id)) {
+    if (canCreateDebris(state) && shouldDropDebris(state, entity, id)) {
       state.debris.push(createDebris(state, entity));
     }
 
@@ -66,7 +67,7 @@ function convertDeadAdvancedThreatsToDebris(state: GameState): void {
       continue;
     }
 
-    if (shouldDropAdvancedThreatDebris(state, entity, id)) {
+    if (canCreateDebris(state) && shouldDropAdvancedThreatDebris(state, entity, id)) {
       state.debris.push(createAdvancedThreatDebris(state, entity));
     }
 
@@ -139,6 +140,9 @@ function processDendriticCells(state: GameState): void {
       entity.carriedAntigenValue = 0;
       entity.carriedDebrisCount = 0;
       entity.targetPosition = null;
+      entity.tacticalState = "guardingArea";
+      entity.orderAnchor = { ...lymphNode };
+      entity.lastOrderFeedback = "Signal lymphatique livre";
     }
 
     if (entity.carriedDebrisCount < adaptive.dendriticCarryCapacity) {
@@ -154,11 +158,16 @@ function processDendriticCells(state: GameState): void {
         state.debris = state.debris.filter(
           (debris) => debris.id !== nearestCollectableDebris.id,
         );
+        entity.tacticalState = "collectingAntigen";
+        entity.lastOrderFeedback = "Debris collecte";
       }
     }
 
     if (entity.carriedDebrisCount >= adaptive.dendriticCarryCapacity) {
       entity.targetPosition = { x: lymphNode.x, y: lymphNode.y };
+      entity.orderAnchor = { ...entity.targetPosition };
+      entity.tacticalState = "deliveringToLymph";
+      entity.lastOrderFeedback = "Dendritique livre un signal lymphatique";
       continue;
     }
 
@@ -166,11 +175,15 @@ function processDendriticCells(state: GameState): void {
 
     if (nextDebris) {
       entity.targetPosition = { ...nextDebris.position };
+      entity.orderAnchor = { ...nextDebris.position };
+      entity.tacticalState = "collectingAntigen";
       continue;
     }
 
     if (entity.carriedDebrisCount > 0) {
       entity.targetPosition = { x: lymphNode.x, y: lymphNode.y };
+      entity.orderAnchor = { ...entity.targetPosition };
+      entity.tacticalState = "deliveringToLymph";
     }
   }
 }

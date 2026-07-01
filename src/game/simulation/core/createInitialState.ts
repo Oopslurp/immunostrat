@@ -3,6 +3,7 @@ import { infiniteDifficultySettings } from "../../data/infiniteMode";
 import {
   missionDefinitions,
   type MissionId,
+  type MissionMapDefinition,
   type MissionPreparation,
 } from "../../data/missions";
 import { unitDefinitions, type UnitTypeId } from "../../data/units";
@@ -51,7 +52,7 @@ export function createInitialState(
       entities[id] = createImmuneUnit(
         id,
         unitTypeId,
-        getSpawnPosition(mission.map.macrophageSpawn, unitTypeId, index),
+        getSpawnPosition(mission.map, unitTypeId, index),
         1100 + nextEntityNumber * 90,
       );
     }
@@ -172,6 +173,13 @@ function createImmuneUnit(
     attackDamage: definition.attackDamage,
     attackCooldownMs: definition.attackCooldownMs,
     attackCooldownRemainingMs: 0,
+    tacticalState: "guardingArea",
+    orderAnchor: { ...position },
+    engagementRadius: definition.engagementRadius,
+    leashRadius: definition.leashRadius,
+    guardRadius: definition.guardRadius,
+    explicitTargetEntityId: null,
+    lastOrderFeedback: "Unite en garde locale",
     lifeRemainingMs:
       unitTypeId === "neutrophil" ? balanceValues.neutrophilLifetimeMs : undefined,
     carriedAntigenValue: 0,
@@ -187,13 +195,26 @@ function offsetPosition(origin: Vector2, index: number, spacing: number): Vector
 }
 
 function getSpawnPosition(
-  macrophageSpawn: Vector2,
+  map: MissionMapDefinition,
   unitTypeId: UnitTypeId,
   index: number,
 ): Vector2 {
-  if (unitTypeId === "macrophage") {
-    return offsetPosition(macrophageSpawn, index, 34);
+  return offsetPosition(getEntryPointForUnit(map, unitTypeId), index, 32);
+}
+
+function getEntryPointForUnit(
+  map: MissionMapDefinition,
+  unitTypeId: UnitTypeId,
+): Vector2 {
+  const entryPoints = map.immuneEntryPoints;
+
+  if (unitTypeId === "dendriticCell") {
+    return entryPoints.find((entry) => entry.kind === "lymph")?.position ?? map.lymphExit;
   }
 
-  return offsetPosition(unitDefinitions[unitTypeId].spawnPosition, index, 32);
+  if (unitTypeId === "neutrophil" || unitTypeId === "nkCell" || unitTypeId === "cytotoxicT") {
+    return entryPoints.find((entry) => entry.kind === "diapedesis")?.position ?? unitDefinitions[unitTypeId].spawnPosition;
+  }
+
+  return entryPoints.find((entry) => entry.kind === "vessel")?.position ?? map.macrophageSpawn;
 }

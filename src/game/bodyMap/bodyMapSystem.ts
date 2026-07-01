@@ -1,4 +1,5 @@
 import type { CampaignProgress } from "../campaign/progress";
+import { balanceValues } from "../data/balance";
 import type { MissionPreparation, StartingUnitDefinition } from "../data/missions";
 import { pathogenDefinitions } from "../data/pathogens";
 import { unitDefinitions, type UnitTypeId } from "../data/units";
@@ -18,6 +19,7 @@ import type {
   BodyMapDifficulty,
   BodyMapRunStatus,
   BodyMapState,
+  BodyMapVictoryBlocker,
   BodyRegionId,
   BodyRegionState,
   BodyRegionStatus,
@@ -28,18 +30,7 @@ import type {
 
 export const BODY_MAP_SAVE_VERSION = 1;
 
-export const bodyMapEndingRules = {
-  victoryRequiredStableTurns: 2,
-  victoryMaxRegionInfection: 10,
-  victoryMaxGlobalInfection: 15,
-  victoryMaxSystemicInflammation: 60,
-  victoryMinGlobalHealth: 40,
-  defeatMaxGlobalInfection: 100,
-  defeatMaxSystemicInflammation: 95,
-  defeatInflammationTurns: 2,
-  defeatCriticalRegions: 4,
-  defeatBloodGlobalHealth: 30,
-};
+export const bodyMapEndingRules = balanceValues.bodyMapEnding;
 
 export const reinforcementCosts: Record<UnitTypeId, ReinforcementCost> = {
   macrophage: { unitTypeId: "macrophage", atp: 12, cytokines: 0, antigens: 0 },
@@ -545,8 +536,10 @@ export function getBodyMapVictoryProgress(state: BodyMapState): {
   infectedRegions: number;
   criticalRegions: number;
   lostRegions: number;
+  canWinNow: boolean;
   ready: boolean;
   blockers: string[];
+  blockerDetails: BodyMapVictoryBlocker[];
 } {
   const regions = bodyRegionOrder.map((regionId) => state.regions[regionId]);
   const infectedRegions = regions.filter(
@@ -554,27 +547,118 @@ export function getBodyMapVictoryProgress(state: BodyMapState): {
   ).length;
   const criticalRegions = regions.filter((region) => isCriticalRegion(region)).length;
   const lostRegions = regions.filter((region) => region.status === "lost").length;
-  const blockers: string[] = [];
+  const blockerDetails: BodyMapVictoryBlocker[] = [];
 
-  if (infectedRegions > 0) {
-    blockers.push(`${infectedRegions} region(s) encore infectee(s)`);
-  }
+  for (const regionId of bodyRegionOrder) {
+    const region = state.regions[regionId];
+    const definition = bodyRegionDefinitions[regionId];
 
-  if (state.globalInfection > bodyMapEndingRules.victoryMaxGlobalInfection) {
-    blockers.push("infection globale trop haute");
+    if (region.infection > bodyMapEndingRules.victoryMaxRegionInfection) {
+      blockerDetails.push({
+        id: `${regionId}-infection`,
+        type: "regionInfection",
+        regionId,
+        regionName: definition.name,
+        currentValue: Math.round(region.infection),
+        requiredValue: bodyMapEndingRules.victoryMaxRegionInfection,
+        message: `${definition.name} encore infecte : ${Math.round(region.infection)}% > seuil ${bodyMapEndingRules.victoryMaxRegionInfection}%`,
+        severity: region.infection >= 60 ? "danger" : "warning",
+      });
+    }
+
+    if (region.status === "critical") {
+      blockerDetails.push({
+        id: `${regionId}-critical`,
+        type: "regionCritical",
+        regionId,
+        regionName: definition.name,
+        currentValue: Math.round(region.localHealth),
+        requiredValue: 23,
+        message: `${definition.name} en etat critique : sante ${Math.round(region.localHealth)}%`,
+        severity: "danger",
+      });
+    }
+
+    if (region.status === "lost") {
+      blockerDetails.push({
+        id: `${regionId}-lost`,
+        type: "regionLost",
+        regionId,
+        regionName: definition.name,
+        currentValue: 0,
+        requiredValue: 1,
+        message: `${definition.name} perdue : relance une nouvelle stabilisation globale`,
+        severity: "danger",
+      });
+    }
+
+    if (
+      region.threat !== "none" &&
+      region.infection > bodyMapEndingRules.victoryMaxRegionInfection
+    ) {
+      blockerDetails.push({
+        id: `${regionId}-crisis`,
+        type: "activeCrisis",
+        regionId,
+        regionName: definition.name,
+        currentValue: Math.round(region.infection),
+        requiredValue: bodyMapEndingRules.victoryMaxRegionInfection,
+        message: `Crise active non controlee : ${formatThreat(region.threat)} dans ${definition.name}`,
+        severity: region.infection >= 45 ? "danger" : "warning",
+      });
+    }
   }
 
   if (state.systemicInflammation > bodyMapEndingRules.victoryMaxSystemicInflammation) {
-    blockers.push("inflammation systemique trop haute");
+    blockerDetails.push({
+      id: "systemic-inflammation",
+      type: "systemicInflammation",
+      currentValue: Math.round(state.systemicInflammation),
+      requiredValue: bodyMapEndingRules.victoryMaxSystemicInflammation,
+      message: `Inflammation systemique trop elevee : ${Math.round(state.systemicInflammation)}% > ${bodyMapEndingRules.victoryMaxSystemicInflammation}%`,
+      severity: state.systemicInflammation >= 80 ? "danger" : "warning",
+    });
+  }
+
+  if (state.globalInfection > bodyMapEndingRules.victoryMaxGlobalInfection) {
+    blockerDetails.push({
+      id: "global-infection",
+      type: "globalInfection",
+      currentValue: Math.round(state.globalInfection),
+      requiredValue: bodyMapEndingRules.victoryMaxGlobalInfection,
+      message: `Infection globale trop elevee : ${Math.round(state.globalInfection)}% > ${bodyMapEndingRules.victoryMaxGlobalInfection}%`,
+      severity: state.globalInfection >= 45 ? "danger" : "warning",
+    });
   }
 
   if (state.globalHealth < bodyMapEndingRules.victoryMinGlobalHealth) {
-    blockers.push("sante globale trop basse");
+    blockerDetails.push({
+      id: "global-health",
+      type: "globalHealth",
+      currentValue: Math.round(state.globalHealth),
+      requiredValue: bodyMapEndingRules.victoryMinGlobalHealth,
+      message: `Sante globale trop basse : ${Math.round(state.globalHealth)}% < ${bodyMapEndingRules.victoryMinGlobalHealth}%`,
+      severity: "danger",
+    });
   }
 
-  if (criticalRegions > 0 || lostRegions > 0) {
-    blockers.push("region critique ou perdue");
+  if (
+    blockerDetails.length === 0 &&
+    state.stabilizationStreak < bodyMapEndingRules.victoryRequiredStableTurns
+  ) {
+    blockerDetails.push({
+      id: "stabilization-turns",
+      type: "stabilizationTurns",
+      currentValue: state.stabilizationStreak,
+      requiredValue: bodyMapEndingRules.victoryRequiredStableTurns,
+      message: `Stabilisation globale : ${state.stabilizationStreak}/${bodyMapEndingRules.victoryRequiredStableTurns} tours`,
+      severity: "info",
+    });
   }
+
+  const activeBlockers = blockerDetails.filter(
+    (blocker) => blocker.type !== "stabilizationTurns",
+  );
 
   return {
     stableTurns: state.stabilizationStreak,
@@ -582,8 +666,10 @@ export function getBodyMapVictoryProgress(state: BodyMapState): {
     infectedRegions,
     criticalRegions,
     lostRegions,
-    ready: blockers.length === 0,
-    blockers,
+    canWinNow: activeBlockers.length === 0,
+    ready: activeBlockers.length === 0,
+    blockers: blockerDetails.map((blocker) => blocker.message),
+    blockerDetails,
   };
 }
 
