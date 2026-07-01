@@ -13,6 +13,7 @@ import { applyMovementSystem } from "../systems/movementSystem";
 import { applyPathogenSystem } from "../systems/pathogenSystem";
 import { applyResourceSystem } from "../systems/resourceSystem";
 import { applyTissueSystem } from "../systems/tissueSystem";
+import { applyTissueRegenerationSystem } from "../systems/tissueRegenerationSystem";
 import { applyTreatmentSystem } from "../systems/treatmentSystem";
 import { applyVirusSystem } from "../systems/virusSystem";
 import { applyWaveSystem } from "../systems/waveSystem";
@@ -39,6 +40,7 @@ export function stepSimulation(state: GameState, deltaMs: number): GameState {
   applyBiofilmSystem(next);
   applyTissueSystem(next, deltaMs);
   applyInflammationSystem(next, deltaMs);
+  applyTissueRegenerationSystem(next, deltaMs);
   next.missionStats.peakInflammation = Math.max(
     next.missionStats.peakInflammation,
     next.inflammation.value,

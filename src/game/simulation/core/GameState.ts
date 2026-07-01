@@ -30,6 +30,13 @@ export type TissueState = {
   maxHealth: number;
 };
 
+export type TissueRepairState = {
+  stableMs: number;
+  status: "recovering" | "waiting" | "blocked";
+  blockedReason: "infection" | "inflammation" | "combat" | null;
+  ratePerSecond: number;
+};
+
 export type TissueCellState = {
   id: string;
   position: Vector2;
@@ -121,6 +128,7 @@ export type GameState = {
   elapsedMs: number;
   status: GameStatus;
   tissue: TissueState;
+  tissueRepair: TissueRepairState;
   tissueCells: TissueCellState[];
   resources: GameResources;
   missionStats: MissionRuntimeStats;

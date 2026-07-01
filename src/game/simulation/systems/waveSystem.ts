@@ -19,6 +19,7 @@ import { spawnAdvancedThreat } from "../pathogens/createAdvancedThreat";
 import { spawnBacterium } from "../pathogens/createBacterium";
 import { spawnVirus } from "../pathogens/createVirus";
 import { canSpawnPathogen } from "./entityLimitSystem";
+import { getRuntimeMapBalance } from "./runtimeMapBalance";
 
 export function applyWaveSystem(state: GameState): void {
   const mission = missionDefinitions[state.missionId];
@@ -34,8 +35,16 @@ export function applyWaveSystem(state: GameState): void {
     return;
   }
 
+  const mapBalance = getRuntimeMapBalance(state);
+  const firstSpawnStartMultiplier =
+    state.waves.currentWaveIndex === 0 && state.waves.spawnedInCurrentWave === 0
+      ? 1
+      : mapBalance.waveIntervalMultiplier;
   const nextSpawnAt =
-    wave.startsAtMs + state.waves.spawnedInCurrentWave * wave.spawnIntervalMs;
+    wave.startsAtMs * firstSpawnStartMultiplier +
+    state.waves.spawnedInCurrentWave *
+      wave.spawnIntervalMs *
+      mapBalance.waveIntervalMultiplier;
 
   if (
     state.elapsedMs < nextSpawnAt ||
@@ -74,6 +83,7 @@ export function applyWaveSystem(state: GameState): void {
       wave.pathogenTypeId,
       state.waves.currentWaveIndex,
       spawnNumber,
+      mapBalance.maxActiveCombatSites,
     ) ?? legacyPosition;
   state.waves.spawnedInCurrentWave += 1;
   if (pathogenDefinitions[wave.pathogenTypeId].pathogenClass === "virus") {

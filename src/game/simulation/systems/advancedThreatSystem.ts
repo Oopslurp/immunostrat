@@ -14,6 +14,7 @@ import { spawnAdvancedThreat } from "../pathogens/createAdvancedThreat";
 import { spawnBacterium } from "../pathogens/createBacterium";
 import { spawnVirus } from "../pathogens/createVirus";
 import { canSpawnPathogen } from "./entityLimitSystem";
+import { getRuntimeMapBalance } from "./runtimeMapBalance";
 
 export function applyAdvancedThreatSystem(
   state: GameState,
@@ -21,6 +22,7 @@ export function applyAdvancedThreatSystem(
 ): void {
   const mission = missionDefinitions[state.missionId];
   const seconds = deltaMs / 1000;
+  const mapBalance = getRuntimeMapBalance(state);
 
   for (const entity of Object.values(state.entities).filter(isAdvancedThreat)) {
     if (entity.health <= 0) {
@@ -35,22 +37,43 @@ export function applyAdvancedThreatSystem(
     if (entity.category === "fungus") {
       state.inflammation.value = Math.min(
         balanceValues.inflammation.maxValue,
-        state.inflammation.value + 0.18 * seconds,
+        state.inflammation.value +
+          0.18 * mapBalance.inflammationGainMultiplier * seconds,
       );
-      if (distance(entity.position, mission.map.tissueCore) <= 180) {
-        state.tissue.health = Math.max(0, state.tissue.health - 0.22 * seconds);
+      if (
+        distance(
+          entity.position,
+          getNearestPressureTarget(state, entity.position, mission.map.tissueCore),
+        ) <= 180
+      ) {
+        state.tissue.health = Math.max(
+          0,
+          state.tissue.health -
+            0.22 *
+              mapBalance.advancedPassiveDamageMultiplier *
+              mapBalance.pathogenDamageMultiplier *
+              seconds,
+        );
       }
     }
 
     if (entity.category === "parasite") {
       state.inflammation.value = Math.min(
         balanceValues.inflammation.maxValue,
-        state.inflammation.value + 0.5 * seconds,
+        state.inflammation.value +
+          0.5 * mapBalance.inflammationGainMultiplier * seconds,
       );
     }
 
     if (entity.category === "cancerCell") {
-      state.tissue.health = Math.max(0, state.tissue.health - 0.18 * seconds);
+      state.tissue.health = Math.max(
+        0,
+        state.tissue.health -
+          0.18 *
+            mapBalance.advancedPassiveDamageMultiplier *
+            mapBalance.pathogenDamageMultiplier *
+            seconds,
+      );
     }
   }
 }
@@ -90,6 +113,7 @@ function updateAdvancedSpawn(
   deltaMs: number,
 ): void {
   const definition = pathogenDefinitions[entity.pathogenTypeId];
+  const spreadRateMultiplier = getRuntimeMapBalance(state).spreadRateMultiplier;
 
   if (!definition.spawn) {
     return;
@@ -97,7 +121,7 @@ function updateAdvancedSpawn(
 
   entity.specialCooldownRemainingMs = Math.max(
     0,
-    entity.specialCooldownRemainingMs - deltaMs,
+    entity.specialCooldownRemainingMs - deltaMs * spreadRateMultiplier,
   );
 
   if (
@@ -136,7 +160,7 @@ function updateAdvancedMovement(
   const target =
     entity.category === "cancerCell"
       ? findNearestTissueCell(state, entity.position)?.position ?? mission.map.tissueCore
-      : mission.map.tissueCore;
+      : getNearestPressureTarget(state, entity.position, mission.map.tissueCore);
 
   if (distance(entity.position, target) <= entity.tissueAttackRange) {
     return;
@@ -155,6 +179,8 @@ function updateAdvancedAttack(
   deltaMs: number,
 ): void {
   const mission = missionDefinitions[state.missionId];
+  const mapBalance = getRuntimeMapBalance(state);
+  const tissueDamage = entity.tissueDamage * mapBalance.pathogenDamageMultiplier;
 
   entity.attackCooldownRemainingMs = Math.max(
     0,
@@ -179,7 +205,7 @@ function updateAdvancedAttack(
   ) {
     immuneTarget.health = Math.max(
       0,
-      immuneTarget.health - entity.tissueDamage * 0.7,
+      immuneTarget.health - tissueDamage * 0.7,
     );
   } else {
     const targetCell = findNearestTissueCell(state, entity.position);
@@ -189,14 +215,19 @@ function updateAdvancedAttack(
       distance(entity.position, targetCell.position) <=
         entity.tissueAttackRange + targetCell.radius
     ) {
-      targetCell.health = Math.max(0, targetCell.health - entity.tissueDamage);
-      state.tissue.health = Math.max(0, state.tissue.health - entity.tissueDamage * 0.5);
+      targetCell.health = Math.max(0, targetCell.health - tissueDamage);
+      state.tissue.health = Math.max(0, state.tissue.health - tissueDamage * 0.5);
 
       if (targetCell.health <= 0) {
         targetCell.status = "destroyed";
       }
-    } else if (distance(entity.position, mission.map.tissueCore) <= entity.tissueAttackRange) {
-      state.tissue.health = Math.max(0, state.tissue.health - entity.tissueDamage * 0.65);
+    } else if (
+      distance(
+        entity.position,
+        getNearestPressureTarget(state, entity.position, mission.map.tissueCore),
+      ) <= entity.tissueAttackRange
+    ) {
+      state.tissue.health = Math.max(0, state.tissue.health - tissueDamage * 0.65);
     } else {
       return;
     }
@@ -211,6 +242,24 @@ function updateAdvancedAttack(
     ttlMs: balanceValues.attackEffectTtlMs,
   });
   state.nextEffectNumber += 1;
+}
+
+function getNearestPressureTarget(
+  state: GameState,
+  position: Vector2,
+  fallback: Vector2,
+): Vector2 {
+  const cell = findNearestTissueCell(state, position);
+
+  if (cell) {
+    return cell.position;
+  }
+
+  const site = [...state.tacticalMap.combatSites].sort(
+    (a, b) => distance(a.position, position) - distance(b.position, position),
+  )[0];
+
+  return site?.position ?? fallback;
 }
 
 function findNearestTissueCell(

@@ -563,8 +563,8 @@ export const tacticalMapDefinitions: Record<TacticalMapId, TacticalMapDefinition
       combatSite("lymph-bravo", "Relais contamine", 830, 460, 125, ["proliferatingBacillus", "respiratoryVirus"], ["dendriticCell", "plasmocyte"]),
     ],
     [
-      entry("lymph-entry-a", "Canal dendritique", 230, 630, "lymph-vessel-a", ["dendriticCell"], true),
-      entry("lymph-entry-b", "Renfort immune", 1160, 250, "lymph-vessel-a", ["macrophage", "plasmocyte", "nkCell"]),
+      entry("lymph-entry-a", "Canal dendritique", 330, 500, "lymph-vessel-a", ["macrophage", "dendriticCell"], true),
+      entry("lymph-entry-b", "Renfort immune", 990, 360, "lymph-vessel-a", ["macrophage", "plasmocyte", "nkCell"]),
     ],
     [
       lymph("lymph-exit-core", "Ganglion local", 690, 650, "bloodNode"),
@@ -590,6 +590,7 @@ export function getTacticalMapForMissionMap(map: TacticalMapSource): TacticalMap
 export function getEntryPointForUnitFromTacticalMap(
   map: TacticalMapSource,
   unitTypeId: UnitTypeId,
+  preferredPosition?: MapPoint | null,
 ): MapPoint | null {
   const tacticalMap = getTacticalMapForMissionMap(map);
   const candidates = [
@@ -598,9 +599,27 @@ export function getEntryPointForUnitFromTacticalMap(
   ];
   const allowed = candidates
     .filter((point) => !point.allowedUnitTypes || point.allowedUnitTypes.includes(unitTypeId))
-    .sort((a, b) => Number(Boolean(b.isDefault)) - Number(Boolean(a.isDefault)) || b.priority - a.priority);
+    .sort((a, b) => {
+      if (preferredPosition) {
+        return (
+          pointDistance(a.position, preferredPosition) -
+            pointDistance(b.position, preferredPosition) ||
+          Number(Boolean(b.isDefault)) - Number(Boolean(a.isDefault)) ||
+          b.priority - a.priority
+        );
+      }
+
+      return Number(Boolean(b.isDefault)) - Number(Boolean(a.isDefault)) || b.priority - a.priority;
+    });
 
   return allowed[0]?.position ?? tacticalMap.diapedesisPoints[0]?.position ?? null;
+}
+
+function pointDistance(a: MapPoint, b: MapPoint): number {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+
+  return Math.sqrt(dx * dx + dy * dy);
 }
 
 export function getLymphExitForMissionMap(map: TacticalMapSource): MapPoint | null {
@@ -636,15 +655,29 @@ export function getPathogenSpawnPositionForWave(
   pathogenTypeId: PathogenTypeId,
   waveIndex: number,
   spawnNumber: number,
+  maxActiveCombatSites = Number.POSITIVE_INFINITY,
 ): MapPoint | null {
   const tacticalMap = getTacticalMapForMissionMap(map);
   const pathogenFamily = getSpawnFamily(pathogenDefinitions[pathogenTypeId].pathogenClass);
-  const matchingZones = tacticalMap.pathogenSpawnZones.filter((zone) =>
-    zone.pathogenFamilies.includes(pathogenFamily) ||
-    zone.pathogenFamilies.includes("mixed") ||
-    zone.pathogenSubtypes.includes(pathogenTypeId),
+  const activeCombatSiteIds = new Set(
+    tacticalMap.combatSites
+      .slice(0, Math.max(1, Math.min(tacticalMap.combatSites.length, maxActiveCombatSites)))
+      .map((site) => site.id),
   );
-  const zones = matchingZones.length ? matchingZones : tacticalMap.pathogenSpawnZones;
+  const matchingZones = tacticalMap.pathogenSpawnZones.filter((zone) =>
+    activeCombatSiteIds.has(zone.combatSiteId) &&
+    (zone.pathogenFamilies.includes(pathogenFamily) ||
+      zone.pathogenFamilies.includes("mixed") ||
+      zone.pathogenSubtypes.includes(pathogenTypeId)),
+  );
+  const activeZones = tacticalMap.pathogenSpawnZones.filter((zone) =>
+    activeCombatSiteIds.has(zone.combatSiteId),
+  );
+  const zones = matchingZones.length
+    ? matchingZones
+    : activeZones.length
+      ? activeZones
+      : tacticalMap.pathogenSpawnZones;
   const spawnZone = zones[waveIndex % Math.max(1, zones.length)];
 
   if (!spawnZone) {

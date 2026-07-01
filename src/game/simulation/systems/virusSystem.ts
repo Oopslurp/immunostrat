@@ -4,10 +4,12 @@ import type { GameState, TissueCellState } from "../core/GameState";
 import { isVirus, type VirusEntity } from "../entities";
 import { spawnVirus } from "../pathogens/createVirus";
 import { canSpawnPathogen } from "./entityLimitSystem";
+import { getRuntimeMapBalance } from "./runtimeMapBalance";
 import { isTreatmentActive } from "./treatmentSystem";
 
 export function applyVirusSystem(state: GameState, deltaMs: number): void {
   const seconds = deltaMs / 1000;
+  const mapBalance = getRuntimeMapBalance(state);
 
   state.antiviral.activeMs = Math.max(0, state.antiviral.activeMs - deltaMs);
   if (state.antiviral.activeMs <= 0) {
@@ -37,12 +39,14 @@ export function applyVirusSystem(state: GameState, deltaMs: number): void {
         ? balanceValues.antiviral.viralProductionMultiplier
         : 1;
     cell.nextVirusBurstMs -=
-      deltaMs * antiviralMultiplier;
+      deltaMs * antiviralMultiplier * mapBalance.spreadRateMultiplier;
 
     state.tissue.health = Math.max(
       0,
       state.tissue.health -
-        balanceValues.tissueCells.infectedTissueDamagePerSecond * seconds,
+        balanceValues.tissueCells.infectedTissueDamagePerSecond *
+          mapBalance.pathogenDamageMultiplier *
+          seconds,
     );
 
     if (cell.nextVirusBurstMs <= 0) {
@@ -76,7 +80,10 @@ function moveVirusTowardHealthyCell(
     target.antiviralProtectedMs > 0 || isTreatmentActive(state, "antiviralDrug")
       ? balanceValues.antiviral.virusSpeedMultiplier
       : 1;
-  const infectionRange = virus.infectionRange * infectionRangeMultiplier;
+  const infectionRange =
+    virus.infectionRange *
+    infectionRangeMultiplier *
+    getRuntimeMapBalance(state).infectionRateMultiplier;
 
   if (distance(virus.position, target.position) <= infectionRange + target.radius) {
     infectCell(state, target, virus);
@@ -125,7 +132,9 @@ function infectCell(
   cell.nextVirusBurstMs = balanceValues.tissueCells.infectedInitialDelayMs;
   state.tissue.health = Math.max(
     0,
-    state.tissue.health - balanceValues.tissueCells.infectionTissueDamage,
+    state.tissue.health -
+      balanceValues.tissueCells.infectionTissueDamage *
+        getRuntimeMapBalance(state).pathogenDamageMultiplier,
   );
   state.effects.push({
     id: `effect-${state.nextEffectNumber}`,

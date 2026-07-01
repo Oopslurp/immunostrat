@@ -515,6 +515,9 @@ export function GamePage({
         <span className="hud-item">
           Selection: {snapshot?.selectedEntityIds.length ?? 0}
         </span>
+        <span className="hud-item">
+          Tissu: {formatTissueRepair(snapshot)}
+        </span>
         {selectedUnits[0] ? (
           <span className="hud-item">
             Etat: {formatTacticalState(selectedUnits[0].tacticalState)} -
@@ -672,6 +675,28 @@ function formatCooldown(value: number | undefined): string {
   const ms = Math.max(0, value ?? 0);
 
   return ms === 0 ? "pret" : `${Math.ceil(ms / 1000)}s`;
+}
+
+function formatTissueRepair(snapshot: GameSnapshot | null): string {
+  if (!snapshot) {
+    return "en attente";
+  }
+
+  if (snapshot.tissueRepairStatus === "recovering") {
+    return `reparation +${snapshot.tissueRepairRatePerSecond.toFixed(1)}/s`;
+  }
+
+  if (snapshot.tissueRepairStatus === "blocked") {
+    const reasons: Record<string, string> = {
+      infection: "bloquee infection",
+      inflammation: "bloquee inflammation",
+      combat: "bloquee combat",
+    };
+
+    return reasons[snapshot.tissueRepairBlockedReason ?? ""] ?? "bloquee";
+  }
+
+  return "stabilisation";
 }
 
 function formatTacticalState(state: string | undefined): string {

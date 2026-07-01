@@ -1,5 +1,6 @@
 import { balanceValues } from "../../data/balance";
 import { infiniteDifficultySettings } from "../../data/infiniteMode";
+import { getMapScaleBalance } from "../../data/mapScaleBalance";
 import {
   missionDefinitions,
   type MissionId,
@@ -23,6 +24,11 @@ export function createInitialState(
 ): GameState {
   const mission = missionDefinitions[missionId];
   const tacticalMap = createRuntimeTacticalMap(missionId, preparation);
+  const mapBalance = getMapScaleBalance({
+    mode: tacticalMap.generationSummary.mode,
+    mapSizeCategory: tacticalMap.mapSizeCategory,
+    difficulty: tacticalMap.generationSummary.difficulty,
+  });
   const vaccination = mission.vaccinationOptions?.find(
     (option) => option.id === preparation.vaccinationId,
   );
@@ -77,6 +83,12 @@ export function createInitialState(
       health: balanceValues.startingTissueHealth,
       maxHealth: balanceValues.startingTissueHealth,
     },
+    tissueRepair: {
+      stableMs: 0,
+      status: "waiting",
+      blockedReason: null,
+      ratePerSecond: 0,
+    },
     tissueCells: tissueCellPositions.map((position, index) => {
       const infected = index < (mission.initialInfectedTissueCells ?? 0);
 
@@ -96,18 +108,24 @@ export function createInitialState(
     resources: {
       atp: Math.max(
         0,
-        mission.startingResources.atp * infiniteResourceMultiplier -
+        mission.startingResources.atp *
+          infiniteResourceMultiplier *
+          mapBalance.resourceIncomeModifier -
           (vaccination?.atpCost ?? 0),
       ),
       cytokines: Math.min(
         balanceValues.maxCytokines,
-        mission.startingResources.cytokines * infiniteResourceMultiplier +
+        mission.startingResources.cytokines *
+          infiniteResourceMultiplier *
+          mapBalance.resourceIncomeModifier +
           (vaccination?.cytokineBonus ?? 0) +
           regionalNodeCytokineBonus,
       ),
       antigens: Math.min(
         balanceValues.maxAntigens,
-        mission.startingResources.antigens * infiniteResourceMultiplier +
+        mission.startingResources.antigens *
+          infiniteResourceMultiplier *
+          mapBalance.resourceIncomeModifier +
           (vaccination?.antigenBonus ?? 0) +
           memoryAntigenBonus +
           regionalNodeAntigenBonus,

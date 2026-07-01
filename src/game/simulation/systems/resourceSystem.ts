@@ -4,9 +4,11 @@ import { pathogenDefinitions } from "../../data/pathogens";
 import { missionDefinitions } from "../../data/missions";
 import type { GameState } from "../core/GameState";
 import { isBacterium, isVirus } from "../entities";
+import { getRuntimeMapBalance } from "./runtimeMapBalance";
 
 export function applyResourceSystem(state: GameState, deltaMs: number): void {
   const mission = missionDefinitions[state.missionId];
+  const mapBalance = getRuntimeMapBalance(state);
   const infiniteResourceMultiplier =
     mission.mode === "infinite" &&
     getActiveInfiniteMutators(
@@ -30,17 +32,19 @@ export function applyResourceSystem(state: GameState, deltaMs: number): void {
     balanceValues.maxAtp,
     state.resources.atp +
       balanceValues.passiveAtpPerSecond *
+        mapBalance.resourceIncomeModifier *
         infiniteResourceMultiplier *
         (deltaMs / 1000),
   );
   state.resources.cytokines = Math.min(
     balanceValues.maxCytokines,
     state.resources.cytokines +
-      (balanceValues.passiveCytokinesPerSecond +
+        (balanceValues.passiveCytokinesPerSecond +
         bacteriaPressure * balanceValues.cytokinesPerBacteriumPerSecond +
         (virusPressure + infectedPressure) *
           balanceValues.cytokinesPerBacteriumPerSecond *
           0.55) *
+        mapBalance.resourceIncomeModifier *
         infiniteResourceMultiplier *
         (deltaMs / 1000),
   );

@@ -4,9 +4,11 @@ import { stableHash, type Vector2 } from "../../types/shared";
 import type { GameState } from "../core/GameState";
 import { isBacterium } from "../entities";
 import { isPathogenTypeId, spawnBacterium } from "../pathogens/createBacterium";
+import { getRuntimeMapBalance } from "./runtimeMapBalance";
 
 export function applyPathogenSystem(state: GameState, deltaMs: number): void {
   const bacteria = Object.values(state.entities).filter(isBacterium);
+  const spreadRateMultiplier = getRuntimeMapBalance(state).spreadRateMultiplier;
 
   for (const bacterium of bacteria) {
     const definition = pathogenDefinitions[bacterium.pathogenTypeId];
@@ -18,7 +20,7 @@ export function applyPathogenSystem(state: GameState, deltaMs: number): void {
     bacterium.specialCooldownRemainingMs = Math.max(
       0,
       (bacterium.specialCooldownRemainingMs ?? definition.spawn.initialDelayMs) -
-        deltaMs,
+        deltaMs * spreadRateMultiplier,
     );
 
     if (

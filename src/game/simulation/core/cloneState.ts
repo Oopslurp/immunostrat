@@ -17,6 +17,7 @@ export function cloneState(state: GameState): GameState {
         : undefined,
     },
     tissue: { ...state.tissue },
+    tissueRepair: { ...state.tissueRepair },
     tissueCells: state.tissueCells.map((cell) => ({
       ...cell,
       position: { ...cell.position },

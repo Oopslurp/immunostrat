@@ -5,6 +5,7 @@ import {
   randomInRange,
   randomIntInRange,
 } from "./tacticalMapSeed";
+import { getMapScaleBalance } from "./mapScaleBalance";
 import {
   getTacticalMapDefinition,
   type ChokePointDefinition,
@@ -231,7 +232,13 @@ function varyTemplate(
   });
 
   const firstSite = combatSites[0] ?? template.combatSites[0];
-  const diapedesisPoints = pickAndJitterEntries(template, random, input.mode, difficulty);
+  const diapedesisPoints = pickAndJitterEntries(
+    template,
+    random,
+    input.mode,
+    difficulty,
+    input.mapSizeCategory ?? template.mapSizeCategory,
+  );
   const reinforcementEntryPoints = template.reinforcementEntryPoints
     .map((entry) => {
       const matched = diapedesisPoints.find((point) => point.id === entry.id);
@@ -395,17 +402,64 @@ function pickAndJitterEntries(
   random: () => number,
   mode: TacticalMapMode,
   difficulty: TacticalMapDifficulty,
+  mapSizeCategory: TacticalMapDefinition["mapSizeCategory"],
 ): DiapedesisPointDefinition[] {
-  const desired =
+  const balance = getMapScaleBalance({
+    mode,
+    mapSizeCategory,
+    difficulty,
+  });
+  const baseDesired =
     mode === "infinite"
       ? Math.min(template.diapedesisPoints.length, 4)
       : difficulty === "hard"
         ? Math.min(template.diapedesisPoints.length, 3)
         : Math.min(template.diapedesisPoints.length, 2);
-
-  return template.diapedesisPoints
+  const desired = Math.max(
+    mapSizeCategory === "huge" ? 4 : mapSizeCategory === "large" ? 3 : mapSizeCategory === "medium" ? 2 : 1,
+    baseDesired + balance.diapedesisPointCountModifier,
+  );
+  const entries = template.diapedesisPoints
     .slice(0, Math.max(1, desired))
     .map((entry) => jitterEntry(entry, random, template, template.siteSpacing * 0.12));
+
+  while (entries.length < desired) {
+    entries.push(createSupplementalEntry(template, random, entries.length));
+  }
+
+  return entries;
+}
+
+function createSupplementalEntry(
+  template: TacticalMapDefinition,
+  random: () => number,
+  index: number,
+): DiapedesisPointDefinition {
+  const site = template.combatSites[index % template.combatSites.length] ?? template.combatSites[0];
+  const side = index % 2 === 0 ? -1 : 1;
+  const basePosition = site
+    ? {
+        x: site.position.x + side * template.siteSpacing * 0.5,
+        y: site.position.y - template.siteSpacing * 0.32,
+      }
+    : {
+        x: template.worldWidth * (0.22 + random() * 0.56),
+        y: template.worldHeight * (0.18 + random() * 0.24),
+      };
+
+  return {
+    id: `${template.id}-generated-entry-${index + 1}`,
+    name: `Diapedese generee ${index + 1}`,
+    position: clampPointToMap(basePosition, template, 90),
+    allowedUnitTypes:
+      index % 3 === 0
+        ? ["macrophage", "neutrophil", "nkCell"]
+        : ["macrophage", "dendriticCell", "plasmocyte", "cytotoxicT"],
+    spawnRadius: 44,
+    priority: 2,
+    isDefault: false,
+    visualHint: "generated supporting diapedesis point for large maps",
+  };
 }
 
 function jitterEntry(

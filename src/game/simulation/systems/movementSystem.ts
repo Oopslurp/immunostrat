@@ -3,10 +3,12 @@ import { missionDefinitions } from "../../data/missions";
 import { distance, moveToward, stableHash, type Vector2 } from "../../types/shared";
 import type { GameState } from "../core/GameState";
 import { isBacterium, isImmuneUnit, type ImmuneUnitEntity } from "../entities";
+import { getRuntimeMapBalance } from "./runtimeMapBalance";
 
 export function applyMovementSystem(state: GameState, deltaMs: number): void {
   const mission = missionDefinitions[state.missionId];
   const maxMoveScale = deltaMs / 1000;
+  const mapBalance = getRuntimeMapBalance(state);
 
   for (const entity of Object.values(state.entities)) {
     if (isImmuneUnit(entity)) {
@@ -29,7 +31,10 @@ export function applyMovementSystem(state: GameState, deltaMs: number): void {
         entity.position = moveToward(
           entity.position,
           entity.targetPosition,
-          entity.movementSpeed * biofilmSlowMultiplier * maxMoveScale,
+          entity.movementSpeed *
+            mapBalance.unitTravelCompensation *
+            biofilmSlowMultiplier *
+            maxMoveScale,
         );
 
         if (distance(entity.position, entity.targetPosition) <= 2) {
@@ -64,7 +69,7 @@ export function applyMovementSystem(state: GameState, deltaMs: number): void {
         continue;
       }
 
-      const target = mission.map.tissueCore;
+      const target = getNearestPathogenPressureTarget(state, entity.position) ?? mission.map.tissueCore;
 
       if (distance(entity.position, target) > entity.tissueAttackRange) {
         const slowMultiplier = isInInflammatoryZone(state, entity.position)
@@ -102,9 +107,29 @@ function applyIdleMovement(
     immuneUnit.position,
     immuneUnit.idleTargetPosition,
     immuneUnit.idleMovementSpeed *
+      getRuntimeMapBalance(state).unitTravelCompensation *
       getBiofilmSlowMultiplier(state, immuneUnit.position) *
       maxMoveScale,
   );
+}
+
+function getNearestPathogenPressureTarget(
+  state: GameState,
+  position: Vector2,
+): Vector2 | null {
+  const nearestCell = state.tissueCells
+    .filter((cell) => cell.status !== "destroyed")
+    .sort((a, b) => distance(a.position, position) - distance(b.position, position))[0];
+
+  if (nearestCell) {
+    return nearestCell.position;
+  }
+
+  const nearestSite = [...state.tacticalMap.combatSites].sort(
+    (a, b) => distance(a.position, position) - distance(b.position, position),
+  )[0];
+
+  return nearestSite?.position ?? null;
 }
 
 function getBiofilmSlowMultiplier(state: GameState, position: Vector2): number {

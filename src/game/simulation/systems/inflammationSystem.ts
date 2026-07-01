@@ -5,6 +5,7 @@ import { missionDefinitions } from "../../data/missions";
 import { distance } from "../../types/shared";
 import type { GameState } from "../core/GameState";
 import { isBacterium, isImmuneUnit, isNeutrophil, isVirus } from "../entities";
+import { getRuntimeMapBalance } from "./runtimeMapBalance";
 import { isTreatmentActive } from "./treatmentSystem";
 
 export function applyInflammationSystem(
@@ -12,6 +13,7 @@ export function applyInflammationSystem(
   deltaMs: number,
 ): void {
   const seconds = deltaMs / 1000;
+  const mapBalance = getRuntimeMapBalance(state);
   const bacteriaPressure = Object.values(state.entities)
     .filter(isBacterium)
     .reduce((pressure, bacterium) => {
@@ -40,14 +42,15 @@ export function applyInflammationSystem(
     0,
   );
   const pressure =
-    bacteriaPressure * inflammation.bacteriaPerSecond +
-    viralPressure * inflammation.bacteriaPerSecond * 0.45 +
-    neutrophilCount * inflammation.neutrophilPerSecond +
-    debrisPressure +
-    biofilmPressure;
+    (bacteriaPressure * inflammation.bacteriaPerSecond +
+      viralPressure * inflammation.bacteriaPerSecond * 0.45 +
+      neutrophilCount * inflammation.neutrophilPerSecond +
+      debrisPressure +
+      biofilmPressure) *
+    mapBalance.inflammationGainMultiplier;
   const decay =
     bacteriaPressure === 0 && viralPressure === 0
-      ? inflammation.decayPerSecond
+      ? inflammation.decayPerSecond * mapBalance.inflammationDecayMultiplier
       : 0;
 
   state.inflammation.value = clamp(
@@ -75,6 +78,7 @@ function applyInflammationTissueDamage(state: GameState, seconds: number): void 
   const treatmentMultiplier = isTreatmentActive(state, "antiInflammatory")
     ? 0.45
     : 1;
+  const mapBalance = getRuntimeMapBalance(state);
   const infiniteMutators =
     missionDefinitions[state.missionId].mode === "infinite"
       ? getActiveInfiniteMutators(
@@ -98,7 +102,11 @@ function applyInflammationTissueDamage(state: GameState, seconds: number): void 
   state.tissue.health = Math.max(
     0,
     state.tissue.health -
-      damagePerSecond * treatmentMultiplier * infiniteDamageMultiplier * seconds,
+      damagePerSecond *
+        treatmentMultiplier *
+        infiniteDamageMultiplier *
+        mapBalance.inflammationDamageMultiplier *
+        seconds,
   );
 }
 
@@ -129,6 +137,7 @@ function applyInflammatoryZoneTissueDamage(
 ): void {
   const mission = missionDefinitions[state.missionId];
   const zoneConfig = balanceValues.inflammatoryZone;
+  const mapBalance = getRuntimeMapBalance(state);
 
   for (const zone of state.inflammatoryZones) {
     if (
@@ -141,7 +150,10 @@ function applyInflammatoryZoneTissueDamage(
     state.tissue.health = Math.max(
       0,
       state.tissue.health -
-        zone.intensity * zoneConfig.tissueDamagePerSecondPerIntensity * seconds,
+        zone.intensity *
+          zoneConfig.tissueDamagePerSecondPerIntensity *
+          mapBalance.inflammationDamageMultiplier *
+          seconds,
     );
   }
 }

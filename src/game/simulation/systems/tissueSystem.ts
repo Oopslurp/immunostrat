@@ -3,9 +3,12 @@ import { missionDefinitions } from "../../data/missions";
 import { distance } from "../../types/shared";
 import type { GameState } from "../core/GameState";
 import { isBacterium, isImmuneUnit } from "../entities";
+import { getRuntimeMapBalance } from "./runtimeMapBalance";
 
 export function applyTissueSystem(state: GameState, deltaMs: number): void {
   const mission = missionDefinitions[state.missionId];
+  const mapBalance = getRuntimeMapBalance(state);
+  const tissueFocus = state.tacticalMap.combatSites[0]?.position ?? mission.map.tissueCore;
 
   for (const entity of Object.values(state.entities)) {
     if (!isBacterium(entity)) {
@@ -22,6 +25,7 @@ export function applyTissueSystem(state: GameState, deltaMs: number): void {
     }
 
     const immuneTarget = findNearestImmuneUnitTarget(state, entity.position);
+    const tissueDamage = entity.tissueDamage * mapBalance.pathogenDamageMultiplier;
 
     if (
       immuneTarget &&
@@ -31,7 +35,7 @@ export function applyTissueSystem(state: GameState, deltaMs: number): void {
       immuneTarget.health = Math.max(
         0,
         immuneTarget.health -
-          entity.tissueDamage *
+          tissueDamage *
             balanceValues.combat.bacteriumContactImmuneDamageMultiplier,
       );
       state.effects.push({
@@ -53,10 +57,10 @@ export function applyTissueSystem(state: GameState, deltaMs: number): void {
       distance(entity.position, targetCell.position) <=
         entity.tissueAttackRange + targetCell.radius
     ) {
-      targetCell.health = Math.max(0, targetCell.health - entity.tissueDamage);
+      targetCell.health = Math.max(0, targetCell.health - tissueDamage);
       state.tissue.health = Math.max(
         0,
-        state.tissue.health - entity.tissueDamage * 0.55,
+        state.tissue.health - tissueDamage * 0.55,
       );
 
       if (targetCell.health <= 0 && targetCell.status !== "destroyed") {
@@ -67,9 +71,9 @@ export function applyTissueSystem(state: GameState, deltaMs: number): void {
         );
       }
     } else if (
-      distance(entity.position, mission.map.tissueCore) <= entity.tissueAttackRange
+      distance(entity.position, tissueFocus) <= entity.tissueAttackRange
     ) {
-      state.tissue.health = Math.max(0, state.tissue.health - entity.tissueDamage);
+      state.tissue.health = Math.max(0, state.tissue.health - tissueDamage);
     } else {
       continue;
     }
@@ -78,7 +82,7 @@ export function applyTissueSystem(state: GameState, deltaMs: number): void {
     state.effects.push({
       id: `effect-${state.nextEffectNumber}`,
       kind: "tissueDamage",
-      position: { ...mission.map.tissueCore },
+      position: { ...tissueFocus },
       radius: balanceValues.tissueDamageEffectRadius,
       ttlMs: balanceValues.tissueDamageEffectTtlMs,
     });

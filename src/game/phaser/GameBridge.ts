@@ -19,6 +19,9 @@ export type GameSnapshot = {
   status: GameState["status"];
   tissueHealth: number;
   tissueMaxHealth: number;
+  tissueRepairStatus: GameState["tissueRepair"]["status"];
+  tissueRepairBlockedReason: GameState["tissueRepair"]["blockedReason"];
+  tissueRepairRatePerSecond: number;
   elapsedMs: number;
   atp: number;
   cytokines: number;

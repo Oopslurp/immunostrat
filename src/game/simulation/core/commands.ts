@@ -352,7 +352,12 @@ function produceImmuneUnit(state: GameState, unitTypeId: UnitTypeId): GameState 
     0,
     next.resources.cytokines - definition.cytokineCost,
   );
-  const entryPoint = getEntryPointForUnit(next.tacticalMap, mission.map, unitTypeId);
+  const entryPoint = getEntryPointForUnit(
+    next.tacticalMap,
+    mission.map,
+    unitTypeId,
+    getSelectedCommandAnchor(next),
+  );
 
   next.entities[id] = {
     id,
@@ -459,6 +464,7 @@ function producePlasmocyte(state: GameState): GameState {
     next.tacticalMap,
     missionDefinitions[state.missionId].map,
     "plasmocyte",
+    getSelectedCommandAnchor(next),
   );
 
   next.entities[id] = {
@@ -498,12 +504,13 @@ function getEntryPointForUnit(
   tacticalMap: TacticalMapDefinition,
   map: MissionMapDefinition,
   unitTypeId: UnitTypeId,
+  preferredPosition?: Vector2 | null,
 ): Vector2 {
   const entryPoints = map.immuneEntryPoints;
 
   if (unitTypeId === "dendriticCell") {
     return (
-      getEntryPointForUnitFromTacticalMap(tacticalMap, unitTypeId) ??
+      getEntryPointForUnitFromTacticalMap(tacticalMap, unitTypeId, preferredPosition) ??
       entryPoints.find((entry) => entry.kind === "lymph")?.position ??
       map.lymphExit
     );
@@ -511,17 +518,29 @@ function getEntryPointForUnit(
 
   if (unitTypeId === "neutrophil" || unitTypeId === "nkCell" || unitTypeId === "cytotoxicT") {
     return (
-      getEntryPointForUnitFromTacticalMap(tacticalMap, unitTypeId) ??
+      getEntryPointForUnitFromTacticalMap(tacticalMap, unitTypeId, preferredPosition) ??
       entryPoints.find((entry) => entry.kind === "diapedesis")?.position ??
       unitDefinitions[unitTypeId].spawnPosition
     );
   }
 
   return (
-    getEntryPointForUnitFromTacticalMap(tacticalMap, unitTypeId) ??
+    getEntryPointForUnitFromTacticalMap(tacticalMap, unitTypeId, preferredPosition) ??
     entryPoints.find((entry) => entry.kind === "vessel")?.position ??
     map.macrophageSpawn
   );
+}
+
+function getSelectedCommandAnchor(state: GameState): Vector2 | null {
+  for (const entityId of state.selectedEntityIds) {
+    const entity = state.entities[entityId];
+
+    if (entity && isImmuneUnit(entity)) {
+      return entity.orderAnchor ?? entity.targetPosition ?? entity.position;
+    }
+  }
+
+  return null;
 }
 
 function researchBacterialAnalysis(state: GameState): GameState {
