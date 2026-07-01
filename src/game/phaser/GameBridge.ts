@@ -44,6 +44,10 @@ export type GameSnapshot = {
   treatmentsUsed: Partial<Record<string, number>>;
   currentWave: number;
   totalWaves: number;
+  waveAlert?: {
+    message: string;
+    secondsRemaining: number;
+  };
   entities: GameEntity[];
   debrisCount: number;
   biofilmCount: number;

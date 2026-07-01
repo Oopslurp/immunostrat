@@ -18,7 +18,7 @@ describe("V9.5.3 large map balance", () => {
     expect(balance.pathogenDamageMultiplier).toBeLessThan(1);
     expect(balance.infectionRateMultiplier).toBeLessThan(1);
     expect(balance.waveIntervalMultiplier).toBeGreaterThan(1);
-    expect(balance.maxActiveCombatSites).toBe(1);
+    expect(balance.maxActiveCombatSites).toBe(2);
     expect(balance.resourceIncomeModifier).toBeGreaterThan(1);
   });
 

@@ -41,6 +41,7 @@ export function spawnBacterium(
     targetPriority: definition.targetPriority,
     specialCooldownRemainingMs: definition.spawn?.initialDelayMs ?? 0,
     spawnedChildrenCount: 0,
+    duplicationCooldownMs: 0,
   };
 
   state.entities[id] = bacterium;

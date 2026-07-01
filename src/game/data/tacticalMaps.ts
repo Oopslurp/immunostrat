@@ -905,10 +905,12 @@ function createInfiniteTemplate(): TacticalMapDefinition {
       combatSite("inf-echo", "Site echo", 1120, 610, 125, ["respiratoryVirus", "reactivatedLatentVirus"], ["nkCell", "cytotoxicT"]),
     ],
     [
-      entry("inf-entry-a", "Entree neutrophile", 500, 105, "mixed-vessel-a", ["neutrophil", "nkCell"], true),
-      entry("inf-entry-b", "Flux monocyte", 1280, 340, "mixed-vessel-a", ["macrophage", "plasmocyte"]),
-      entry("inf-entry-c", "Porte macrophage", 500, 720, "mixed-vessel-b", ["macrophage", "dendriticCell"]),
-      entry("inf-entry-d", "Canal dendritique", 1150, 720, "mixed-vessel-b", ["dendriticCell", "cytotoxicT"]),
+      entry("inf-entry-a", "Diapedese alpha", 255, 310, "mixed-vessel-a", ["macrophage", "neutrophil", "nkCell"], true),
+      entry("inf-entry-b", "Diapedese centrale", 660, 330, "mixed-vessel-a", ["macrophage", "dendriticCell", "plasmocyte", "cytotoxicT"]),
+      entry("inf-entry-c", "Diapedese bravo", 990, 250, "mixed-vessel-a", ["neutrophil", "nkCell", "cytotoxicT"]),
+      entry("inf-entry-d", "Diapedese delta", 420, 565, "mixed-vessel-b", ["macrophage", "dendriticCell", "neutrophil"]),
+      entry("inf-entry-e", "Diapedese echo", 1040, 610, "mixed-vessel-b", ["macrophage", "nkCell", "cytotoxicT"]),
+      entry("inf-entry-f", "Diapedese lymphoide", 735, 620, "mixed-vessel-b", ["dendriticCell", "plasmocyte", "cytotoxicT"]),
     ],
     [
       lymph("inf-lymph-a", "Sortie lymphatique 1", 130, 355, "bloodNode"),

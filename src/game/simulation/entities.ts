@@ -96,6 +96,7 @@ export type BacteriumEntity = {
   targetPriority?: number;
   specialCooldownRemainingMs?: number;
   spawnedChildrenCount?: number;
+  duplicationCooldownMs?: number;
 };
 
 export type VirusEntity = {

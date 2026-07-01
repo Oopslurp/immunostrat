@@ -33,6 +33,8 @@ import type {
 export const BODY_MAP_SAVE_VERSION = 1;
 
 export const bodyMapEndingRules = balanceValues.bodyMapEnding;
+export const MAX_LOCAL_BATTLE_DEFEATS_BEFORE_REGION_LOST = 3;
+export const GLOBAL_HEALTH_LOSS_ON_REGION_LOST = 12;
 
 export const reinforcementCosts: Record<UnitTypeId, ReinforcementCost> = {
   macrophage: { unitTypeId: "macrophage", atp: 12, cytokines: 0, antigens: 0 },
@@ -226,6 +228,43 @@ export function assignReinforcement(
   return next;
 }
 
+export function removeAssignedReinforcement(
+  state: BodyMapState,
+  regionId: BodyRegionId,
+  unitTypeId: UnitTypeId,
+): BodyMapState {
+  if (state.runStatus !== "running") {
+    return state;
+  }
+
+  const currentCount = state.regions[regionId].assignedReinforcements[unitTypeId] ?? 0;
+
+  if (currentCount <= 0) {
+    return state;
+  }
+
+  const cost = reinforcementCosts[unitTypeId];
+  const next = cloneBodyMapState(state);
+  const region = next.regions[regionId];
+
+  next.globalResources.atp += cost.atp;
+  next.globalResources.cytokines += cost.cytokines;
+  next.globalResources.antigens += cost.antigens;
+
+  if (currentCount <= 1) {
+    delete region.assignedReinforcements[unitTypeId];
+  } else {
+    region.assignedReinforcements[unitTypeId] = currentCount - 1;
+  }
+
+  next.alerts = pushAlert(
+    next.alerts,
+    `${unitDefinitions[unitTypeId].displayName} retire des renforts de ${bodyRegionDefinitions[regionId].name}.`,
+  );
+
+  return next;
+}
+
 export function activateRegionalNode(
   state: BodyMapState,
   nodeId: RegionalNodeId,
@@ -255,6 +294,39 @@ export function activateRegionalNode(
   );
 
   return next;
+}
+
+export function applyPassiveBodyMapInfectionTick(
+  state: BodyMapState,
+): BodyMapState {
+  if (state.runStatus !== "running") {
+    return state;
+  }
+
+  const next = cloneBodyMapState(state);
+  let changed = false;
+
+  for (const regionId of bodyRegionOrder) {
+    const region = next.regions[regionId];
+
+    if (
+      region.status === "lost" ||
+      region.status === "controlled" ||
+      region.status === "healthy" ||
+      region.localHealth <= 0
+    ) {
+      continue;
+    }
+
+    region.infection = clamp(region.infection + 1, 0, 100);
+    changed = true;
+  }
+
+  if (!changed) {
+    return state;
+  }
+
+  return updateBodyMapEndState(recalculateGlobalMetrics(next));
 }
 
 export function prepareBodyBattle(
@@ -357,6 +429,7 @@ export function applyBodyBattleOutcome(
       inflammationPeak >= 82 ? -4 : quality === "clean" ? -22 : -12;
 
     region.infection = clamp(region.infection - infectionDrop, 0, 100);
+    region.localDefeatStreak = 0;
     region.inflammation = clamp(region.inflammation + inflammationDelta, 0, 100);
     next.systemicInflammation = clamp(
       next.systemicInflammation +
@@ -393,6 +466,9 @@ export function applyBodyBattleOutcome(
       `Tour ${next.strategicTurn} : ${definition.name} stabilise (${quality}).`,
     );
   } else {
+    const localDefeatStreak = (region.localDefeatStreak ?? 0) + 1;
+
+    region.localDefeatStreak = localDefeatStreak;
     region.infection = clamp(
       region.infection + 22 + (outcome.enemiesRemaining ?? 0) * 1.4,
       0,
@@ -404,12 +480,29 @@ export function applyBodyBattleOutcome(
       0,
       100,
     );
+
+    if (
+      region.localHealth <= 0 &&
+      localDefeatStreak < MAX_LOCAL_BATTLE_DEFEATS_BEFORE_REGION_LOST
+    ) {
+      region.localHealth = 8;
+      region.infection = Math.max(region.infection, 65);
+      region.inflammation = Math.max(region.inflammation, 68);
+    }
+
     region.status = getRegionStatus(region);
     next.systemicInflammation = clamp(next.systemicInflammation + 10, 0, 100);
-    next.globalHealth = clamp(next.globalHealth - 8, 0, 100);
+    next.globalHealth = clamp(
+      next.globalHealth -
+        (region.status === "lost" ? GLOBAL_HEALTH_LOSS_ON_REGION_LOST : 8),
+      0,
+      100,
+    );
     next.alerts = pushAlert(
       next.alerts,
-      `Bataille perdue dans ${definition.name} : risque de propagation augmente.`,
+      region.status === "lost"
+        ? `${definition.name} perdue : les ${MAX_LOCAL_BATTLE_DEFEATS_BEFORE_REGION_LOST} tentatives locales sont epuisees, sante globale -${GLOBAL_HEALTH_LOSS_ON_REGION_LOST}%.`
+        : `Bataille perdue dans ${definition.name} : tentative ${localDefeatStreak}/${MAX_LOCAL_BATTLE_DEFEATS_BEFORE_REGION_LOST}, zone encore recuperable.`,
     );
     next.history = pushHistory(
       next.history,
@@ -578,15 +671,23 @@ export function getBodyMapVictoryProgress(state: BodyMapState): {
 } {
   const regions = bodyRegionOrder.map((regionId) => state.regions[regionId]);
   const infectedRegions = regions.filter(
-    (region) => region.infection > bodyMapEndingRules.victoryMaxRegionInfection,
+    (region) =>
+      region.status !== "lost" &&
+      region.infection > bodyMapEndingRules.victoryMaxRegionInfection,
   ).length;
-  const criticalRegions = regions.filter((region) => isCriticalRegion(region)).length;
+  const criticalRegions = regions.filter(
+    (region) => region.status !== "lost" && isCriticalRegion(region),
+  ).length;
   const lostRegions = regions.filter((region) => region.status === "lost").length;
   const blockerDetails: BodyMapVictoryBlocker[] = [];
 
   for (const regionId of bodyRegionOrder) {
     const region = state.regions[regionId];
     const definition = bodyRegionDefinitions[regionId];
+
+    if (region.status === "lost") {
+      continue;
+    }
 
     if (region.infection > bodyMapEndingRules.victoryMaxRegionInfection) {
       blockerDetails.push({
@@ -610,19 +711,6 @@ export function getBodyMapVictoryProgress(state: BodyMapState): {
         currentValue: Math.round(region.localHealth),
         requiredValue: 23,
         message: `${definition.name} en etat critique : sante ${Math.round(region.localHealth)}%`,
-        severity: "danger",
-      });
-    }
-
-    if (region.status === "lost") {
-      blockerDetails.push({
-        id: `${regionId}-lost`,
-        type: "regionLost",
-        regionId,
-        regionName: definition.name,
-        currentValue: 0,
-        requiredValue: 1,
-        message: `${definition.name} perdue : relance une nouvelle stabilisation globale`,
         severity: "danger",
       });
     }
@@ -864,13 +952,20 @@ function inheritThreat(
 function recalculateGlobalMetrics(state: BodyMapState): BodyMapState {
   const next = cloneBodyMapState(state);
   const regions = bodyRegionOrder.map((regionId) => next.regions[regionId]);
+  const activeRegions = regions.filter((region) => region.status !== "lost");
+  const metricRegions = activeRegions.length > 0 ? activeRegions : regions;
   const averageHealth =
-    regions.reduce((sum, region) => sum + region.localHealth, 0) / regions.length;
+    metricRegions.reduce((sum, region) => sum + region.localHealth, 0) /
+    metricRegions.length;
   const averageInfection =
-    regions.reduce((sum, region) => sum + region.infection, 0) / regions.length;
+    metricRegions.reduce((sum, region) => sum + region.infection, 0) /
+    metricRegions.length;
   const averageInflammation =
-    regions.reduce((sum, region) => sum + region.inflammation, 0) / regions.length;
-  const infectedRegions = regions.filter((region) => region.infection >= 45).length;
+    metricRegions.reduce((sum, region) => sum + region.inflammation, 0) /
+    metricRegions.length;
+  const infectedRegions = metricRegions.filter(
+    (region) => region.infection >= 45,
+  ).length;
 
   next.globalInfection = clamp(averageInfection + infectedRegions * 3, 0, 100);
   next.systemicInflammation = clamp(
@@ -900,7 +995,10 @@ function recalculateGlobalMetrics(state: BodyMapState): BodyMapState {
 }
 
 function getRegionStatus(region: BodyRegionState): BodyRegionStatus {
-  if (region.localHealth <= 0) {
+  if (
+    region.localHealth <= 0 &&
+    (region.localDefeatStreak ?? 0) >= MAX_LOCAL_BATTLE_DEFEATS_BEFORE_REGION_LOST
+  ) {
     return "lost";
   }
 
@@ -947,6 +1045,7 @@ function sanitizeRegion(
     activeBattleMissionId: region.activeBattleMissionId,
     lastBattleMissionId: region.lastBattleMissionId,
     lastBattleQuality: region.lastBattleQuality,
+    localDefeatStreak: Math.max(0, region.localDefeatStreak ?? 0),
     treatedCount: Math.max(0, region.treatedCount ?? 0),
   };
 }

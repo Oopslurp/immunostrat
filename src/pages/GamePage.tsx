@@ -34,6 +34,7 @@ type GamePageProps = {
   onInfiniteComplete?: (result: MissionRunResultSummary) => void;
   onPlayMission: (missionId: MissionId, vaccinationId?: string | null) => void;
   preparation?: MissionPreparation;
+  canRestartBattle?: boolean;
 };
 
 export function GamePage({
@@ -46,6 +47,7 @@ export function GamePage({
   onMissionComplete,
   onPlayMission,
   preparation,
+  canRestartBattle = true,
 }: GamePageProps) {
   const bridge = useMemo(() => new GameBridge(), []);
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
@@ -316,9 +318,11 @@ export function GamePage({
               </Button>
             );
           })}
-          <Button onClick={() => bridge.dispatch({ type: "restart" })}>
-            Recommencer
-          </Button>
+          {canRestartBattle ? (
+            <Button onClick={() => bridge.dispatch({ type: "restart" })}>
+              Recommencer
+            </Button>
+          ) : null}
           <Button onClick={onBackToCampaign}>
             {battleSource === "infinite"
               ? "Retour mode infini"
@@ -394,6 +398,12 @@ export function GamePage({
 
       <section className="game-frame" aria-label="Canvas du jeu Immunostrat">
         <PhaserGame bridge={bridge} missionId={missionId} preparation={preparation} />
+        {snapshot?.waveAlert && snapshot.status === "running" ? (
+          <div className="wave-alert-overlay" role="status">
+            <strong>{snapshot.waveAlert.message}</strong>
+            <span>{snapshot.waveAlert.secondsRemaining}s</span>
+          </div>
+        ) : null}
         {snapshot && snapshot.status !== "running" ? (
           <div className="result-overlay">
             <div className="result-title">
@@ -411,9 +421,11 @@ export function GamePage({
                 </span>
               ))}
             </div>
-            <Button onClick={() => bridge.dispatch({ type: "restart" })}>
-              Recommencer
-            </Button>
+            {canRestartBattle ? (
+              <Button onClick={() => bridge.dispatch({ type: "restart" })}>
+                Recommencer
+              </Button>
+            ) : null}
             <Button onClick={onBackToCampaign}>
               {battleSource === "infinite"
                 ? "Retour mode infini"

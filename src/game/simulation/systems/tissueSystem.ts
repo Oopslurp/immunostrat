@@ -1,9 +1,15 @@
 import { balanceValues } from "../../data/balance";
 import { missionDefinitions } from "../../data/missions";
-import { distance } from "../../types/shared";
+import { distance, stableHash } from "../../types/shared";
 import type { GameState } from "../core/GameState";
-import { isBacterium, isImmuneUnit } from "../entities";
+import { isBacterium, isImmuneUnit, type BacteriumEntity } from "../entities";
+import { spawnBacterium } from "../pathogens/createBacterium";
+import { canSpawnPathogen } from "./entityLimitSystem";
 import { getRuntimeMapBalance } from "./runtimeMapBalance";
+
+const BACTERIA_DUPLICATION_ON_ATTACK_CHANCE = 0.35;
+const BACTERIA_DUPLICATION_COOLDOWN_MS = 5000;
+const BACTERIA_DUPLICATION_DAMAGE_MULTIPLIER = 0.75;
 
 export function applyTissueSystem(state: GameState, deltaMs: number): void {
   const mission = missionDefinitions[state.missionId];
@@ -18,6 +24,10 @@ export function applyTissueSystem(state: GameState, deltaMs: number): void {
     entity.attackCooldownRemainingMs = Math.max(
       0,
       entity.attackCooldownRemainingMs - deltaMs,
+    );
+    entity.duplicationCooldownMs = Math.max(
+      0,
+      (entity.duplicationCooldownMs ?? 0) - deltaMs,
     );
 
     if (entity.attackCooldownRemainingMs > 0) {
@@ -47,6 +57,7 @@ export function applyTissueSystem(state: GameState, deltaMs: number): void {
       });
       state.nextEffectNumber += 1;
       entity.attackCooldownRemainingMs = entity.attackCooldownMs;
+      tryDuplicateBacteriumAfterAttack(state, entity);
       continue;
     }
 
@@ -79,6 +90,7 @@ export function applyTissueSystem(state: GameState, deltaMs: number): void {
     }
 
     entity.attackCooldownRemainingMs = entity.attackCooldownMs;
+    tryDuplicateBacteriumAfterAttack(state, entity);
     state.effects.push({
       id: `effect-${state.nextEffectNumber}`,
       kind: "tissueDamage",
@@ -88,6 +100,60 @@ export function applyTissueSystem(state: GameState, deltaMs: number): void {
     });
     state.nextEffectNumber += 1;
   }
+}
+
+function tryDuplicateBacteriumAfterAttack(
+  state: GameState,
+  bacterium: BacteriumEntity,
+): void {
+  if (!canSpawnPathogen(state, bacterium.pathogenTypeId)) {
+    return;
+  }
+
+  if ((bacterium.duplicationCooldownMs ?? 0) > 0) {
+    return;
+  }
+
+  const seed = stableHash(
+    `${bacterium.id}-${state.elapsedMs}-${state.nextEntityNumber}-attack-duplication`,
+  );
+  const roll = (seed % 1000) / 1000;
+
+  if (roll >= BACTERIA_DUPLICATION_ON_ATTACK_CHANCE) {
+    return;
+  }
+
+  const angle = ((seed % 360) * Math.PI) / 180;
+  const radius = bacterium.radius + 18 + (seed % 18);
+  const position = clampToWorld(
+    state,
+    {
+      x: bacterium.position.x + Math.cos(angle) * radius,
+      y: bacterium.position.y + Math.sin(angle) * radius,
+    },
+    bacterium.radius + 8,
+  );
+  const child = spawnBacterium(state, bacterium.pathogenTypeId, position);
+
+  bacterium.duplicationCooldownMs = BACTERIA_DUPLICATION_COOLDOWN_MS;
+  child.health = Math.max(1, child.maxHealth * 0.65);
+  child.tissueDamage *= BACTERIA_DUPLICATION_DAMAGE_MULTIPLIER;
+  child.duplicationCooldownMs = BACTERIA_DUPLICATION_COOLDOWN_MS;
+  child.attackCooldownRemainingMs = Math.max(
+    child.attackCooldownMs * 0.75,
+    500,
+  );
+}
+
+function clampToWorld(
+  state: GameState,
+  position: { x: number; y: number },
+  padding: number,
+): { x: number; y: number } {
+  return {
+    x: Math.max(padding, Math.min(state.tacticalMap.worldWidth - padding, position.x)),
+    y: Math.max(padding, Math.min(state.tacticalMap.worldHeight - padding, position.y)),
+  };
 }
 
 function findNearestImmuneUnitTarget(

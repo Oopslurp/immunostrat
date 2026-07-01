@@ -761,6 +761,17 @@
   gap: 0.65rem;
 }
 
+.body-reinforcement-control {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: stretch;
+}
+
+.body-reinforcement-control .button:first-child {
+  min-width: 34px;
+  padding-inline: 0.55rem;
+}
+
 .body-action-row {
   justify-content: flex-end;
 }
@@ -1023,6 +1034,30 @@
   z-index: 8;
   background: rgba(7, 18, 23, 0.68);
   backdrop-filter: blur(4px);
+}
+
+.wave-alert-overlay {
+  position: absolute;
+  z-index: 7;
+  top: 1rem;
+  left: 50%;
+  display: inline-flex;
+  gap: 0.6rem;
+  align-items: center;
+  max-width: min(720px, calc(100% - 2rem));
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(255, 199, 107, 0.55);
+  border-radius: 8px;
+  color: #fff0c7;
+  background: rgba(42, 25, 11, 0.74);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.wave-alert-overlay strong,
+.wave-alert-overlay span {
+  white-space: nowrap;
 }
 
 .game-page .result-overlay > * {

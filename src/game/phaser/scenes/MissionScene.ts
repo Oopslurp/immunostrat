@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import {
   calculateInfiniteScore,
+  createInfiniteWave,
   getActiveInfiniteMutators,
   getInfiniteCycle,
   getInfinitePhase,
@@ -28,6 +29,7 @@ import type { GameBridge, GameSnapshot } from "../GameBridge";
 import { Simulation } from "../../simulation/core/Simulation";
 import type { GameCommand } from "../../simulation/core/commands";
 import type { GameState } from "../../simulation/core/GameState";
+import { getRuntimeMapBalance } from "../../simulation/systems/runtimeMapBalance";
 import { distanceSquared } from "../../types/shared";
 import {
   isBacterium,
@@ -1205,6 +1207,7 @@ export class MissionScene extends Phaser.Scene {
           ? state.waves.currentWaveIndex + 1
           : Math.min(state.waves.currentWaveIndex + 1, mission.waves.length),
       totalWaves: mission.mode === "infinite" ? 0 : mission.waves.length,
+      waveAlert: getWaveAlert(state),
       entities: Object.values(state.entities),
       debrisCount: state.debris.length,
       biofilmCount: state.biofilmZones.length,
@@ -1226,6 +1229,48 @@ export class MissionScene extends Phaser.Scene {
     this.bridge.publishSnapshot(snapshot);
     this.lastPublishedStatus = state.status;
   }
+}
+
+function getWaveAlert(
+  state: GameState,
+): GameSnapshot["waveAlert"] | undefined {
+  const mission = missionDefinitions[state.missionId];
+  const wave =
+    mission.mode === "infinite"
+      ? createInfiniteWave(
+          state.waves.currentWaveIndex + 1,
+          state.preparation.infiniteDifficulty ?? "normal",
+        )
+      : mission.waves[state.waves.currentWaveIndex];
+
+  if (!wave || state.waves.spawnedInCurrentWave > 0) {
+    return undefined;
+  }
+
+  const mapBalance = getRuntimeMapBalance(state);
+  const firstSpawnStartMultiplier =
+    state.waves.currentWaveIndex === 0 ? 1 : mapBalance.waveIntervalMultiplier;
+  const waveStartMs = wave.startsAtMs * firstSpawnStartMultiplier;
+  const remainingMs = waveStartMs - state.elapsedMs;
+
+  if (remainingMs <= 0 || remainingMs > 10000) {
+    return undefined;
+  }
+
+  const activeSites = Math.max(
+    1,
+    Math.min(state.tacticalMap.combatSites.length, mapBalance.maxActiveCombatSites),
+  );
+  const site =
+    state.tacticalMap.combatSites[state.waves.currentWaveIndex % activeSites] ??
+    state.tacticalMap.combatSites[0];
+  const pathogen = pathogenDefinitions[wave.pathogenTypeId];
+  const location = site?.name ?? "front local";
+
+  return {
+    message: `Alerte: infiltration ${location} (${pathogen.displayName})`,
+    secondsRemaining: Math.ceil(remainingMs / 1000),
+  };
 }
 
 function getInfiniteRunInfo(state: GameState): InfiniteRunInfo | undefined {

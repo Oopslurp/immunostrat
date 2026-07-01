@@ -3,7 +3,10 @@ import {
   advanceStrategicTurn,
   applyBodyBattleOutcome,
   assignReinforcement,
+  bodyMapEndingRules,
   createDefaultBodyMapState,
+  getBodyMapVictoryProgress,
+  GLOBAL_HEALTH_LOSS_ON_REGION_LOST,
   prepareBodyBattle,
   toMissionPreparation,
 } from "../game/bodyMap/bodyMapSystem";
@@ -49,6 +52,98 @@ describe("V7 body map strategy layer", () => {
     expect(next.regions.skin.infection).toBeLessThan(state.regions.skin.infection);
     expect(next.regionalNodes.skinNode.antigenSignalsDelivered).toBe(1);
     expect(next.strategicTurn).toBe(state.strategicTurn + 1);
+  });
+
+  it("keeps a collapsed region recoverable for two local defeats, then loses it on the third", () => {
+    const state = createDefaultBodyMapState();
+
+    state.regions.skin.localHealth = 10;
+    let next = applyBodyBattleOutcome(state, {
+      regionId: "skin",
+      missionId: "woundBacteriaV1",
+      status: "defeat",
+      score: 20,
+      civilianCellsLost: 12,
+      enemiesRemaining: 8,
+    });
+
+    expect(next.regions.skin.status).toBe("critical");
+    expect(next.regions.skin.localHealth).toBeGreaterThan(0);
+    expect(next.regions.skin.localDefeatStreak).toBe(1);
+
+    next.regions.skin.localHealth = 4;
+    next = applyBodyBattleOutcome(next, {
+      regionId: "skin",
+      missionId: "woundBacteriaV1",
+      status: "defeat",
+      score: 20,
+      civilianCellsLost: 12,
+      enemiesRemaining: 8,
+    });
+
+    expect(next.regions.skin.status).toBe("critical");
+    expect(next.regions.skin.localDefeatStreak).toBe(2);
+
+    next.regions.skin.localHealth = 4;
+    next = applyBodyBattleOutcome(next, {
+      regionId: "skin",
+      missionId: "woundBacteriaV1",
+      status: "defeat",
+      score: 20,
+      civilianCellsLost: 12,
+      enemiesRemaining: 8,
+    });
+
+    expect(next.regions.skin.status).toBe("lost");
+    expect(next.regions.skin.localDefeatStreak).toBe(3);
+    expect(next.globalHealth).toBeLessThanOrEqual(
+      state.globalHealth - GLOBAL_HEALTH_LOSS_ON_REGION_LOST,
+    );
+  });
+
+  it("does not require a lost region to be recovered before global victory", () => {
+    const state = createDefaultBodyMapState();
+
+    for (const region of Object.values(state.regions)) {
+      region.localHealth = 80;
+      region.infection = 0;
+      region.inflammation = 12;
+      region.threat = "none";
+      region.status = "controlled";
+    }
+
+    state.regions.skin.localHealth = 0;
+    state.regions.skin.infection = 100;
+    state.regions.skin.inflammation = 100;
+    state.regions.skin.localDefeatStreak = 3;
+    state.regions.skin.status = "lost";
+    state.globalHealth = bodyMapEndingRules.victoryMinGlobalHealth + 10;
+    state.globalInfection = bodyMapEndingRules.victoryMaxGlobalInfection;
+    state.systemicInflammation =
+      bodyMapEndingRules.victoryMaxSystemicInflammation;
+    state.stabilizationStreak = bodyMapEndingRules.victoryRequiredStableTurns;
+
+    const progress = getBodyMapVictoryProgress(state);
+
+    expect(progress.lostRegions).toBe(1);
+    expect(progress.canWinNow).toBe(true);
+    expect(progress.blockers).not.toEqual(
+      expect.arrayContaining([expect.stringContaining("Peau")]),
+    );
+  });
+
+  it("resets local defeat attempts after a regional victory", () => {
+    const state = createDefaultBodyMapState();
+
+    state.regions.skin.localDefeatStreak = 2;
+    const next = applyBodyBattleOutcome(state, {
+      regionId: "skin",
+      missionId: "woundBacteriaV1",
+      status: "victory",
+      score: 180,
+    });
+
+    expect(next.regions.skin.localDefeatStreak).toBe(0);
   });
 
   it("propagates severe infection through connected regions", () => {

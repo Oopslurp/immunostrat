@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   activateRegionalNode,
   advanceStrategicTurn,
+  applyPassiveBodyMapInfectionTick,
   assignReinforcement,
   getAvailableReinforcements,
   getBodyMapVictoryProgress,
   prepareBodyBattle,
   reinforcementCosts,
+  removeAssignedReinforcement,
   toMissionPreparation,
 } from "../game/bodyMap/bodyMapSystem";
 import type {
@@ -66,9 +68,19 @@ export function BodyMapPage({
   const availableReinforcements = getAvailableReinforcements(progress);
   const victoryProgress = getBodyMapVictoryProgress(state);
   const isRunFinished = state.runStatus !== "running";
-  const canLaunchBattle =
-    !isRunFinished &&
-    (selectedRegion.infection >= 15 || selectedRegion.status === "infected");
+  const canLaunchBattle = !isRunFinished && canRegionLaunchBattle(selectedRegion);
+
+  useEffect(() => {
+    if (isRunFinished) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      onUpdateState(applyPassiveBodyMapInfectionTick(state));
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, [isRunFinished, onUpdateState, state]);
 
   const launchBattle = () => {
     const bodyPreparation = prepareBodyBattle(state, selectedRegionId);
@@ -266,7 +278,16 @@ export function BodyMapPage({
             <span>
               Signaux antigeniques: {selectedNode.antigenSignalsDelivered}
             </span>
+            <span>
+              Tentatives locales: {selectedRegion.localDefeatStreak ?? 0}/3
+            </span>
           </div>
+          {selectedRegion.status === "lost" ? (
+            <div className="body-alert body-alert-danger">
+              Zone perdue : elle est abandonnee pour cette partie. Elle ne bloque
+              plus la progression, mais la sante globale a deja encaisse la perte.
+            </div>
+          ) : null}
 
           <div className="threat-panel">
             <strong>Pathogenes</strong>
@@ -306,20 +327,37 @@ export function BodyMapPage({
                   state.globalResources.atp >= cost.atp &&
                   state.globalResources.cytokines >= cost.cytokines &&
                   state.globalResources.antigens >= cost.antigens &&
+                  selectedRegion.status !== "lost" &&
                   !isRunFinished;
 
                 return (
-                  <Button
-                    disabled={!canAfford}
-                    key={unitTypeId}
-                    onClick={() =>
-                      onUpdateState(
-                        assignReinforcement(state, selectedRegionId, unitTypeId),
-                      )
-                    }
-                  >
-                    + {unitDefinitions[unitTypeId].displayName} ({count})
-                  </Button>
+                  <div className="body-reinforcement-control" key={unitTypeId}>
+                    <Button
+                      disabled={count <= 0 || isRunFinished}
+                      onClick={() =>
+                        onUpdateState(
+                          removeAssignedReinforcement(
+                            state,
+                            selectedRegionId,
+                            unitTypeId,
+                          ),
+                        )
+                      }
+                      title={`Retirer un ${unitDefinitions[unitTypeId].displayName} et recuperer les ressources`}
+                    >
+                      -
+                    </Button>
+                    <Button
+                      disabled={!canAfford}
+                      onClick={() =>
+                        onUpdateState(
+                          assignReinforcement(state, selectedRegionId, unitTypeId),
+                        )
+                      }
+                    >
+                      + {unitDefinitions[unitTypeId].displayName} ({count})
+                    </Button>
+                  </div>
                 );
               })}
             </div>
@@ -333,7 +371,9 @@ export function BodyMapPage({
               {selectedNode.active ? "Ganglion actif" : "Activer ganglion"}
             </Button>
             <Button disabled={!canLaunchBattle} onClick={launchBattle} variant="primary">
-              Lancer bataille locale
+              {selectedRegion.status === "lost"
+                ? "Zone perdue"
+                : "Lancer bataille locale"}
             </Button>
           </div>
         </Panel>
@@ -446,6 +486,23 @@ function formatStatus(status: string): string {
   };
 
   return labels[status] ?? status;
+}
+
+function canRegionLaunchBattle(
+  region: BodyMapState["regions"][BodyRegionId],
+): boolean {
+  if (region.status === "lost" || region.status === "controlled" || region.status === "healthy") {
+    return false;
+  }
+
+  return (
+    region.infection >= 8 ||
+    region.status === "alert" ||
+    region.status === "infected" ||
+    region.status === "critical" ||
+    region.status === "highInflammation" ||
+    Boolean(region.activeBattleMissionId)
+  );
 }
 
 function formatThreat(threat: string): string {

@@ -150,6 +150,7 @@ export type BodyRegionState = {
   activeBattleMissionId?: MissionId;
   lastBattleMissionId?: MissionId;
   lastBattleQuality?: BodyBattleQuality;
+  localDefeatStreak?: number;
   treatedCount?: number;
 };
 

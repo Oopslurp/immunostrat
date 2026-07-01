@@ -216,7 +216,7 @@ function getInitialActiveSites(params: {
   difficulty: MapScaleDifficulty;
 }): number {
   if (params.mode === "infinite") {
-    return 1;
+    return 2;
   }
 
   if (params.difficulty === "easy") {
@@ -240,7 +240,7 @@ function getFrontEscalation(
   waveIndex: number,
 ): number {
   if (mode === "campaign") {
-    return waveIndex >= 4 ? 1 : 0;
+    return waveIndex >= 3 ? 2 : waveIndex >= 1 ? 1 : 0;
   }
 
   if (mode === "infinite") {
@@ -253,6 +253,10 @@ function getFrontEscalation(
     }
 
     if (waveIndex >= 4) {
+      return 2;
+    }
+
+    if (waveIndex >= 2) {
       return 1;
     }
 
@@ -263,7 +267,7 @@ function getFrontEscalation(
     return waveIndex >= 5 ? 2 : waveIndex >= 2 ? 1 : 0;
   }
 
-  return waveIndex >= 5 ? 1 : 0;
+  return waveIndex >= 4 ? 2 : waveIndex >= 1 ? 1 : 0;
 }
 
 function mergeBalance(

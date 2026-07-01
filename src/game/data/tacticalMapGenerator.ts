@@ -416,7 +416,15 @@ function pickAndJitterEntries(
         ? Math.min(template.diapedesisPoints.length, 3)
         : Math.min(template.diapedesisPoints.length, 2);
   const desired = Math.max(
-    mapSizeCategory === "huge" ? 4 : mapSizeCategory === "large" ? 3 : mapSizeCategory === "medium" ? 2 : 1,
+    mapSizeCategory === "huge"
+      ? mode === "campaign"
+        ? 6
+        : 4
+      : mapSizeCategory === "large"
+        ? 3
+        : mapSizeCategory === "medium"
+          ? 2
+          : 1,
     baseDesired + balance.diapedesisPointCountModifier,
   );
   const entries = template.diapedesisPoints

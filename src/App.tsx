@@ -219,6 +219,11 @@ export default function App() {
           : routes.campaign,
     );
   };
+  const activeBodyBattleRegion = bodyBattleRegionId
+    ? bodyMapState.regions[bodyBattleRegionId]
+    : null;
+  const canRestartCurrentBattle =
+    !activeBodyBattleRegion || activeBodyBattleRegion.status !== "lost";
 
   return (
     <AppShell
@@ -294,6 +299,7 @@ export default function App() {
           }
           onPlayMission={playMission}
           preparation={selectedPreparation}
+          canRestartBattle={canRestartCurrentBattle}
         />
       ) : null}
     </AppShell>
