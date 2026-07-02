@@ -37,7 +37,6 @@ export function stepSimulation(state: GameState, deltaMs: number): GameState {
   applyMovementSystem(next, deltaMs);
   applyCombatSystem(next, deltaMs);
   applyDebrisSystem(next, deltaMs);
-  applyBiofilmSystem(next);
   applyTissueSystem(next, deltaMs);
   applyInflammationSystem(next, deltaMs);
   applyTissueRegenerationSystem(next, deltaMs);

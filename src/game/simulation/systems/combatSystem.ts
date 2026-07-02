@@ -285,14 +285,17 @@ function findNearestPathogenInRange(
       continue;
     }
 
+    if (pathogen.id === immuneUnit.explicitTargetEntityId) {
+      return pathogen;
+    }
+
     const definition = pathogenDefinitions[pathogen.pathogenTypeId];
     const currentPriority =
       getRoleTargetPriority(immuneUnit, pathogen) +
       (pathogen.targetPriority ?? definition.targetPriority);
 
     if (
-      (pathogen.id === immuneUnit.explicitTargetEntityId ||
-        currentPriority > nearestPriority ||
+      (currentPriority > nearestPriority ||
         (currentPriority === nearestPriority && currentDistance < nearestDistance))
     ) {
       nearest = pathogen;

@@ -4,6 +4,7 @@ import {
   applyBodyBattleOutcome,
   assignReinforcement,
   bodyMapEndingRules,
+  canRegionLaunchBattle,
   createDefaultBodyMapState,
   getBodyMapVictoryProgress,
   GLOBAL_HEALTH_LOSS_ON_REGION_LOST,
@@ -144,6 +145,39 @@ describe("V7 body map strategy layer", () => {
     });
 
     expect(next.regions.skin.localDefeatStreak).toBe(0);
+  });
+
+  it("lets low infection victory blockers be targeted instead of soft-locking the body map", () => {
+    const state = createDefaultBodyMapState();
+
+    state.regions.skin.infection = bodyMapEndingRules.victoryMaxRegionInfection + 1;
+    state.regions.skin.localHealth = 95;
+    state.regions.skin.inflammation = 5;
+    state.regions.skin.status = "healthy";
+
+    const progress = getBodyMapVictoryProgress(state);
+
+    expect(progress.blockers).toEqual(
+      expect.arrayContaining([expect.stringContaining("Peau encore infecte")]),
+    );
+    expect(canRegionLaunchBattle(state.regions.skin)).toBe(true);
+  });
+
+  it("does not generate body-map regions that block victory without a battle path", () => {
+    const seeds = ["seed-a", "seed-b", "seed-c", "seed-d", "seed-e"];
+
+    for (const seed of seeds) {
+      const state = createGeneratedBodyMapState("normal", seed);
+      const blockingRegions = Object.values(state.regions).filter(
+        (region) =>
+          region.status !== "lost" &&
+          region.infection > bodyMapEndingRules.victoryMaxRegionInfection,
+      );
+
+      for (const region of blockingRegions) {
+        expect(canRegionLaunchBattle(region)).toBe(true);
+      }
+    }
   });
 
   it("propagates severe infection through connected regions", () => {

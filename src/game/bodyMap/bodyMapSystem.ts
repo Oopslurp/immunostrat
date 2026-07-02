@@ -329,6 +329,22 @@ export function applyPassiveBodyMapInfectionTick(
   return updateBodyMapEndState(recalculateGlobalMetrics(next));
 }
 
+export function canRegionLaunchBattle(region: BodyRegionState): boolean {
+  if (region.status === "lost") {
+    return false;
+  }
+
+  return (
+    region.infection > bodyMapEndingRules.victoryMaxRegionInfection ||
+    region.infection >= 8 ||
+    region.status === "alert" ||
+    region.status === "infected" ||
+    region.status === "critical" ||
+    region.status === "highInflammation" ||
+    Boolean(region.activeBattleMissionId)
+  );
+}
+
 export function prepareBodyBattle(
   state: BodyMapState,
   regionId: BodyRegionId,

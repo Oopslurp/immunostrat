@@ -138,21 +138,15 @@ export default function App() {
       return;
     }
 
-    setBodyMapState((currentState) => {
-      const nextState = applyBodyBattleOutcome(currentState, {
-        ...result,
-        regionId: bodyBattleRegionId,
-        missionId: result.missionId,
-        status: result.status,
-        score: result.score,
-      });
-
-      saveBodyMapState(nextState);
-      maybeRecordBodyMapResult(currentState, nextState);
-      setHasActiveBodyMapRun(nextState.runStatus === "running");
-
-      return nextState;
+    const nextState = applyBodyBattleOutcome(bodyMapState, {
+      ...result,
+      regionId: bodyBattleRegionId,
+      missionId: result.missionId,
+      status: result.status,
+      score: result.score,
     });
+
+    updateBodyMapState(nextState);
   };
 
   const maybeRecordBodyMapResult = (
@@ -167,16 +161,13 @@ export default function App() {
       return;
     }
 
-    setBodyMapProgress((currentProgress) => {
-      const nextProgress = recordBodyMapRun(
-        currentProgress,
-        nextState.finalSummary!,
-      );
+    const nextProgress = recordBodyMapRun(
+      bodyMapProgress,
+      nextState.finalSummary,
+    );
 
-      saveBodyMapProgress(nextProgress);
-
-      return nextProgress;
-    });
+    saveBodyMapProgress(nextProgress);
+    setBodyMapProgress(nextProgress);
   };
 
   const startInfiniteRun = (difficulty: InfiniteDifficulty) => {

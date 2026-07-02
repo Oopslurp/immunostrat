@@ -159,4 +159,29 @@ describe("V9.4 semi-guided RTS gameplay", () => {
     expect(bacterium.health).toBe(bacteriumDefinition.maxHealth);
     expect(virus.health).toBe(pathogenDefinitions.respiratoryVirus.maxHealth);
   });
+
+  it("keeps an explicit attack target ahead of automatic role priority", () => {
+    const state = createInitialState();
+    const macrophage = Object.values(state.entities).find(
+      (entity) => entity.kind === "macrophage",
+    );
+
+    if (!macrophage || macrophage.kind !== "macrophage") {
+      throw new Error("Expected macrophage");
+    }
+
+    macrophage.position = { x: 360, y: 360 };
+    macrophage.orderAnchor = { x: 360, y: 360 };
+    macrophage.engagementRadius = 160;
+    macrophage.attackRange = 140;
+    macrophage.attackCooldownRemainingMs = 0;
+    const bacterium = spawnBacterium(state, "cocciRapid", { x: 390, y: 360 });
+    const virus = spawnVirus(state, "respiratoryVirus", { x: 430, y: 360 });
+
+    macrophage.explicitTargetEntityId = virus.id;
+    applyCombatSystem(state, unitDefinitions.macrophage.attackCooldownMs);
+
+    expect(virus.health).toBeLessThan(pathogenDefinitions.respiratoryVirus.maxHealth);
+    expect(bacterium.health).toBe(pathogenDefinitions.cocciRapid.maxHealth);
+  });
 });

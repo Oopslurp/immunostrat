@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   activateRegionalNode,
   advanceStrategicTurn,
   applyPassiveBodyMapInfectionTick,
   assignReinforcement,
+  canRegionLaunchBattle,
   getAvailableReinforcements,
   getBodyMapVictoryProgress,
   prepareBodyBattle,
@@ -69,6 +70,11 @@ export function BodyMapPage({
   const victoryProgress = getBodyMapVictoryProgress(state);
   const isRunFinished = state.runStatus !== "running";
   const canLaunchBattle = !isRunFinished && canRegionLaunchBattle(selectedRegion);
+  const stateRef = useRef(state);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   useEffect(() => {
     if (isRunFinished) {
@@ -76,11 +82,11 @@ export function BodyMapPage({
     }
 
     const intervalId = window.setInterval(() => {
-      onUpdateState(applyPassiveBodyMapInfectionTick(state));
+      onUpdateState(applyPassiveBodyMapInfectionTick(stateRef.current));
     }, 5000);
 
     return () => window.clearInterval(intervalId);
-  }, [isRunFinished, onUpdateState, state]);
+  }, [isRunFinished, onUpdateState]);
 
   const launchBattle = () => {
     const bodyPreparation = prepareBodyBattle(state, selectedRegionId);
@@ -373,6 +379,9 @@ export function BodyMapPage({
             <Button disabled={!canLaunchBattle} onClick={launchBattle} variant="primary">
               {selectedRegion.status === "lost"
                 ? "Zone perdue"
+                : selectedRegion.infection > 0 &&
+                    selectedRegion.infection <= 18
+                  ? "Nettoyer la zone"
                 : "Lancer bataille locale"}
             </Button>
           </div>
@@ -486,23 +495,6 @@ function formatStatus(status: string): string {
   };
 
   return labels[status] ?? status;
-}
-
-function canRegionLaunchBattle(
-  region: BodyMapState["regions"][BodyRegionId],
-): boolean {
-  if (region.status === "lost" || region.status === "controlled" || region.status === "healthy") {
-    return false;
-  }
-
-  return (
-    region.infection >= 8 ||
-    region.status === "alert" ||
-    region.status === "infected" ||
-    region.status === "critical" ||
-    region.status === "highInflammation" ||
-    Boolean(region.activeBattleMissionId)
-  );
 }
 
 function formatThreat(threat: string): string {
