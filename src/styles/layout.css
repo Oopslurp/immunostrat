@@ -4,7 +4,7 @@
   grid-template-rows: auto 1fr;
   background:
     radial-gradient(circle at 18% 16%, rgba(98, 211, 200, 0.12), transparent 26rem),
-    linear-gradient(135deg, #101820 0%, #172233 48%, #251b2e 100%);
+    linear-gradient(135deg, var(--v11-ui-bg) 0%, #172233 48%, #251b2e 100%);
 }
 
 .top-bar {
@@ -14,7 +14,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem clamp(1rem, 4vw, 3rem);
-  border-bottom: 1px solid rgba(245, 251, 255, 0.12);
+  border-bottom: 1px solid var(--v11-ui-border);
   background: rgba(11, 18, 28, 0.78);
   backdrop-filter: blur(14px);
 }
@@ -31,7 +31,7 @@
 }
 
 .brand-subtitle {
-  color: #a8c0cc;
+  color: var(--v11-ui-text-faint);
   font-size: 0.78rem;
 }
 
@@ -47,8 +47,8 @@
   border: 1px solid rgba(245, 251, 255, 0.16);
   border-radius: 8px;
   padding: 0.65rem 0.9rem;
-  color: #f5fbff;
-  background: rgba(255, 255, 255, 0.08);
+  color: var(--v11-ui-text);
+  background: var(--v11-ui-button-bg);
   transition:
     transform 160ms ease,
     border-color 160ms ease,
@@ -58,8 +58,8 @@
 .nav-button:hover,
 .button:hover {
   transform: translateY(-1px);
-  border-color: rgba(98, 211, 200, 0.65);
-  background: rgba(98, 211, 200, 0.14);
+  border-color: var(--v11-ui-border-accent);
+  background: var(--v11-ui-button-hover);
 }
 
 .nav-button-active {
@@ -69,13 +69,13 @@
 
 .button-primary {
   border-color: rgba(98, 211, 200, 0.72);
-  color: #071217;
-  background: #62d3c8;
+  color: var(--v11-ui-ink);
+  background: var(--v11-ui-accent-cyan);
   font-weight: 800;
 }
 
 .button-primary:hover {
-  background: #8ae2d9;
+  background: var(--v11-ui-accent-cyan-strong);
 }
 
 .page {
@@ -98,7 +98,7 @@
 }
 
 .eyebrow {
-  color: #62d3c8;
+  color: var(--v11-ui-accent-cyan);
   font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -115,7 +115,7 @@
 .hero-text {
   max-width: 640px;
   margin: 0;
-  color: #c7d7df;
+  color: var(--v11-ui-text-muted);
   font-size: clamp(1rem, 2vw, 1.18rem);
   line-height: 1.7;
 }
@@ -129,7 +129,7 @@
 .panel {
   border: 1px solid rgba(245, 251, 255, 0.14);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--v11-ui-button-bg);
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
 }
 
@@ -162,12 +162,12 @@
 }
 
 .stat-label {
-  color: #a8c0cc;
+  color: var(--v11-ui-text-faint);
   font-size: 0.78rem;
 }
 
 .stat-value {
-  color: #ffffff;
+  color: var(--v11-ui-text-strong);
   font-size: 1rem;
   font-weight: 800;
 }
@@ -197,7 +197,7 @@
 .campaign-header p {
   max-width: 760px;
   margin: 0.45rem 0 0;
-  color: #c7d7df;
+  color: var(--v11-ui-text-muted);
   line-height: 1.6;
 }
 
@@ -231,42 +231,42 @@
 .mission-status,
 .mission-unlocks span,
 .objective-pill {
-  border: 1px solid rgba(245, 251, 255, 0.12);
+  border: 1px solid var(--v11-ui-border);
   border-radius: 8px;
   padding: 0.28rem 0.48rem;
   background: rgba(255, 255, 255, 0.06);
-  color: #dbeaf0;
+  color: var(--v11-ui-text-panel);
   font-size: 0.78rem;
 }
 
 .mission-index {
-  color: #071217;
-  background: #62d3c8;
+  color: var(--v11-ui-ink);
+  background: var(--v11-ui-accent-cyan);
   font-weight: 900;
 }
 
 .mission-status-open {
-  color: #7ee28a;
+  color: var(--v11-ui-success);
 }
 
 .mission-status-complete {
-  color: #ffc76b;
+  color: var(--v11-ui-warning);
 }
 
 .mission-status-locked {
-  color: #a8c0cc;
+  color: var(--v11-ui-text-faint);
 }
 
 .mission-subtitle,
 .mission-score {
-  color: #a8c0cc;
+  color: var(--v11-ui-text-faint);
   font-size: 0.9rem;
 }
 
 .mission-vaccine {
   display: grid;
   gap: 0.35rem;
-  color: #c7d7df;
+  color: var(--v11-ui-text-muted);
   font-size: 0.86rem;
 }
 
@@ -275,14 +275,14 @@
   border: 1px solid rgba(245, 251, 255, 0.14);
   border-radius: 8px;
   padding: 0.45rem 0.55rem;
-  color: #f5fbff;
-  background: #101820;
+  color: var(--v11-ui-text);
+  background: var(--v11-ui-bg);
 }
 
 .mission-briefing {
   margin: 0;
   padding-left: 1.1rem;
-  color: #c7d7df;
+  color: var(--v11-ui-text-muted);
   line-height: 1.5;
 }
 
@@ -301,7 +301,7 @@
 .game-header p {
   max-width: 680px;
   margin: 0.45rem 0 0;
-  color: #c7d7df;
+  color: var(--v11-ui-text-muted);
   line-height: 1.6;
 }
 
@@ -318,7 +318,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 0.9fr);
   gap: 1rem;
-  border: 1px solid rgba(245, 251, 255, 0.12);
+  border: 1px solid var(--v11-ui-border);
   border-radius: 8px;
   padding: 0.85rem;
   background: rgba(8, 13, 21, 0.42);
@@ -326,7 +326,7 @@
 
 .mission-briefing-panel p {
   margin: 0.35rem 0 0;
-  color: #c7d7df;
+  color: var(--v11-ui-text-muted);
   line-height: 1.5;
 }
 
@@ -343,11 +343,11 @@
 
 .objective-pill-complete {
   border-color: rgba(126, 226, 138, 0.55);
-  color: #7ee28a;
+  color: var(--v11-ui-success);
 }
 
 .objective-pill em {
-  color: #a8c0cc;
+  color: var(--v11-ui-text-faint);
   font-style: normal;
 }
 
@@ -381,13 +381,13 @@
 }
 
 .result-title {
-  color: #ffffff;
+  color: var(--v11-ui-text-strong);
   font-size: clamp(2rem, 5vw, 4rem);
   font-weight: 900;
 }
 
 .result-score {
-  color: #ffc76b;
+  color: var(--v11-ui-warning);
   font-size: 1.15rem;
   font-weight: 800;
 }
@@ -422,11 +422,11 @@
 
 .hud-item,
 .hud-gauge {
-  border: 1px solid rgba(245, 251, 255, 0.12);
+  border: 1px solid var(--v11-ui-border);
   border-radius: 8px;
   padding: 0.65rem 0.8rem;
-  color: #dbeaf0;
-  background: rgba(8, 13, 21, 0.45);
+  color: var(--v11-ui-text-panel);
+  background: var(--v11-ui-panel);
 }
 
 .hud-gauge {
@@ -456,23 +456,23 @@
 }
 
 .hud-gauge-fill-health {
-  background: #7ee28a;
+  background: var(--v11-ui-success);
 }
 
 .hud-gauge-fill-atp {
-  background: #62d3c8;
+  background: var(--v11-ui-accent-cyan);
 }
 
 .hud-gauge-fill-cytokines {
-  background: #ffc76b;
+  background: var(--v11-ui-warning);
 }
 
 .hud-gauge-fill-antigens {
-  background: #b69cff;
+  background: var(--v11-ui-accent-violet);
 }
 
 .hud-gauge-fill-inflammation {
-  background: #ff7f8f;
+  background: var(--v11-ui-danger);
 }
 
 .threat-panel {
@@ -480,16 +480,16 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.65rem;
-  border: 1px solid rgba(245, 251, 255, 0.12);
+  border: 1px solid var(--v11-ui-border);
   border-radius: 8px;
   padding: 0.75rem 0.85rem;
-  color: #dbeaf0;
+  color: var(--v11-ui-text-panel);
   background: rgba(8, 13, 21, 0.42);
 }
 
 .threat-panel strong {
   margin-right: 0.25rem;
-  color: #f5fbff;
+  color: var(--v11-ui-text);
 }
 
 .threat-pill {
@@ -497,7 +497,7 @@
   align-items: center;
   gap: 0.4rem;
   min-height: 32px;
-  border: 1px solid rgba(245, 251, 255, 0.12);
+  border: 1px solid var(--v11-ui-border);
   border-radius: 8px;
   padding: 0.35rem 0.55rem;
   background: rgba(255, 255, 255, 0.06);
@@ -505,7 +505,7 @@
 }
 
 .threat-pill em {
-  color: #a8c0cc;
+  color: var(--v11-ui-text-faint);
   font-size: 0.78rem;
   font-style: normal;
 }
@@ -519,7 +519,7 @@
 }
 
 .threat-empty {
-  color: #a8c0cc;
+  color: var(--v11-ui-text-faint);
   font-size: 0.9rem;
 }
 
@@ -542,10 +542,10 @@
 
 .body-metric,
 .body-resource-row {
-  border: 1px solid rgba(245, 251, 255, 0.12);
+  border: 1px solid var(--v11-ui-border);
   border-radius: 8px;
   padding: 0.75rem 0.85rem;
-  background: rgba(8, 13, 21, 0.45);
+  background: var(--v11-ui-panel);
 }
 
 .body-resource-row {
@@ -553,7 +553,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.55rem;
-  color: #dbeaf0;
+  color: var(--v11-ui-text-panel);
 }
 
 .body-resource-row span {
@@ -566,7 +566,7 @@
 .body-difficulty {
   display: grid;
   gap: 0.25rem;
-  color: #c7d7df;
+  color: var(--v11-ui-text-muted);
   font-size: 0.82rem;
 }
 
@@ -575,8 +575,8 @@
   border: 1px solid rgba(245, 251, 255, 0.14);
   border-radius: 8px;
   padding: 0.45rem 0.55rem;
-  color: #f5fbff;
-  background: #101820;
+  color: var(--v11-ui-text);
+  background: var(--v11-ui-bg);
 }
 
 .body-metric-fill {
@@ -585,15 +585,15 @@
 }
 
 .body-metric-fill-health {
-  background: #7ee28a;
+  background: var(--v11-ui-success);
 }
 
 .body-metric-fill-infection {
-  background: #ff7f8f;
+  background: var(--v11-ui-danger);
 }
 
 .body-metric-fill-inflammation {
-  background: #ffc76b;
+  background: var(--v11-ui-warning);
 }
 
 .body-map-layout {
@@ -612,7 +612,7 @@
   position: relative;
   overflow: hidden;
   min-height: 620px;
-  border: 1px solid rgba(245, 251, 255, 0.12);
+  border: 1px solid var(--v11-ui-border);
   border-radius: 8px;
   background:
     linear-gradient(90deg, rgba(245, 251, 255, 0.04) 1px, transparent 1px),
@@ -644,7 +644,7 @@
   border: 2px solid rgba(245, 251, 255, 0.18);
   border-radius: 8px;
   padding: 0.55rem;
-  color: #f5fbff;
+  color: var(--v11-ui-text);
   background: rgba(255, 255, 255, 0.1);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
   transform: translate(-50%, -50%);
@@ -666,7 +666,7 @@
 }
 
 .body-node-selected {
-  border-color: #ffc76b;
+  border-color: var(--v11-ui-selection);
   box-shadow: 0 0 0 4px rgba(255, 199, 107, 0.16);
 }
 
@@ -709,7 +709,7 @@
 
 .body-detail-heading p,
 .body-alert-panel p {
-  color: #c7d7df;
+  color: var(--v11-ui-text-muted);
   line-height: 1.5;
 }
 
@@ -729,7 +729,7 @@
   border: 1px solid rgba(245, 251, 255, 0.1);
   border-radius: 8px;
   padding: 0.5rem 0.6rem;
-  color: #dbeaf0;
+  color: var(--v11-ui-text-panel);
   background: rgba(255, 255, 255, 0.06);
 }
 
@@ -811,7 +811,7 @@
 }
 
 .infinite-launch-panel p {
-  color: #c7d7df;
+  color: var(--v11-ui-text-muted);
   line-height: 1.5;
 }
 
@@ -822,18 +822,18 @@
 }
 
 .infinite-record strong {
-  color: #ffc76b;
+  color: var(--v11-ui-warning);
   font-size: 2rem;
 }
 
 .body-status-healthy,
 .body-status-controlled {
-  color: #7ee28a;
+  color: var(--v11-ui-success);
 }
 
 .body-status-alert,
 .body-status-highInflammation {
-  color: #ffc76b;
+  color: var(--v11-ui-warning);
 }
 
 .body-status-infected,
@@ -845,7 +845,7 @@
 }
 
 .body-status-victory {
-  color: #7ee28a;
+  color: var(--v11-ui-success);
 }
 
 .game-page {
@@ -893,7 +893,7 @@
   border: 1px solid rgba(245, 251, 255, 0.14);
   border-radius: 8px;
   padding: 0.65rem 0.75rem;
-  background: rgba(8, 13, 21, 0.72);
+  background: var(--v11-ui-panel-strong);
   backdrop-filter: blur(12px);
   pointer-events: auto;
 }
@@ -945,7 +945,7 @@
 .game-page .mission-briefing-panel summary {
   cursor: pointer;
   padding: 0.65rem 0.75rem;
-  color: #f5fbff;
+  color: var(--v11-ui-text);
   font-weight: 800;
 }
 
@@ -986,7 +986,7 @@
 
 .game-page .hud-item,
 .game-page .hud-gauge {
-  border-color: rgba(245, 251, 255, 0.12);
+  border-color: var(--v11-ui-border);
   padding: 0.38rem 0.52rem;
   background: rgba(8, 13, 21, 0.68);
   backdrop-filter: blur(8px);
@@ -1015,7 +1015,7 @@
   max-height: 150px;
   overflow: auto;
   padding: 0.55rem 0.65rem;
-  background: rgba(8, 13, 21, 0.72);
+  background: var(--v11-ui-panel-strong);
   backdrop-filter: blur(12px);
 }
 
@@ -1070,7 +1070,7 @@
 .game-page .result-overlay .button {
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
-  background: rgba(8, 13, 21, 0.72);
+  background: var(--v11-ui-panel-strong);
 }
 
 @media (max-width: 820px) {

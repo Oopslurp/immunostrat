@@ -1,6 +1,46 @@
 :root {
-  color: #f5fbff;
-  background: #101820;
+  /* ---- Immunostrat V11 UI theme tokens (V11.1A) ----
+     Base extraite des couleurs HUD/UI deja en place dans layout.css.
+     Alignee sur ASSET_GUIDE_V11.md section 6.8 (palette candidate stable).
+     Aucune valeur hex du guide n'est modifiee ici : chaque token reprend une
+     couleur existante -> extraction pure, sans changement visuel.
+     Le vrai polish HUD (compaction, hierarchie) viendra en V11.1B / V11.1C. */
+
+  /* Fonds & panneaux */
+  --v11-ui-bg: #101820;
+  --v11-ui-panel: rgba(8, 13, 21, 0.45);
+  --v11-ui-panel-strong: rgba(8, 13, 21, 0.72);
+
+  /* Bordures */
+  --v11-ui-border: rgba(245, 251, 255, 0.12);
+  --v11-ui-border-accent: rgba(98, 211, 200, 0.65);
+
+  /* Textes */
+  --v11-ui-text: #f5fbff;
+  --v11-ui-text-strong: #ffffff;
+  --v11-ui-text-panel: #dbeaf0;
+  --v11-ui-text-muted: #c7d7df;
+  --v11-ui-text-faint: #a8c0cc;
+  --v11-ui-ink: #071217; /* texte sombre sur fond clair (bouton primaire, pastilles cyan) */
+
+  /* Accents & statuts */
+  --v11-ui-accent-cyan: #62d3c8;
+  --v11-ui-accent-cyan-strong: #8ae2d9;
+  --v11-ui-accent-violet: #b69cff;
+  --v11-ui-accent-orange: #ff9f43; /* reserve V11.1B : inflammation (guide 6.6), pas encore applique */
+  --v11-ui-danger: #ff7f8f;
+  --v11-ui-warning: #ffc76b;
+  --v11-ui-success: #7ee28a;
+
+  /* Elements interactifs */
+  --v11-ui-button-bg: rgba(255, 255, 255, 0.08); /* surface interactive partagee (bouton + .panel + pastilles) */
+  --v11-ui-button-hover: rgba(98, 211, 200, 0.14);
+  --v11-ui-button-disabled: rgba(255, 255, 255, 0.04); /* reserve V11.1B : disabled utilise opacity aujourd'hui */
+  --v11-ui-selection: #ffc76b; /* surbrillance de selection (noeud selectionne, etat actif) */
+  --v11-ui-tooltip-bg: rgba(8, 13, 21, 0.92); /* reserve V11.1B : pas de tooltip dedie actuellement */
+
+  color: var(--v11-ui-text);
+  background: var(--v11-ui-bg);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
