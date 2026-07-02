@@ -199,8 +199,8 @@ export function GamePage({
 
   return (
     <div className="page game-page">
-      <header className="game-header">
-        <div>
+      <div className="game-topbar">
+        <div className="game-topbar-brand">
           <span className="eyebrow">
             {battleSource === "infinite"
               ? "Mode infini V9"
@@ -209,8 +209,58 @@ export function GamePage({
                 : "Campagne V6"}
           </span>
           <h1>{mission.title}</h1>
-          <p>{mission.description}</p>
         </div>
+        <div className="game-topbar-resources">
+          <Gauge
+            label="Sante du tissu"
+            value={formatHealth(snapshot?.tissueHealth)}
+            max={formatHealth(snapshot?.tissueMaxHealth) || 100}
+            tone="health"
+          />
+          <Gauge
+            label="ATP"
+            value={formatAtp(snapshot?.atp)}
+            max={balanceValues.maxAtp}
+            tone="atp"
+          />
+          <Gauge
+            label="Cytokines"
+            value={formatAtp(snapshot?.cytokines)}
+            max={balanceValues.maxCytokines}
+            tone="cytokines"
+          />
+          <Gauge
+            label="Antigenes"
+            value={formatAtp(snapshot?.antigens)}
+            max={balanceValues.maxAntigens}
+            tone="antigens"
+          />
+          <Gauge
+            label="Inflammation"
+            value={formatAtp(snapshot?.inflammation)}
+            max={balanceValues.inflammation.maxValue}
+            tone="inflammation"
+          />
+        </div>
+        <div className="game-topbar-status">
+          <span className="topbar-stat">
+            <span className="topbar-stat-label">Vague</span>
+            <span className="topbar-stat-value">
+              {snapshot?.infinite
+                ? snapshot.currentWave
+                : `${snapshot ? Math.min(snapshot.currentWave, snapshot.totalWaves) : 0}/${
+                    snapshot?.totalWaves ?? 0
+                  }`}
+            </span>
+          </span>
+          <span className="topbar-stat">
+            <span className="topbar-stat-label">Score</span>
+            <span className="topbar-stat-value">{snapshot?.score ?? 0}</span>
+          </span>
+        </div>
+      </div>
+
+      <header className="game-header">
         <div className="game-actions">
           {isUnitUnlocked(missionId, "macrophage") ? (
             <Button
@@ -465,45 +515,6 @@ export function GamePage({
             </span>
           </>
         ) : null}
-        <Gauge
-          label="Sante du tissu"
-          value={formatHealth(snapshot?.tissueHealth)}
-          max={formatHealth(snapshot?.tissueMaxHealth) || 100}
-          tone="health"
-        />
-        <Gauge
-          label="ATP"
-          value={formatAtp(snapshot?.atp)}
-          max={balanceValues.maxAtp}
-          tone="atp"
-        />
-        <Gauge
-          label="Cytokines"
-          value={formatAtp(snapshot?.cytokines)}
-          max={balanceValues.maxCytokines}
-          tone="cytokines"
-        />
-        <Gauge
-          label="Antigenes"
-          value={formatAtp(snapshot?.antigens)}
-          max={balanceValues.maxAntigens}
-          tone="antigens"
-        />
-        <Gauge
-          label="Inflammation"
-          value={formatAtp(snapshot?.inflammation)}
-          max={balanceValues.inflammation.maxValue}
-          tone="inflammation"
-        />
-        <span className="hud-item">
-          Vague:{" "}
-          {snapshot?.infinite
-            ? snapshot.currentWave
-            : `${snapshot ? Math.min(snapshot.currentWave, snapshot.totalWaves) : 0}/${
-                snapshot?.totalWaves ?? 0
-              }`}
-        </span>
-        <span className="hud-item">Score: {snapshot?.score ?? 0}</span>
         <span className="hud-item">
           Bacteries:{" "}
           {snapshot?.entities.filter((entity) => entity.kind === "bacterium")

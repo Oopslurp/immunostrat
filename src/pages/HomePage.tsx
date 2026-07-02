@@ -1,5 +1,11 @@
 import { Button } from "../ui/Button";
 import { Panel } from "../ui/Panel";
+import campaignIcon from "../assets/home/home-icon-campaign.png";
+import bodyMapIcon from "../assets/home/home-icon-bodymap.png";
+import infiniteIcon from "../assets/home/home-icon-infinite.png";
+import scienceIcon from "../assets/home/home-icon-science.png";
+import immunityEmblem from "../assets/home/home-emblem-immunity.png";
+import heroChipIcon from "../assets/home/home-chip-cell.png";
 
 type HomePageProps = {
   onPlay: () => void;
@@ -16,60 +22,109 @@ export function HomePage({
   onOpenInfinite,
   bodyMapUnlocked,
 }: HomePageProps) {
+  const modes = [
+    {
+      title: "Campagne",
+      subtitle: "Apprendre les defenses",
+      description: "Progresse mission par mission, des macrophages aux reponses adaptatives.",
+      icon: campaignIcon,
+      actionLabel: "Lancer",
+      onClick: onPlay,
+      primary: true,
+    },
+    {
+      title: "Partie normale",
+      subtitle: "Stabiliser le corps",
+      description: "Choisis les regions a sauver, envoie des renforts, accepte parfois une perte.",
+      icon: bodyMapIcon,
+      actionLabel: bodyMapUnlocked ? "Nouvelle partie" : "Verrouille",
+      onClick: onStartNormalGame,
+      disabled: !bodyMapUnlocked,
+    },
+    {
+      title: "Carte du corps",
+      subtitle: "Reprendre une crise",
+      description: "Retourne sur la strategie globale et traite les foyers encore actifs.",
+      icon: scienceIcon,
+      actionLabel: bodyMapUnlocked ? "Continuer" : "Mission 7 requise",
+      onClick: onOpenBodyMap,
+      disabled: !bodyMapUnlocked,
+    },
+    {
+      title: "Mode infini",
+      subtitle: "Tenir face aux vagues",
+      description: "Survis le plus longtemps possible sur une grande carte biologique.",
+      icon: infiniteIcon,
+      actionLabel: "Survivre",
+      onClick: onOpenInfinite,
+    },
+  ];
+
   return (
-    <div className="page home-layout">
-      <section className="hero-copy" aria-labelledby="home-title">
-        <span className="eyebrow">Prototype jouable V9</span>
+    <div className="page home-layout home-v11-page">
+      <section className="hero-copy home-hero-panel" aria-labelledby="home-title">
+        <div className="home-hero-chip">
+          <img alt="" src={heroChipIcon} />
+          <span>Strategie immunitaire tactique</span>
+        </div>
         <h1 className="hero-title" id="home-title">
           Immunostrat
         </h1>
         <p className="hero-text">
-          Campagne pour apprendre, partie normale sur carte du corps pour
-          stabiliser l'organisme, mode infini pour survivre et scorer.
+          Deployez vos cellules. Contenez l'infection. Sauvez l'organisme.
         </p>
-        <div className="home-actions">
-          <Button variant="primary" onClick={onPlay}>
-            Campagne guidee
-          </Button>
-          <Button disabled={!bodyMapUnlocked} onClick={onStartNormalGame}>
-            Partie normale
-          </Button>
-          <Button disabled={!bodyMapUnlocked} onClick={onOpenBodyMap}>
-            Continuer carte du corps
-          </Button>
-          <Button onClick={onOpenInfinite}>Mode infini</Button>
+        <div className="home-hero-status" aria-label="Etat du prototype">
+          <span>Campagne jouable</span>
+          <span>Carte du corps</span>
+          <span>Mode infini</span>
+        </div>
+        <div className="home-actions" aria-label="Modes de jeu">
+          {modes.map((mode) => (
+            <Button
+              className="home-mode-button"
+              disabled={mode.disabled}
+              key={mode.title}
+              onClick={mode.onClick}
+              variant={mode.primary ? "primary" : "secondary"}
+            >
+              <img alt="" src={mode.icon} />
+              <span>
+                <strong>{mode.title}</strong>
+                <em>{mode.actionLabel}</em>
+              </span>
+            </Button>
+          ))}
         </div>
       </section>
 
-      <Panel className="status-panel">
-        <h2>Campagne et strategie globale</h2>
-        <div className="stat-grid">
-          <div className="stat-item">
-            <span className="stat-label">Architecture</span>
-            <span className="stat-value">React / Phaser / Simulation</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Rendu</span>
-            <span className="stat-value">Placeholders propres</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Gameplay</span>
-            <span className="stat-value">Campagne / Normal / Infini</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Carte du corps</span>
-            <span className="stat-value">
-              {bodyMapUnlocked ? "Debloquee" : "Apres mission 7"}
-            </span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Mode infini</span>
-            <span className="stat-value">Survie sans victoire finale</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Science</span>
-            <span className="stat-value">Inspiree, simplifiee</span>
-          </div>
+      <Panel className="status-panel home-command-panel">
+        <div className="home-emblem-wrap">
+          <img alt="" className="home-emblem" src={immunityEmblem} />
+        </div>
+        <div>
+          <span className="eyebrow">Etat de l'organisme</span>
+          <h2>Choisissez votre front</h2>
+          <p>
+            Chaque mode reprend les memes regles de terrain : guider les cellules,
+            tenir les foyers infectieux, et garder l'inflammation sous controle.
+          </p>
+        </div>
+        <div className="stat-grid home-intel-grid">
+          {modes.map((mode) => (
+            <button
+              className="stat-item home-intel-card"
+              disabled={mode.disabled}
+              key={mode.title}
+              onClick={mode.onClick}
+              type="button"
+            >
+              <img alt="" src={mode.icon} />
+              <span>
+                <span className="stat-label">{mode.subtitle}</span>
+                <span className="stat-value">{mode.description}</span>
+              </span>
+            </button>
+          ))}
         </div>
       </Panel>
     </div>

@@ -27,7 +27,7 @@
   --v11-ui-accent-cyan: #62d3c8;
   --v11-ui-accent-cyan-strong: #8ae2d9;
   --v11-ui-accent-violet: #b69cff;
-  --v11-ui-accent-orange: #ff9f43; /* reserve V11.1B : inflammation (guide 6.6), pas encore applique */
+  --v11-ui-accent-orange: #ff9f43; /* inflammation canonique (guide 6.6), applique en V11.1B */
   --v11-ui-danger: #ff7f8f;
   --v11-ui-warning: #ffc76b;
   --v11-ui-success: #7ee28a;
@@ -37,7 +37,15 @@
   --v11-ui-button-hover: rgba(98, 211, 200, 0.14);
   --v11-ui-button-disabled: rgba(255, 255, 255, 0.04); /* reserve V11.1B : disabled utilise opacity aujourd'hui */
   --v11-ui-selection: #ffc76b; /* surbrillance de selection (noeud selectionne, etat actif) */
-  --v11-ui-tooltip-bg: rgba(8, 13, 21, 0.92); /* reserve V11.1B : pas de tooltip dedie actuellement */
+  --v11-ui-tooltip-bg: rgba(8, 13, 21, 0.92); /* reserve V11.1C : pas de tooltip dedie actuellement */
+
+  /* ---- V11.1B : surfaces, aretes & glow (ressenti HUD "jeu" bio-tech) ---- */
+  --v11-ui-surface: rgba(13, 20, 30, 0.82); /* panneau de jeu opaque translucide */
+  --v11-ui-surface-hover: rgba(24, 38, 52, 0.9); /* survol d'element interactif */
+  --v11-ui-panel-edge: rgba(98, 211, 200, 0.28); /* arete/liseret cyan discret */
+  --v11-ui-panel-edge-strong: rgba(98, 211, 200, 0.55); /* arete cyan accentuee */
+  --v11-ui-glow-soft: 0 0 12px rgba(98, 211, 200, 0.14); /* halo doux reutilisable */
+  --v11-ui-radius: 4px; /* coins plus nets, feeling pixel-art contenu */
 
   color: var(--v11-ui-text);
   background: var(--v11-ui-bg);
