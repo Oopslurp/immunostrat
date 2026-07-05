@@ -23,6 +23,26 @@ import { GameBridge, type GameSnapshot } from "../game/phaser/GameBridge";
 import { PhaserGame } from "../game/phaser/PhaserGame";
 import { isImmuneUnit, type ImmuneUnitEntity } from "../game/simulation/entities";
 import { Button } from "../ui/Button";
+import iconAg from "../assets/bodymap-control/icon-ag.png";
+import iconAlert from "../assets/bodymap-control/icon-alert.png";
+import iconAtp from "../assets/bodymap-control/icon-atp.png";
+import iconCyt from "../assets/bodymap-control/icon-cyt.png";
+import iconHealth from "../assets/bodymap-control/icon-global-health.png";
+import iconInflammation from "../assets/bodymap-control/icon-global-inflammation.png";
+import iconPathogen from "../assets/bodymap-control/icon-pathogen.png";
+import iconSelection from "../assets/bodymap-control/icon-selection.png";
+import cmdAntiInflammatory from "../assets/battle-hud/cmd-anti-inflammatory.png";
+import cmdAntiviral from "../assets/battle-hud/cmd-antiviral.png";
+import cmdBacterialAnalysis from "../assets/battle-hud/cmd-bacterial-analysis.png";
+import cmdCytotoxic from "../assets/battle-hud/cmd-cytotoxic.png";
+import cmdDendritic from "../assets/battle-hud/cmd-dendritic.png";
+import cmdInterferons from "../assets/battle-hud/cmd-interferons.png";
+import cmdMacrophage from "../assets/battle-hud/cmd-macrophage.png";
+import cmdNeutralization from "../assets/battle-hud/cmd-neutralization.png";
+import cmdNeutrophil from "../assets/battle-hud/cmd-neutrophil.png";
+import cmdNk from "../assets/battle-hud/cmd-nk.png";
+import cmdPlasmocyte from "../assets/battle-hud/cmd-plasmocyte.png";
+import cmdViralAnalysis from "../assets/battle-hud/cmd-viral-analysis.png";
 
 type GamePageProps = {
   battleSource?: "campaign" | "bodyMap" | "infinite";
@@ -35,6 +55,38 @@ type GamePageProps = {
   onPlayMission: (missionId: MissionId, vaccinationId?: string | null) => void;
   preparation?: MissionPreparation;
   canRestartBattle?: boolean;
+};
+
+type BattleCommandGroupId = "cells" | "analysis" | "treatments";
+
+type BattleCommand = {
+  id: string;
+  label: string;
+  cost?: string;
+  icon: string;
+  disabled: boolean;
+  onClick: () => void;
+  title?: string;
+  variant?: "primary" | "secondary";
+};
+
+type BattleCommandGroup = {
+  id: BattleCommandGroupId;
+  label: string;
+  commands: BattleCommand[];
+};
+
+type SelectionCompositionItem = {
+  id: UnitTypeId;
+  label: string;
+  count: number;
+};
+
+type UnitPortraitMeta = {
+  futureSpriteKey: string;
+  label: string;
+  abbreviation: string;
+  toneClass: string;
 };
 
 export function GamePage({
@@ -197,6 +249,202 @@ export function GamePage({
     );
   };
 
+  const objectives =
+    snapshot?.objectives ??
+    mission.objectives.map((objective) => ({
+      id: objective.id,
+      label: objective.label,
+      complete: false,
+      required: objective.required ?? false,
+      progressLabel: "en attente",
+    }));
+  const hostileCount =
+    snapshot?.entities.filter(
+      (entity) =>
+        entity.kind === "bacterium" ||
+        entity.kind === "virus" ||
+        entity.kind === "advancedThreat",
+    ).length ?? 0;
+  const virusCount =
+    snapshot?.entities.filter((entity) => entity.kind === "virus").length ?? 0;
+  const bacteriaCount =
+    snapshot?.entities.filter((entity) => entity.kind === "bacterium").length ??
+    0;
+  const advancedThreatCount =
+    snapshot?.entities.filter((entity) => entity.kind === "advancedThreat")
+      .length ?? 0;
+  const selectedComposition = getSelectionComposition(selectedUnits);
+  const averageSelectedHealth = selectedUnits.length
+    ? Math.round(
+        selectedUnits.reduce(
+          (sum, unit) => sum + (unit.health / unit.maxHealth) * 100,
+          0,
+        ) / selectedUnits.length,
+      )
+    : 0;
+  const selectedLead = selectedUnits[0] ?? null;
+  const selectionStatus = selectedLead
+    ? formatTacticalState(selectedLead.tacticalState)
+    : "aucune selection";
+  const waveLabel = snapshot?.infinite
+    ? `V${snapshot.infinite.wave} / C${snapshot.infinite.cycle}`
+    : `${snapshot ? Math.min(snapshot.currentWave, snapshot.totalWaves) : 0}/${
+        snapshot?.totalWaves ?? 0
+      }`;
+  const phaseLabel = snapshot?.infinite
+    ? snapshot.infinite.phase.name
+    : battleSource === "bodyMap"
+      ? "Bataille locale"
+      : "Mission";
+  const treatmentCommands: BattleCommand[] = mission.unlockedTreatments.map((treatmentId) => {
+    const treatment = treatmentDefinitions[treatmentId];
+    const activeMs = snapshot?.activeTreatments[treatmentId] ?? 0;
+    const cooldownMs = snapshot?.treatmentCooldowns[treatmentId] ?? 0;
+    const status =
+      activeMs > 0
+        ? `actif ${formatCooldown(activeMs)}`
+        : cooldownMs > 0
+          ? `CD ${formatCooldown(cooldownMs)}`
+          : undefined;
+
+    return {
+      id: treatmentId,
+      label: treatment.shortLabel,
+      cost: `${treatment.atpCost} ATP${
+        treatment.cytokineCost > 0 ? ` / ${treatment.cytokineCost} CYT` : ""
+      }${status ? ` / ${status}` : ""}`,
+      icon: getTreatmentIcon(treatmentId),
+      disabled: !canUseTreatment(treatmentId),
+      onClick: () => bridge.dispatch({ type: "useTreatment", treatmentId }),
+      title: `${treatment.displayName}: ${treatment.gameplayDescription} ${treatment.scienceDescription}`,
+    } satisfies BattleCommand;
+  });
+  const commandGroups: BattleCommandGroup[] = [
+    {
+      id: "cells" as const,
+      label: "Cellules",
+      commands: compactCommands([
+        isUnitUnlocked(missionId, "macrophage")
+          ? {
+              id: "macrophage",
+              label: "Macrophage",
+              cost: `${unitDefinitions.macrophage.atpCost} ATP`,
+              icon: cmdMacrophage,
+              disabled: !canProduceMacrophage,
+              onClick: () => bridge.dispatch({ type: "produceMacrophage" }),
+              variant: "primary",
+            }
+          : null,
+        isUnitUnlocked(missionId, "neutrophil")
+          ? {
+              id: "neutrophil",
+              label: "Neutrophile",
+              cost: `${unitDefinitions.neutrophil.atpCost} ATP / ${unitDefinitions.neutrophil.cytokineCost} CYT`,
+              icon: cmdNeutrophil,
+              disabled: !canProduceNeutrophil,
+              onClick: () => bridge.dispatch({ type: "produceNeutrophil" }),
+            }
+          : null,
+        isUnitUnlocked(missionId, "dendriticCell")
+          ? {
+              id: "dendriticCell",
+              label: "Dendritique",
+              cost: `${unitDefinitions.dendriticCell.atpCost} ATP / ${unitDefinitions.dendriticCell.cytokineCost} CYT`,
+              icon: cmdDendritic,
+              disabled: !canProduceDendritic,
+              onClick: () => bridge.dispatch({ type: "produceDendriticCell" }),
+            }
+          : null,
+        isUnitUnlocked(missionId, "plasmocyte")
+          ? {
+              id: "plasmocyte",
+              label: "Plasmocyte",
+              cost: `${balanceValues.adaptive.plasmocyteAntigenCost} AG`,
+              icon: cmdPlasmocyte,
+              disabled: !canProducePlasmocyte,
+              onClick: () => bridge.dispatch({ type: "producePlasmocyte" }),
+            }
+          : null,
+        isUnitUnlocked(missionId, "nkCell")
+          ? {
+              id: "nkCell",
+              label: "Cellule NK",
+              cost: `${unitDefinitions.nkCell.atpCost} ATP / ${unitDefinitions.nkCell.cytokineCost} CYT`,
+              icon: cmdNk,
+              disabled: !canProduceNk,
+              onClick: () => bridge.dispatch({ type: "produceNkCell" }),
+            }
+          : null,
+        isUnitUnlocked(missionId, "cytotoxicT")
+          ? {
+              id: "cytotoxicT",
+              label: "T cytotoxique",
+              cost: `${unitDefinitions.cytotoxicT.atpCost} ATP / ${balanceValues.adaptive.cytotoxicTAntigenCost} AG`,
+              icon: cmdCytotoxic,
+              disabled: !canProduceCytotoxicT,
+              onClick: () => bridge.dispatch({ type: "produceCytotoxicT" }),
+            }
+          : null,
+      ]),
+    },
+    {
+      id: "analysis" as const,
+      label: "Analyses",
+      commands: compactCommands([
+        isResearchUnlocked(missionId, "bacterialAnalysis")
+          ? {
+              id: "bacterialAnalysis",
+              label: "Analyse bacterienne",
+              cost: `${balanceValues.adaptive.bacterialAnalysisAntigenCost} AG`,
+              icon: cmdBacterialAnalysis,
+              disabled: !canResearch,
+              onClick: () =>
+                bridge.dispatch({ type: "researchBacterialAnalysis" }),
+            }
+          : null,
+        isResearchUnlocked(missionId, "viralAnalysis")
+          ? {
+              id: "viralAnalysis",
+              label: "Analyse virale",
+              cost: `${balanceValues.adaptive.viralAnalysisAntigenCost} AG`,
+              icon: cmdViralAnalysis,
+              disabled: !canResearchViral,
+              onClick: () => bridge.dispatch({ type: "researchViralAnalysis" }),
+            }
+          : null,
+        isAbilityUnlocked(missionId, "interferons")
+          ? {
+              id: "interferons",
+              label: "Interferons",
+              cost:
+                snapshot && snapshot.antiviralActiveMs > 0
+                  ? `actif ${formatCooldown(snapshot.antiviralActiveMs)}`
+                  : `${balanceValues.antiviral.cytokineCost} CYT`,
+              icon: cmdInterferons,
+              disabled: !canUseAntiviral,
+              onClick: () => bridge.dispatch({ type: "useAntiviralSignal" }),
+            }
+          : null,
+        isAbilityUnlocked(missionId, "massiveNeutralization")
+          ? {
+              id: "massiveNeutralization",
+              label: "Neutralisation",
+              cost: `${balanceValues.adaptive.massiveNeutralizationAntigenCost} AG`,
+              icon: cmdNeutralization,
+              disabled: !canUseAdaptive,
+              onClick: () =>
+                bridge.dispatch({ type: "useMassiveNeutralization" }),
+            }
+          : null,
+      ]),
+    },
+    {
+      id: "treatments" as const,
+      label: "Traitements",
+      commands: treatmentCommands,
+    },
+  ].filter((group) => group.commands.length > 0);
+
   return (
     <div className="page game-page">
       <div className="game-topbar">
@@ -211,47 +459,50 @@ export function GamePage({
           <h1>{mission.title}</h1>
         </div>
         <div className="game-topbar-resources">
-          <Gauge
-            label="Sante du tissu"
-            value={formatHealth(snapshot?.tissueHealth)}
+          <ResourceChip
+            icon={iconHealth}
+            label="Tissu"
             max={formatHealth(snapshot?.tissueMaxHealth) || 100}
             tone="health"
+            value={formatHealth(snapshot?.tissueHealth)}
           />
-          <Gauge
+          <ResourceChip
+            icon={iconAtp}
             label="ATP"
-            value={formatAtp(snapshot?.atp)}
             max={balanceValues.maxAtp}
             tone="atp"
+            value={formatAtp(snapshot?.atp)}
           />
-          <Gauge
-            label="Cytokines"
-            value={formatAtp(snapshot?.cytokines)}
+          <ResourceChip
+            icon={iconCyt}
+            label="CYT"
             max={balanceValues.maxCytokines}
             tone="cytokines"
+            value={formatAtp(snapshot?.cytokines)}
           />
-          <Gauge
-            label="Antigenes"
-            value={formatAtp(snapshot?.antigens)}
+          <ResourceChip
+            icon={iconAg}
+            label="AG"
             max={balanceValues.maxAntigens}
             tone="antigens"
+            value={formatAtp(snapshot?.antigens)}
           />
-          <Gauge
-            label="Inflammation"
-            value={formatAtp(snapshot?.inflammation)}
+          <ResourceChip
+            icon={iconInflammation}
+            label="Infl."
             max={balanceValues.inflammation.maxValue}
             tone="inflammation"
+            value={formatAtp(snapshot?.inflammation)}
           />
         </div>
         <div className="game-topbar-status">
+          <span className="topbar-stat topbar-stat-phase">
+            <span className="topbar-stat-label">Phase</span>
+            <span className="topbar-stat-value">{phaseLabel}</span>
+          </span>
           <span className="topbar-stat">
             <span className="topbar-stat-label">Vague</span>
-            <span className="topbar-stat-value">
-              {snapshot?.infinite
-                ? snapshot.currentWave
-                : `${snapshot ? Math.min(snapshot.currentWave, snapshot.totalWaves) : 0}/${
-                    snapshot?.totalWaves ?? 0
-                  }`}
-            </span>
+            <span className="topbar-stat-value">{waveLabel}</span>
           </span>
           <span className="topbar-stat">
             <span className="topbar-stat-label">Score</span>
@@ -261,113 +512,8 @@ export function GamePage({
       </div>
 
       <header className="game-header">
-        <div className="game-actions">
-          {isUnitUnlocked(missionId, "macrophage") ? (
-            <Button
-              disabled={!canProduceMacrophage}
-              onClick={() => bridge.dispatch({ type: "produceMacrophage" })}
-              variant="primary"
-            >
-              Macrophage (-{unitDefinitions.macrophage.atpCost} ATP)
-            </Button>
-          ) : null}
-          {isUnitUnlocked(missionId, "neutrophil") ? (
-            <Button
-              disabled={!canProduceNeutrophil}
-              onClick={() => bridge.dispatch({ type: "produceNeutrophil" })}
-            >
-              Neutrophile (-{unitDefinitions.neutrophil.atpCost} ATP, -
-              {unitDefinitions.neutrophil.cytokineCost} CYT)
-            </Button>
-          ) : null}
-          {isUnitUnlocked(missionId, "dendriticCell") ? (
-            <Button
-              disabled={!canProduceDendritic}
-              onClick={() => bridge.dispatch({ type: "produceDendriticCell" })}
-            >
-              Dendritique (-{unitDefinitions.dendriticCell.atpCost} ATP, -
-              {unitDefinitions.dendriticCell.cytokineCost} CYT)
-            </Button>
-          ) : null}
-          {isResearchUnlocked(missionId, "bacterialAnalysis") ? (
-            <Button
-              disabled={!canResearch}
-              onClick={() => bridge.dispatch({ type: "researchBacterialAnalysis" })}
-            >
-              Analyse bacterienne (-{balanceValues.adaptive.bacterialAnalysisAntigenCost} AG)
-            </Button>
-          ) : null}
-          {isUnitUnlocked(missionId, "plasmocyte") ? (
-            <Button
-              disabled={!canProducePlasmocyte}
-              onClick={() => bridge.dispatch({ type: "producePlasmocyte" })}
-            >
-              Plasmocyte (-{balanceValues.adaptive.plasmocyteAntigenCost} AG)
-            </Button>
-          ) : null}
-          {isAbilityUnlocked(missionId, "massiveNeutralization") ? (
-            <Button
-              disabled={!canUseAdaptive}
-              onClick={() => bridge.dispatch({ type: "useMassiveNeutralization" })}
-            >
-              Neutralisation massive
-            </Button>
-          ) : null}
-          {isAbilityUnlocked(missionId, "interferons") ? (
-            <Button
-              disabled={!canUseAntiviral}
-              onClick={() => bridge.dispatch({ type: "useAntiviralSignal" })}
-            >
-              Interferons (-{balanceValues.antiviral.cytokineCost} CYT)
-            </Button>
-          ) : null}
-          {isUnitUnlocked(missionId, "nkCell") ? (
-            <Button
-              disabled={!canProduceNk}
-              onClick={() => bridge.dispatch({ type: "produceNkCell" })}
-            >
-              Cellule NK (-{unitDefinitions.nkCell.atpCost} ATP, -
-              {unitDefinitions.nkCell.cytokineCost} CYT)
-            </Button>
-          ) : null}
-          {isResearchUnlocked(missionId, "viralAnalysis") ? (
-            <Button
-              disabled={!canResearchViral}
-              onClick={() => bridge.dispatch({ type: "researchViralAnalysis" })}
-            >
-              Analyse virale (-{balanceValues.adaptive.viralAnalysisAntigenCost} AG)
-            </Button>
-          ) : null}
-          {isUnitUnlocked(missionId, "cytotoxicT") ? (
-            <Button
-              disabled={!canProduceCytotoxicT}
-              onClick={() => bridge.dispatch({ type: "produceCytotoxicT" })}
-            >
-              T cytotoxique (-{unitDefinitions.cytotoxicT.atpCost} ATP, -
-              {unitDefinitions.cytotoxicT.cytokineCost} CYT, -
-              {balanceValues.adaptive.cytotoxicTAntigenCost} AG)
-            </Button>
-          ) : null}
-          {mission.unlockedTreatments.map((treatmentId) => {
-            const treatment = treatmentDefinitions[treatmentId];
-            const activeMs = snapshot?.activeTreatments[treatmentId] ?? 0;
-            const cooldownMs = snapshot?.treatmentCooldowns[treatmentId] ?? 0;
-
-            return (
-              <Button
-                disabled={!canUseTreatment(treatmentId)}
-                key={treatmentId}
-                onClick={() =>
-                  bridge.dispatch({ type: "useTreatment", treatmentId })
-                }
-                title={`${treatment.gameplayDescription} ${treatment.scienceDescription}`}
-              >
-                {treatment.displayName} (-{treatment.atpCost} ATP
-                {treatment.cytokineCost > 0 ? `, -${treatment.cytokineCost} CYT` : ""}
-                ) {activeMs > 0 ? `actif ${formatCooldown(activeMs)}` : cooldownMs > 0 ? `CD ${formatCooldown(cooldownMs)}` : ""}
-              </Button>
-            );
-          })}
+        <BattleCommandBar groups={commandGroups} />
+        <div className="battle-system-actions">
           {canRestartBattle ? (
             <Button onClick={() => bridge.dispatch({ type: "restart" })}>
               Recommencer
@@ -383,68 +529,200 @@ export function GamePage({
         </div>
       </header>
 
-      <details className="mission-briefing-panel" open>
-        <summary>Briefing / objectifs</summary>
-        <div className="mission-briefing-content">
-        <div>
-          <strong>Briefing</strong>
-          {mission.briefing.map((line) => (
-            <p key={line}>{line}</p>
-          ))}
+      <aside className="battle-selection-panel" aria-label="Escouade selectionnee">
+        <div className="battle-panel-title">
+          <img alt="" src={iconSelection} />
+          <span>Escouade</span>
         </div>
-        <div>
-          <strong>Objectifs</strong>
-          {(snapshot?.objectives ?? mission.objectives.map((objective) => ({
-            id: objective.id,
-            label: objective.label,
-            complete: false,
-            required: objective.required ?? false,
-            progressLabel: "en attente",
-          }))).map((objective) => (
+        <div className="battle-selection-summary">
+          <strong>
+            {selectedUnits.length
+              ? `${selectedUnits.length} unite${selectedUnits.length > 1 ? "s" : ""} selectionnee${selectedUnits.length > 1 ? "s" : ""}`
+              : "Aucune selection"}
+          </strong>
+          <span>{selectionStatus}</span>
+        </div>
+        <div className="battle-squad-slots" aria-label="Slots de portraits futurs">
+          {Array.from({ length: 6 }).map((_, index) => {
+            const unit = selectedUnits[index] ?? null;
+            const portrait = unit ? getUnitPortraitMeta(unit.unitTypeId) : null;
+
+            return (
+              <span
+                className={[
+                  "battle-squad-slot",
+                  portrait ? "battle-slot-active" : "battle-slot-empty",
+                  portrait?.toneClass ?? "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                data-future-sprite-key={portrait?.futureSpriteKey}
+                key={index}
+                title={portrait?.label ?? "Slot de portrait futur"}
+              >
+                {portrait ? <strong>{portrait.abbreviation}</strong> : null}
+              </span>
+            );
+          })}
+        </div>
+        {selectedUnits.length ? (
+          <>
+            <Gauge
+              label="Sante moyenne"
+              max={100}
+              tone="health"
+              value={averageSelectedHealth}
+            />
+            <div className="battle-composition-list">
+              {selectedComposition.map((item) => (
+                <span key={item.id}>
+                  {item.label}
+                  <strong>x{item.count}</strong>
+                </span>
+              ))}
+            </div>
+            {selectedLead?.lastOrderFeedback ? (
+              <p className="battle-selection-note">{selectedLead.lastOrderFeedback}</p>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <div className="battle-composition-list">
+              <span className="battle-composition-empty">
+                Selection
+                <strong>vide</strong>
+              </span>
+            </div>
+            <p className="battle-selection-note">
+              Clique gauche ou rectangle pour selectionner une cellule.
+            </p>
+          </>
+        )}
+      </aside>
+
+      <aside className="battle-objective-panel" aria-label="Objectifs et menaces">
+        <div className="battle-panel-title">
+          <img alt="" src={iconAlert} />
+          <span>Objectifs</span>
+        </div>
+        <div className="battle-objective-list">
+          {objectives.map((objective) => (
             <span
-              className={`objective-pill ${
-                objective.complete ? "objective-pill-complete" : ""
-              }`}
+              className={objective.complete ? "battle-objective-complete" : ""}
               key={objective.id}
             >
-              {objective.complete ? "[x]" : "[ ]"} {objective.label}{" "}
+              <strong>{objective.complete ? "OK" : objective.required ? "PRIO" : "OPT"}</strong>
+              {objective.label}
               <em>{objective.progressLabel}</em>
             </span>
           ))}
         </div>
-        <div>
-          <strong>Science vs gameplay</strong>
-          <p>
-            {mission.memoryHintProfiles?.length
-              ? `Memoire immunitaire: ${mission.memoryHintProfiles
-                  .map((profile) =>
-                    progress.immuneMemory.knownProfiles.includes(profile)
-                      ? `${profile} deja reconnu`
-                      : `${profile} a apprendre`,
-                  )
-                  .join(" / ")}.`
-              : "Les mecaniques biologiques restent simplifiees pour le gameplay."}
-          </p>
-          {mission.unlockedTreatments.length ? (
-            <p>
-              Traitements disponibles:{" "}
-              {mission.unlockedTreatments
-                .map((id) => treatmentDefinitions[id].displayName)
-                .join(", ")}
-              .
-            </p>
+        <div className="battle-panel-title battle-panel-title-small">
+          <img alt="" src={iconPathogen} />
+          <span>Menaces</span>
+        </div>
+        <div className="battle-threat-list">
+          <span className="battle-threat-item battle-threat-total">
+            Pression active
+            <strong>x{hostileCount}</strong>
+          </span>
+          {snapshot && snapshot.infectedTissueCells > 0 ? (
+            <span className="battle-threat-item battle-threat-warning">
+              Cellules infectees
+              <strong>x{snapshot.infectedTissueCells}</strong>
+            </span>
           ) : null}
-          {snapshot?.tacticalMapSummary ? (
-            <p>
-              Carte seedee: {snapshot.tacticalMapSummary.templateId} / seed{" "}
-              {snapshot.tacticalMapSummary.seed} / sites{" "}
-              {snapshot.tacticalMapSummary.numberOfCombatSites} /{" "}
-              {snapshot.tacticalMapSummary.validationStatus}
-            </p>
+          {snapshot?.threatSummary.length ? (
+            snapshot.threatSummary.slice(0, 4).map((item) => {
+              const definition = pathogenDefinitions[item.pathogenTypeId];
+
+              return (
+                <span className="battle-threat-item" key={item.pathogenTypeId}>
+                  {definition.displayName}
+                  <strong>x{item.count}</strong>
+                </span>
+              );
+            })
+          ) : (
+            <span className="battle-threat-empty">Aucune menace active</span>
+          )}
+          {snapshot?.infinite?.activeMutators.length ? (
+            <span className="battle-threat-item battle-threat-warning">
+              Mutateurs
+              <strong>x{snapshot.infinite.activeMutators.length}</strong>
+            </span>
           ) : null}
         </div>
-        </div>
-      </details>
+        <details className="battle-details-panel">
+          <summary>Details tactiques</summary>
+          <div>
+            {snapshot?.infinite ? (
+              <>
+                <span>Cycle {snapshot.infinite.cycle}</span>
+                <span>Phase {snapshot.infinite.phase.name}</span>
+                <span>
+                  Prochaine:{" "}
+                  {snapshot.infinite.nextPhaseAtCycle
+                    ? `cycle ${snapshot.infinite.nextPhaseAtCycle}`
+                    : "Nightmare"}
+                </span>
+              </>
+            ) : null}
+            <span>Bacteries: {bacteriaCount}</span>
+            <span>Virus: {virusCount}</span>
+            <span>Avancees: {advancedThreatCount}</span>
+            <span>Debris: {snapshot?.debrisCount ?? 0}</span>
+            <span>Biofilm: {snapshot?.biofilmCount ?? 0}</span>
+            <span>
+              Cellules: {snapshot?.healthyTissueCells ?? 0} saines /{" "}
+              {snapshot?.infectedTissueCells ?? 0} infectees
+            </span>
+            <span>Tissu: {formatTissueRepair(snapshot)}</span>
+            <span>
+              Analyse bacterienne:{" "}
+              {snapshot?.bacterialAnalysisComplete ? "complete" : "non"}
+            </span>
+            <span>
+              Analyse virale: {snapshot?.viralAnalysisComplete ? "complete" : "non"}
+            </span>
+            <span>Neutrophile: {formatCooldown(snapshot?.neutrophilCooldownMs)}</span>
+            <span>
+              Adaptatif: {formatCooldown(snapshot?.massiveNeutralizationCooldownMs)}
+            </span>
+            <span>
+              Antiviral:{" "}
+              {snapshot && snapshot.antiviralActiveMs > 0
+                ? `actif ${formatCooldown(snapshot.antiviralActiveMs)}`
+                : formatCooldown(snapshot?.antiviralSignalCooldownMs)}
+            </span>
+            {snapshot?.tacticalMapSummary ? (
+              <span>
+                Carte: {snapshot.tacticalMapSummary.templateId} / sites{" "}
+                {snapshot.tacticalMapSummary.numberOfCombatSites}
+              </span>
+            ) : null}
+          </div>
+        </details>
+        <details className="battle-details-panel battle-science-panel">
+          <summary>Aide bio</summary>
+          <div>
+            {mission.briefing.slice(0, 2).map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+            <p>
+              {mission.memoryHintProfiles?.length
+                ? `Memoire: ${mission.memoryHintProfiles
+                    .map((profile) =>
+                      progress.immuneMemory.knownProfiles.includes(profile)
+                        ? `${profile} connu`
+                        : `${profile} a apprendre`,
+                    )
+                    .join(" / ")}.`
+                : "Science inspiree et simplifiee pour le gameplay."}
+            </p>
+          </div>
+        </details>
+      </aside>
 
       <section className="game-frame" aria-label="Canvas du jeu Immunostrat">
         <PhaserGame bridge={bridge} missionId={missionId} preparation={preparation} />
@@ -498,144 +776,6 @@ export function GamePage({
         ) : null}
       </section>
 
-      <div className="hud-strip" aria-label="Statut du jeu V5">
-        {snapshot?.infinite ? (
-          <>
-            <span className="hud-item">Score infini: {snapshot.infinite.score}</span>
-            <span className="hud-item">Cycle: {snapshot.infinite.cycle}</span>
-            <span className="hud-item">Vague: {snapshot.infinite.wave}</span>
-            <span className="hud-item">
-              Phase {snapshot.infinite.phase.id}: {snapshot.infinite.phase.name}
-            </span>
-            <span className="hud-item">
-              Prochaine phase:{" "}
-              {snapshot.infinite.nextPhaseAtCycle
-                ? `cycle ${snapshot.infinite.nextPhaseAtCycle}`
-                : "Nightmare"}
-            </span>
-          </>
-        ) : null}
-        <span className="hud-item">
-          Bacteries:{" "}
-          {snapshot?.entities.filter((entity) => entity.kind === "bacterium")
-            .length ?? 0}
-        </span>
-        <span className="hud-item">
-          Virus:{" "}
-          {snapshot?.entities.filter((entity) => entity.kind === "virus").length ??
-            0}
-        </span>
-        <span className="hud-item">
-          Avancees:{" "}
-          {snapshot?.entities.filter((entity) => entity.kind === "advancedThreat")
-            .length ?? 0}
-        </span>
-        <span className="hud-item">
-          Cellules: {snapshot?.healthyTissueCells ?? 0} saines /{" "}
-          {snapshot?.infectedTissueCells ?? 0} infectees /{" "}
-          {snapshot?.destroyedTissueCells ?? 0} detruites
-        </span>
-        <span className="hud-item">
-          Selection: {snapshot?.selectedEntityIds.length ?? 0}
-        </span>
-        <span className="hud-item">
-          Tissu: {formatTissueRepair(snapshot)}
-        </span>
-        {selectedUnits[0] ? (
-          <span className="hud-item">
-            Etat: {formatTacticalState(selectedUnits[0].tacticalState)} -
-            engagement {Math.round(selectedUnits[0].engagementRadius ?? 0)} -
-            {selectedUnits[0].lastOrderFeedback ?? "garde locale"}
-          </span>
-        ) : null}
-        <span className="hud-item">
-          NK/T:{" "}
-          {snapshot?.entities.filter((entity) => entity.kind === "nkCell").length ??
-            0}
-          /
-          {snapshot?.entities.filter((entity) => entity.kind === "cytotoxicT")
-            .length ?? 0}
-        </span>
-        <span className="hud-item">
-          Debris: {snapshot?.debrisCount ?? 0}
-        </span>
-        <span className="hud-item">
-          Biofilm: {snapshot?.biofilmCount ?? 0}
-        </span>
-        <span className="hud-item">
-          Analyse: {snapshot?.bacterialAnalysisComplete ? "complete" : "non"}
-        </span>
-        <span className="hud-item">
-          Analyse virale: {snapshot?.viralAnalysisComplete ? "complete" : "non"}
-        </span>
-        <span className="hud-item">
-          Neutrophile CD: {formatCooldown(snapshot?.neutrophilCooldownMs)}
-        </span>
-        <span className="hud-item">
-          Adaptatif CD: {formatCooldown(snapshot?.massiveNeutralizationCooldownMs)}
-        </span>
-        <span className="hud-item">
-          Antiviral:{" "}
-          {snapshot && snapshot.antiviralActiveMs > 0
-            ? `actif ${formatCooldown(snapshot.antiviralActiveMs)}`
-            : `CD ${formatCooldown(snapshot?.antiviralSignalCooldownMs)}`}
-        </span>
-      </div>
-
-      {snapshot?.infinite ? (
-        <aside className="threat-panel" aria-label="Mutateurs infinis">
-          <strong>Mutateurs actifs</strong>
-          {snapshot.infinite.activeMutators.length ? (
-            snapshot.infinite.activeMutators.map((mutator) => (
-              <span className="threat-pill" key={mutator.id} title={mutator.description}>
-                {mutator.name}
-                <em>{mutator.tags.join("/")}</em>
-              </span>
-            ))
-          ) : (
-            <span className="threat-empty">Aucun mutateur actif en phase initiale</span>
-          )}
-        </aside>
-      ) : null}
-
-      <aside className="threat-panel" aria-label="Menaces detectees">
-        <strong>Menaces detectees</strong>
-        {snapshot && snapshot.infectedTissueCells > 0 ? (
-          <span className="threat-pill">
-            <span className="threat-dot" style={{ backgroundColor: "#8bbcff" }} />
-            Cellule infectee detectee x{snapshot.infectedTissueCells}
-            <em>viral</em>
-          </span>
-        ) : null}
-        {snapshot?.threatSummary.length ? (
-          snapshot.threatSummary.slice(0, 4).map((item) => {
-            const definition = pathogenDefinitions[item.pathogenTypeId];
-
-            return (
-              <span className="threat-pill" key={item.pathogenTypeId}>
-                <span
-                  className="threat-dot"
-                  style={{ backgroundColor: `#${definition.color.toString(16).padStart(6, "0")}` }}
-                />
-                {definition.displayName} x{item.count}
-                <em
-                  title={[
-                    definition.gameplayRole,
-                    definition.realLifeInspiration,
-                    definition.simplificationNote,
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                >
-                  {definition.subtype ?? definition.archetype}
-                </em>
-              </span>
-            );
-          })
-        ) : (
-          <span className="threat-empty">Aucune menace active</span>
-        )}
-      </aside>
     </div>
   );
 }
@@ -658,12 +798,168 @@ function isResearchUnlocked(
   return missionDefinitions[missionId].unlockedResearch.includes(researchId);
 }
 
+function isBattleCommand(command: BattleCommand | null): command is BattleCommand {
+  return command !== null;
+}
+
+function compactCommands(commands: Array<BattleCommand | null>): BattleCommand[] {
+  return commands.filter(isBattleCommand);
+}
+
+function getSelectionComposition(
+  units: ImmuneUnitEntity[],
+): SelectionCompositionItem[] {
+  const composition = new Map<UnitTypeId, SelectionCompositionItem>();
+
+  for (const unit of units) {
+    const current = composition.get(unit.unitTypeId);
+
+    if (current) {
+      current.count += 1;
+      continue;
+    }
+
+    composition.set(unit.unitTypeId, {
+      id: unit.unitTypeId,
+      label: unitDefinitions[unit.unitTypeId].displayName,
+      count: 1,
+    });
+  }
+
+  return [...composition.values()];
+}
+
+const unitPortraitMeta: Record<UnitTypeId, UnitPortraitMeta> = {
+  macrophage: {
+    futureSpriteKey: "unit_macrophage_portrait",
+    label: "Macrophage",
+    abbreviation: "M",
+    toneClass: "unit-portrait-macrophage",
+  },
+  neutrophil: {
+    futureSpriteKey: "unit_neutrophil_portrait",
+    label: "Neutrophile",
+    abbreviation: "N",
+    toneClass: "unit-portrait-neutrophil",
+  },
+  dendriticCell: {
+    futureSpriteKey: "unit_dendritic_cell_portrait",
+    label: "Cellule dendritique",
+    abbreviation: "D",
+    toneClass: "unit-portrait-dendritic",
+  },
+  plasmocyte: {
+    futureSpriteKey: "unit_plasmocyte_portrait",
+    label: "Plasmocyte",
+    abbreviation: "B",
+    toneClass: "unit-portrait-plasmocyte",
+  },
+  nkCell: {
+    futureSpriteKey: "unit_nk_cell_portrait",
+    label: "Cellule NK",
+    abbreviation: "NK",
+    toneClass: "unit-portrait-nk",
+  },
+  cytotoxicT: {
+    futureSpriteKey: "unit_t_cytotoxic_portrait",
+    label: "T cytotoxique",
+    abbreviation: "T",
+    toneClass: "unit-portrait-cytotoxic",
+  },
+};
+
+function getUnitPortraitMeta(unitTypeId: UnitTypeId): UnitPortraitMeta {
+  return unitPortraitMeta[unitTypeId];
+}
+
+function getTreatmentIcon(treatmentId: TreatmentId): string {
+  if (treatmentId === "antiInflammatory") {
+    return cmdAntiInflammatory;
+  }
+
+  return cmdAntiviral;
+}
+
 type GaugeProps = {
   label: string;
   value: number;
   max: number;
   tone: "health" | "atp" | "cytokines" | "antigens" | "inflammation";
 };
+
+function BattleCommandBar({ groups }: { groups: BattleCommandGroup[] }) {
+  return (
+    <nav className="battle-command-bar" aria-label="Commandes de bataille">
+      {groups.map((group) => (
+        <section
+          className="battle-command-group"
+          data-command-group={group.id}
+          key={group.id}
+        >
+          <div className="battle-command-group-title">{group.label}</div>
+          <div className="battle-command-grid">
+            {group.commands.map((command) => (
+              <BattleActionCard
+                command={command}
+                groupId={group.id}
+                key={command.id}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
+    </nav>
+  );
+}
+
+function BattleActionCard({
+  command,
+  groupId,
+}: {
+  command: BattleCommand;
+  groupId: BattleCommandGroupId;
+}) {
+  const stateClass = command.disabled
+    ? "battle-action-card-disabled"
+    : command.variant === "primary"
+      ? "battle-action-card-primary"
+      : "battle-action-card-ready";
+
+  return (
+    <button
+      aria-label={command.cost ? `${command.label}, ${command.cost}` : command.label}
+      className={`battle-action-card ${stateClass}`}
+      data-command-group={groupId}
+      disabled={command.disabled}
+      onClick={command.onClick}
+      title={command.title}
+      type="button"
+    >
+      <span className="battle-action-icon" aria-hidden="true">
+        <img alt="" src={command.icon} />
+      </span>
+      <span className="battle-action-copy">
+        <strong>{command.label}</strong>
+        {command.cost ? <em>{command.cost}</em> : <small>Action</small>}
+      </span>
+    </button>
+  );
+}
+
+function ResourceChip({
+  icon,
+  label,
+  max,
+  tone,
+  value,
+}: GaugeProps & { icon: string }) {
+  return (
+    <div className={`battle-resource-chip battle-resource-chip-${tone}`}>
+      <img alt="" src={icon} />
+      <Gauge label={label} max={max} tone={tone} value={value} />
+    </div>
+  );
+}
 
 function Gauge({ label, value, max, tone }: GaugeProps) {
   const ratio = Math.max(0, Math.min(1, value / max));

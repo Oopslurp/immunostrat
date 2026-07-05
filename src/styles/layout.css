@@ -558,6 +558,7 @@
   border: 1px solid rgba(245, 251, 255, 0.14);
   border-radius: var(--v11-ui-radius);
   padding: 0.45rem 0.55rem;
+  color-scheme: dark;
   color: var(--v11-ui-text);
   background: var(--v11-ui-bg);
 }
@@ -708,7 +709,7 @@
 .campaign-v11-grid {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(4, minmax(240px, 1fr));
+  grid-template-columns: repeat(4, minmax(260px, 1fr));
   gap: clamp(0.85rem, 1.5vw, 1.25rem);
   width: min(1460px, 100%);
   margin: 0 auto;
@@ -731,9 +732,9 @@
   position: relative;
   display: grid;
   grid-template-rows: auto auto auto auto 1fr auto auto auto;
-  gap: 0.65rem;
-  min-height: 560px;
-  padding: 1rem;
+  gap: 0.68rem;
+  min-height: 580px;
+  padding: 1.05rem;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--mission-accent) 48%, rgba(245, 251, 255, 0.12));
   border-radius: 6px;
@@ -744,6 +745,10 @@
     inset 0 0 0 1px rgba(245, 251, 255, 0.04),
     inset 0 18px 0 rgba(245, 251, 255, 0.025),
     0 18px 44px rgba(0, 0, 0, 0.25);
+}
+
+.campaign-v11-grid .campaign-mission-card:nth-child(8) {
+  min-height: 620px;
 }
 
 .campaign-mission-card::before,
@@ -813,7 +818,7 @@
   justify-content: space-between;
   gap: 0.8rem;
   min-height: 76px;
-  padding-right: 2.35rem;
+  padding-right: 3rem;
 }
 
 .campaign-mission-icon-wrap {
@@ -840,7 +845,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.32rem;
-  max-width: calc(100% - 5.8rem);
+  max-width: calc(100% - 6.6rem);
+  margin-right: 0.75rem;
   border: 1px solid rgba(245, 251, 255, 0.12);
   border-radius: 999px;
   padding: 0.24rem 0.48rem 0.24rem 0.28rem;
@@ -920,6 +926,15 @@
   box-shadow: inset 0 1px 0 rgba(245, 251, 255, 0.045);
 }
 
+.campaign-mission-objectives span,
+.campaign-mission-tags span,
+.campaign-mission-memory,
+.campaign-mission-memory span {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .campaign-mission-objectives span {
   padding: 0.38rem 0.5rem;
   color: var(--v11-ui-text-panel);
@@ -965,6 +980,10 @@
   color: var(--v11-ui-text-muted);
 }
 
+.campaign-mission-memory span {
+  line-height: 1.25;
+}
+
 .campaign-mission-score {
   align-self: end;
 }
@@ -1001,9 +1020,12 @@
 
 .campaign-v11-page .mission-vaccine select {
   appearance: none;
+  width: 100%;
   min-height: 42px;
   border-color: color-mix(in srgb, var(--mission-accent) 38%, rgba(245, 251, 255, 0.14));
   padding: 0.5rem 2.2rem 0.5rem 0.65rem;
+  color-scheme: dark;
+  color: var(--v11-ui-text);
   background:
     linear-gradient(45deg, transparent 50%, var(--v11-ui-accent-cyan) 50%) calc(100% - 18px) 17px / 8px 8px no-repeat,
     linear-gradient(135deg, var(--v11-ui-accent-cyan) 50%, transparent 50%) calc(100% - 13px) 17px / 8px 8px no-repeat,
@@ -1014,6 +1036,33 @@
 .campaign-v11-page .mission-vaccine select:disabled {
   color: var(--v11-ui-text-faint);
   opacity: 0.66;
+}
+
+.campaign-v11-page .mission-vaccine select option,
+.body-difficulty select option,
+.body-command-select select option,
+.mode-select select option,
+.mode-select-danger select option {
+  background: #06111d;
+  color: #f5fffd;
+}
+
+.campaign-v11-page .mission-vaccine select option:checked,
+.body-difficulty select option:checked,
+.body-command-select select option:checked,
+.mode-select select option:checked,
+.mode-select-danger select option:checked {
+  background: #0d5c66;
+  color: #ffffff;
+}
+
+.campaign-v11-page .mission-vaccine select option:disabled,
+.body-difficulty select option:disabled,
+.body-command-select select option:disabled,
+.mode-select select option:disabled,
+.mode-select-danger select option:disabled {
+  background: #071018;
+  color: #8da1aa;
 }
 
 .game-header {
@@ -1331,6 +1380,7 @@
   border: 1px solid rgba(245, 251, 255, 0.14);
   border-radius: var(--v11-ui-radius);
   padding: 0.45rem 0.55rem;
+  color-scheme: dark;
   color: var(--v11-ui-text);
   background: var(--v11-ui-bg);
 }
@@ -1714,6 +1764,8 @@
 .body-command-select select {
   min-height: 34px;
   border-color: rgba(98, 211, 200, 0.28);
+  color-scheme: dark;
+  color: var(--v11-ui-text);
   background: rgba(3, 8, 14, 0.86);
 }
 
@@ -2458,6 +2510,7 @@
   border: 1px solid rgba(98, 211, 200, 0.34);
   border-radius: var(--v11-ui-radius);
   padding: 0.55rem 2.35rem 0.55rem 0.7rem;
+  color-scheme: dark;
   color: var(--v11-ui-text);
   background:
     linear-gradient(45deg, transparent 50%, var(--v11-ui-accent-cyan) 50%) calc(100% - 18px) 18px / 8px 8px no-repeat,
@@ -3095,6 +3148,666 @@
   border-bottom: 2px solid var(--v11-ui-panel-edge-strong);
   border-right: 2px solid var(--v11-ui-panel-edge-strong);
   border-bottom-right-radius: var(--v11-ui-radius);
+}
+
+/* ---- V11.1F Battle HUD: interface RTS compacte et non-debug ---- */
+.game-page .game-topbar {
+  min-height: 76px;
+  padding: 0.52rem 0.85rem;
+  border: 1px solid rgba(98, 211, 200, 0.2);
+  border-radius: var(--v11-ui-radius);
+  background:
+    linear-gradient(90deg, rgba(3, 8, 15, 0.9), rgba(8, 16, 28, 0.78)),
+    linear-gradient(180deg, rgba(98, 211, 200, 0.1), rgba(98, 211, 200, 0));
+  box-shadow:
+    inset 0 1px 0 rgba(245, 251, 255, 0.08),
+    inset 0 -2px 0 rgba(98, 211, 200, 0.14),
+    0 16px 34px rgba(0, 0, 0, 0.36),
+    0 0 18px rgba(98, 211, 200, 0.12);
+}
+
+.game-page .game-topbar-brand {
+  width: clamp(250px, 20vw, 340px);
+  min-height: 66px;
+  border: 0;
+  padding: 0.66rem 1.4rem 0.62rem 1.18rem;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(3, 8, 15, 0.18), rgba(3, 8, 15, 0.02)),
+    url("../assets/battle-hud/hud-title-panel-clean.png") center / 100% 100% no-repeat;
+}
+
+.game-page .game-topbar-brand .eyebrow {
+  color: var(--v11-ui-accent-cyan-strong);
+  font-size: 0.58rem;
+}
+
+.game-page .game-topbar-brand h1 {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--v11-ui-text-strong);
+  font-size: clamp(0.82rem, 0.95vw, 1.05rem);
+  line-height: 1.08;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 10px rgba(98, 211, 200, 0.3);
+  white-space: nowrap;
+}
+
+.game-page .game-topbar-resources {
+  gap: 0.42rem;
+}
+
+.battle-resource-chip {
+  display: grid;
+  grid-template-columns: 2.05rem minmax(86px, 1fr);
+  align-items: center;
+  gap: 0.28rem;
+  min-width: 128px;
+  max-width: 186px;
+  border: 1px solid rgba(98, 211, 200, 0.2);
+  border-radius: var(--v11-ui-radius);
+  padding: 0.26rem 0.36rem;
+  background:
+    linear-gradient(180deg, rgba(10, 20, 32, 0.82), rgba(3, 8, 15, 0.76)),
+    rgba(8, 13, 21, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(245, 251, 255, 0.08),
+    inset 0 -2px 0 rgba(98, 211, 200, 0.13);
+}
+
+.battle-resource-chip > img {
+  width: 2rem;
+  height: 2rem;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 8px rgba(98, 211, 200, 0.28));
+}
+
+.battle-resource-chip .hud-gauge {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.battle-resource-chip .hud-gauge-label {
+  font-size: 0.64rem;
+}
+
+.battle-resource-chip .hud-gauge-track {
+  height: 6px;
+}
+
+.game-page .game-topbar-status {
+  min-width: 245px;
+  border-left: 1px solid rgba(98, 211, 200, 0.22);
+}
+
+.topbar-stat-phase {
+  min-width: 6.8rem;
+}
+
+.battle-selection-panel,
+.battle-objective-panel {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  align-content: start;
+  gap: 0.72rem;
+  pointer-events: auto;
+  backdrop-filter: blur(10px);
+}
+
+.battle-selection-panel {
+  top: 5.45rem;
+  left: 0.9rem;
+  width: min(278px, calc(42vw - 1rem));
+  min-height: 340px;
+  padding: 1rem 0.96rem 0.94rem;
+  background:
+    linear-gradient(180deg, rgba(3, 8, 15, 0.58), rgba(3, 8, 15, 0.36)),
+    url("../assets/battle-hud/hud-squad-panel-clean.png") center / 100% 100% no-repeat;
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.34),
+    0 0 18px rgba(98, 211, 200, 0.12);
+}
+
+.battle-objective-panel {
+  top: 5.45rem;
+  right: 0.9rem;
+  width: min(340px, calc(44vw - 1rem));
+  max-height: calc(100vh - 17.4rem);
+  overflow: auto;
+  padding: 0.8rem;
+  background:
+    linear-gradient(180deg, rgba(3, 8, 15, 0.86), rgba(3, 8, 15, 0.62)),
+    url("../assets/battle-hud/hud-alert-panel.png") center / 100% 100% no-repeat;
+}
+
+.battle-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--v11-ui-accent-cyan-strong);
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.battle-panel-title img {
+  width: 1.7rem;
+  height: 1.7rem;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.battle-panel-title-small {
+  margin-top: 0.18rem;
+  color: var(--v11-ui-warning);
+}
+
+.battle-selection-summary {
+  display: grid;
+  gap: 0.08rem;
+  border-bottom: 1px solid rgba(98, 211, 200, 0.16);
+  padding-bottom: 0.46rem;
+}
+
+.battle-selection-summary strong {
+  color: var(--v11-ui-text-strong);
+  font-size: 0.94rem;
+  line-height: 1.08;
+}
+
+.battle-selection-summary span,
+.battle-selection-note {
+  color: var(--v11-ui-text-muted);
+  font-size: 0.78rem;
+}
+
+.battle-squad-slots {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.42rem;
+  padding: 0.08rem 0.22rem;
+}
+
+.battle-squad-slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  border: 2px solid rgba(98, 211, 200, 0.26);
+  border-radius: 0.55rem;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(98, 211, 200, 0.12), transparent 58%),
+    linear-gradient(180deg, rgba(7, 18, 25, 0.78), rgba(2, 7, 12, 0.84));
+  box-shadow:
+    inset 0 0 0 2px rgba(3, 8, 15, 0.58),
+    inset 0 -5px 0 rgba(98, 211, 200, 0.05);
+  color: var(--v11-ui-text-faint);
+  overflow: hidden;
+}
+
+.battle-squad-slot::before {
+  content: "";
+  position: absolute;
+  inset: 0.28rem;
+  border: 1px solid rgba(98, 211, 200, 0.1);
+  border-radius: 0.35rem;
+  pointer-events: none;
+}
+
+.battle-squad-slot strong {
+  position: relative;
+  z-index: 1;
+  color: #eafffb;
+  font-size: clamp(0.72rem, 1.1vw, 0.9rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-shadow:
+    0 0 8px rgba(98, 211, 200, 0.55),
+    0 1px 0 rgba(0, 0, 0, 0.7);
+}
+
+.battle-squad-slots .battle-slot-empty {
+  border-color: rgba(98, 211, 200, 0.12);
+  opacity: 0.48;
+}
+
+.battle-squad-slots .battle-slot-active {
+  box-shadow:
+    inset 0 0 0 2px rgba(3, 8, 15, 0.58),
+    0 0 14px rgba(98, 211, 200, 0.2);
+}
+
+.battle-squad-slot.unit-portrait-macrophage {
+  border-color: rgba(98, 211, 200, 0.5);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(98, 211, 200, 0.32), transparent 58%),
+    linear-gradient(180deg, rgba(9, 31, 39, 0.86), rgba(2, 7, 12, 0.88));
+}
+
+.battle-squad-slot.unit-portrait-neutrophil {
+  border-color: rgba(126, 226, 138, 0.48);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(126, 226, 138, 0.3), transparent 58%),
+    linear-gradient(180deg, rgba(11, 35, 25, 0.86), rgba(2, 7, 12, 0.88));
+}
+
+.battle-squad-slot.unit-portrait-dendritic {
+  border-color: rgba(188, 130, 255, 0.48);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(188, 130, 255, 0.3), transparent 58%),
+    linear-gradient(180deg, rgba(31, 16, 45, 0.86), rgba(2, 7, 12, 0.88));
+}
+
+.battle-squad-slot.unit-portrait-plasmocyte {
+  border-color: rgba(255, 199, 107, 0.52);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 199, 107, 0.32), transparent 58%),
+    linear-gradient(180deg, rgba(43, 28, 10, 0.86), rgba(2, 7, 12, 0.88));
+}
+
+.battle-squad-slot.unit-portrait-nk,
+.battle-squad-slot.unit-portrait-cytotoxic {
+  border-color: rgba(255, 111, 145, 0.5);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 111, 145, 0.3), transparent 58%),
+    linear-gradient(180deg, rgba(43, 13, 25, 0.86), rgba(2, 7, 12, 0.88));
+}
+
+.battle-composition-list,
+.battle-objective-list,
+.battle-threat-list,
+.battle-details-panel > div {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.battle-composition-list span,
+.battle-threat-item,
+.battle-threat-empty,
+.battle-details-panel span,
+.battle-details-panel p {
+  border: 1px solid rgba(245, 251, 255, 0.09);
+  border-radius: var(--v11-ui-radius);
+  padding: 0.34rem 0.48rem;
+  background: rgba(4, 9, 17, 0.54);
+  color: var(--v11-ui-text-panel);
+  font-size: 0.76rem;
+}
+
+.battle-composition-list span,
+.battle-threat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.battle-composition-list span {
+  min-height: 1.75rem;
+  border-color: rgba(98, 211, 200, 0.13);
+  background: rgba(4, 12, 18, 0.62);
+}
+
+.battle-composition-list strong,
+.battle-threat-item strong {
+  color: var(--v11-ui-accent-cyan-strong);
+}
+
+.battle-composition-empty strong {
+  color: var(--v11-ui-text-faint);
+}
+
+.battle-objective-list span {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.12rem 0.5rem;
+  border: 1px solid rgba(255, 199, 107, 0.18);
+  border-radius: var(--v11-ui-radius);
+  padding: 0.42rem 0.5rem;
+  background: rgba(12, 9, 19, 0.58);
+  color: var(--v11-ui-text-panel);
+  font-size: 0.76rem;
+  line-height: 1.25;
+}
+
+.battle-objective-list strong {
+  color: var(--v11-ui-warning);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+}
+
+.battle-objective-list em {
+  grid-column: 2;
+  color: var(--v11-ui-text-faint);
+  font-size: 0.68rem;
+  font-style: normal;
+}
+
+.battle-objective-list .battle-objective-complete {
+  border-color: rgba(126, 226, 138, 0.28);
+  background: rgba(126, 226, 138, 0.08);
+}
+
+.battle-objective-complete strong {
+  color: var(--v11-ui-success);
+}
+
+.battle-threat-warning strong {
+  color: var(--v11-ui-warning);
+}
+
+.battle-threat-total {
+  border-color: rgba(98, 211, 200, 0.2);
+}
+
+.battle-details-panel {
+  border-top: 1px solid rgba(98, 211, 200, 0.16);
+  padding-top: 0.45rem;
+}
+
+.battle-details-panel summary {
+  cursor: pointer;
+  color: var(--v11-ui-accent-cyan);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.battle-details-panel > div {
+  margin-top: 0.45rem;
+}
+
+.battle-details-panel p {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.game-page .battle-command-bar {
+  --battle-action-card-width: 164px;
+  position: absolute;
+  left: 50%;
+  bottom: 0.72rem;
+  width: fit-content;
+  max-width: calc(100vw - 1.8rem);
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
+  align-items: start;
+  gap: 0.42rem;
+  padding: 0.3rem 0.4rem;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  background:
+    linear-gradient(180deg, rgba(2, 9, 15, 0.2), rgba(2, 9, 15, 0.5));
+  border-radius: 12px;
+}
+
+.battle-command-group {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.08rem;
+}
+
+.battle-command-group-title {
+  color: var(--v11-ui-accent-cyan-strong);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  padding-left: 0.18rem;
+  text-shadow: 0 0 8px rgba(98, 211, 200, 0.45);
+  text-transform: uppercase;
+}
+
+.battle-command-grid {
+  display: grid;
+  grid-template-columns: repeat(2, var(--battle-action-card-width));
+  gap: 0.24rem;
+  align-content: start;
+}
+
+.battle-command-group[data-command-group="cells"] .battle-command-grid {
+  grid-template-columns: repeat(2, var(--battle-action-card-width));
+}
+
+.battle-command-group[data-command-group="analysis"] .battle-command-grid {
+  grid-template-columns: repeat(2, var(--battle-action-card-width));
+}
+
+.battle-command-group[data-command-group="treatments"] .battle-command-grid {
+  grid-template-columns: repeat(3, var(--battle-action-card-width));
+}
+
+.battle-action-card {
+  position: relative;
+  width: var(--battle-action-card-width);
+  min-height: 0;
+  aspect-ratio: 300 / 128;
+  display: grid;
+  grid-template-columns: 3.62rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.22rem;
+  border: 0;
+  padding: 0.48rem 0.58rem 0.48rem 0.42rem;
+  color: var(--v11-ui-text-strong);
+  cursor: pointer;
+  background:
+    linear-gradient(180deg, rgba(21, 77, 86, 0.1), rgba(2, 8, 14, 0.08)),
+    url("../assets/battle-hud/hud-action-card-clean.png") center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+  text-align: left;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.72);
+  transition:
+    filter 140ms ease,
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.battle-action-card-primary {
+  color: #f5fffd;
+  filter: drop-shadow(0 0 7px rgba(98, 211, 200, 0.3)) saturate(1.18);
+}
+
+.battle-action-card-ready:hover,
+.battle-action-card-primary:hover {
+  filter: brightness(1.18) saturate(1.14) drop-shadow(0 0 9px rgba(98, 211, 200, 0.22));
+  transform: translateY(-1px);
+}
+
+.battle-action-icon {
+  justify-self: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(98, 211, 200, 0.45);
+  border-radius: 4px;
+  background: rgba(3, 12, 20, 0.72);
+  box-shadow: inset 0 0 10px rgba(98, 211, 200, 0.18);
+}
+
+.battle-action-icon img {
+  width: 1.78rem;
+  height: 1.78rem;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 8px rgba(98, 211, 200, 0.18));
+}
+
+.battle-action-copy {
+  display: grid;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.battle-action-copy strong {
+  overflow: hidden;
+  color: #f5fffd;
+  font-size: 0.68rem;
+  font-weight: 900;
+  line-height: 1.04;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle-action-copy em,
+.battle-action-copy small {
+  color: #b7e1e8;
+  font-size: 0.56rem;
+  font-style: normal;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle-action-card-disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.82) brightness(0.56);
+  opacity: 0.54;
+}
+
+.battle-action-card-disabled .battle-action-icon {
+  border-color: rgba(152, 173, 184, 0.24);
+  box-shadow: inset 0 0 9px rgba(0, 0, 0, 0.35);
+}
+
+.battle-system-actions {
+  position: absolute;
+  right: 0.95rem;
+  bottom: 7.2rem;
+  z-index: 6;
+  display: flex;
+  gap: 0.45rem;
+  pointer-events: auto;
+}
+
+.battle-system-actions .button {
+  min-height: 36px;
+  padding: 0.42rem 0.66rem;
+  font-size: 0.72rem;
+}
+
+.game-page .wave-alert-overlay {
+  top: 5.05rem;
+  border: 0;
+  background:
+    linear-gradient(90deg, rgba(42, 18, 20, 0.84), rgba(42, 25, 11, 0.72)),
+    url("../assets/battle-hud/hud-alert-panel.png") center / 100% 100% no-repeat;
+}
+
+@media (max-width: 1360px) {
+  .game-page .game-topbar {
+    gap: 0.45rem;
+  }
+
+  .game-page .game-topbar-brand {
+    min-width: 170px;
+  }
+
+  .battle-resource-chip {
+    grid-template-columns: 1.75rem minmax(70px, 1fr);
+    min-width: 108px;
+  }
+
+  .battle-resource-chip > img {
+    width: 1.72rem;
+    height: 1.72rem;
+  }
+
+  .game-page .game-topbar-status {
+    min-width: 190px;
+  }
+
+  .game-page .battle-command-bar {
+    --battle-action-card-width: 156px;
+    grid-template-columns: repeat(3, max-content);
+    max-height: 178px;
+    overflow: auto;
+  }
+
+  .battle-selection-panel {
+    width: 270px;
+  }
+
+  .battle-objective-panel {
+    width: 300px;
+  }
+}
+
+@media (max-width: 980px) {
+  .game-page {
+    height: auto;
+    min-height: calc(100vh - 64px);
+    overflow: auto;
+    padding: 0.6rem;
+  }
+
+  .game-page .game-frame {
+    height: min(72vh, 720px);
+    min-height: 560px;
+  }
+
+  .game-page .game-topbar,
+  .battle-selection-panel,
+  .battle-objective-panel,
+  .game-page .battle-command-bar,
+  .battle-system-actions {
+    position: relative;
+    inset: auto;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    width: 100%;
+    max-height: none;
+    transform: none;
+  }
+
+  .game-page .game-topbar,
+  .game-page .battle-command-bar {
+    margin-bottom: 0.6rem;
+  }
+
+  .game-page .game-topbar {
+    flex-wrap: wrap;
+  }
+
+  .game-page .game-topbar-status {
+    flex: 1 1 100%;
+    border-left: 0;
+    border-top: 1px solid rgba(98, 211, 200, 0.18);
+    padding: 0.45rem 0 0;
+  }
+
+  .battle-selection-panel,
+  .battle-objective-panel {
+    margin-top: 0.6rem;
+  }
+
+  .game-page .battle-command-bar {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .battle-system-actions {
+    justify-content: flex-end;
+    margin: 0.6rem 0;
+  }
+
+  .game-page .wave-alert-overlay {
+    top: 1rem;
+  }
 }
 
 @media (max-width: 1260px) {
