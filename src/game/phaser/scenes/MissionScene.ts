@@ -25,6 +25,8 @@ import {
   getLymphExitForMissionMap,
   type TacticalMapDefinition,
 } from "../../data/tacticalMaps";
+import { getLayerABackgroundForMap } from "../../mapVisuals/mapVisualAssets";
+import { createVesselLayer } from "../../mapVisuals/VesselLayerRenderer";
 import type { GameBridge, GameSnapshot } from "../GameBridge";
 import { Simulation } from "../../simulation/core/Simulation";
 import type { GameCommand } from "../../simulation/core/commands";
@@ -55,6 +57,8 @@ type CameraKeys = {
 
 export class MissionScene extends Phaser.Scene {
   private simulation: Simulation;
+  private layerABackground?: Phaser.GameObjects.Image;
+  private layerBVessels?: Phaser.GameObjects.RenderTexture;
   private dynamicLayer?: Phaser.GameObjects.Graphics;
   private bridgeUnsubscribe?: () => void;
   private snapshotElapsedMs = 0;
@@ -87,6 +91,8 @@ export class MissionScene extends Phaser.Scene {
       map.cameraBounds.height,
     );
     this.input.mouse?.disableContextMenu();
+    this.setupLayerABackground(map);
+    this.layerBVessels = createVesselLayer(this, map);
     this.dynamicLayer = this.add.graphics();
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cleanupBridge());
@@ -160,6 +166,31 @@ export class MissionScene extends Phaser.Scene {
     this.rightDragStartScreen = null;
     this.rightDragLastScreen = null;
     this.rightDragMoved = false;
+  }
+
+  private setupLayerABackground(tacticalMap: TacticalMapDefinition): void {
+    const background = getLayerABackgroundForMap(tacticalMap);
+
+    if (!background || !this.textures.exists(background.key)) {
+      this.layerABackground = undefined;
+      return;
+    }
+
+    const texture = this.textures.get(background.key);
+    const source = texture.getSourceImage() as HTMLImageElement | HTMLCanvasElement;
+    const sourceWidth = source.width || tacticalMap.worldWidth;
+    const sourceHeight = source.height || tacticalMap.worldHeight;
+    const coverScale = Math.max(
+      tacticalMap.worldWidth / sourceWidth,
+      tacticalMap.worldHeight / sourceHeight,
+    );
+
+    this.layerABackground = this.add
+      .image(tacticalMap.worldWidth / 2, tacticalMap.worldHeight / 2, background.key)
+      .setOrigin(0.5)
+      .setScale(coverScale)
+      .setAlpha(background.opacity)
+      .setDepth(-100);
   }
 
   private handleCommand(command: GameCommand) {
@@ -564,72 +595,80 @@ export class MissionScene extends Phaser.Scene {
     const tissueZone = mission.map.tissueZone;
     const entryZone = mission.map.bacteriaEntryZone;
     const entryVisual = balanceValues.bacteriaEntryVisual;
+    const hasLayerABackground = Boolean(this.layerABackground?.active);
 
-    graphics.fillStyle(0x101820, 1);
-    graphics.fillRect(0, 0, tacticalMap.worldWidth, tacticalMap.worldHeight);
-
-    graphics.fillStyle(0x203141, 1);
-    graphics.fillRoundedRect(
-      playArea.x,
-      playArea.y,
-      playArea.width,
-      playArea.height,
-      playArea.radius,
-    );
-
-    graphics.lineStyle(2, 0x62d3c8, 0.22);
-    for (let x = grid.startX; x <= grid.endX; x += grid.stepX) {
-      graphics.lineBetween(x, grid.startY, x + grid.skewX, grid.endY);
+    if (hasLayerABackground) {
+      graphics.fillStyle(0x071217, 0.08);
+      graphics.fillRect(0, 0, tacticalMap.worldWidth, tacticalMap.worldHeight);
+    } else {
+      graphics.fillStyle(0x101820, 1);
+      graphics.fillRect(0, 0, tacticalMap.worldWidth, tacticalMap.worldHeight);
     }
 
-    graphics.fillStyle(0x62d3c8, 0.08);
-    graphics.fillRoundedRect(
-      tissueZone.x,
-      tissueZone.y,
-      tissueZone.width,
-      tissueZone.height,
-      18,
-    );
-    graphics.lineStyle(3, 0x62d3c8, 0.28);
-    graphics.strokeRoundedRect(
-      tissueZone.x,
-      tissueZone.y,
-      tissueZone.width,
-      tissueZone.height,
-      18,
-    );
+    if (!hasLayerABackground) {
+      graphics.fillStyle(0x203141, 1);
+      graphics.fillRoundedRect(
+        playArea.x,
+        playArea.y,
+        playArea.width,
+        playArea.height,
+        playArea.radius,
+      );
 
-    graphics.fillStyle(0xff7f8f, 0.16);
-    graphics.fillRoundedRect(
-      entryZone.x - entryVisual.xOffset,
-      entryZone.yMin,
-      entryVisual.width,
-      entryZone.yMax - entryZone.yMin,
-      entryVisual.radius,
-    );
-    graphics.lineStyle(3, 0xff7f8f, 0.45);
-    graphics.strokeRoundedRect(
-      entryZone.x - entryVisual.xOffset,
-      entryZone.yMin,
-      entryVisual.width,
-      entryZone.yMax - entryZone.yMin,
-      entryVisual.radius,
-    );
+      graphics.lineStyle(2, 0x62d3c8, 0.22);
+      for (let x = grid.startX; x <= grid.endX; x += grid.stepX) {
+        graphics.lineBetween(x, grid.startY, x + grid.skewX, grid.endY);
+      }
 
-    const defaultEntry =
-      tacticalMap.reinforcementEntryPoints[0] ?? tacticalMap.diapedesisPoints[0];
-    const defaultExit = tacticalMap.lymphaticExits[0];
+      graphics.fillStyle(0x62d3c8, 0.08);
+      graphics.fillRoundedRect(
+        tissueZone.x,
+        tissueZone.y,
+        tissueZone.width,
+        tissueZone.height,
+        18,
+      );
+      graphics.lineStyle(3, 0x62d3c8, 0.28);
+      graphics.strokeRoundedRect(
+        tissueZone.x,
+        tissueZone.y,
+        tissueZone.width,
+        tissueZone.height,
+        18,
+      );
 
-    if (defaultEntry) {
-      graphics.fillStyle(0xffc76b, 0.72);
-      graphics.fillCircle(defaultEntry.position.x, defaultEntry.position.y, 10);
-    }
+      graphics.fillStyle(0xff7f8f, 0.16);
+      graphics.fillRoundedRect(
+        entryZone.x - entryVisual.xOffset,
+        entryZone.yMin,
+        entryVisual.width,
+        entryZone.yMax - entryZone.yMin,
+        entryVisual.radius,
+      );
+      graphics.lineStyle(3, 0xff7f8f, 0.45);
+      graphics.strokeRoundedRect(
+        entryZone.x - entryVisual.xOffset,
+        entryZone.yMin,
+        entryVisual.width,
+        entryZone.yMax - entryZone.yMin,
+        entryVisual.radius,
+      );
 
-    if (defaultExit) {
-      graphics.fillStyle(0x62d3c8, 0.16);
-      graphics.fillCircle(defaultExit.position.x, defaultExit.position.y, defaultExit.radius);
-      graphics.lineStyle(3, 0x62d3c8, 0.58);
-      graphics.strokeCircle(defaultExit.position.x, defaultExit.position.y, defaultExit.radius);
+      const defaultEntry =
+        tacticalMap.reinforcementEntryPoints[0] ?? tacticalMap.diapedesisPoints[0];
+      const defaultExit = tacticalMap.lymphaticExits[0];
+
+      if (defaultEntry) {
+        graphics.fillStyle(0xffc76b, 0.72);
+        graphics.fillCircle(defaultEntry.position.x, defaultEntry.position.y, 10);
+      }
+
+      if (defaultExit) {
+        graphics.fillStyle(0x62d3c8, 0.16);
+        graphics.fillCircle(defaultExit.position.x, defaultExit.position.y, defaultExit.radius);
+        graphics.lineStyle(3, 0x62d3c8, 0.58);
+        graphics.strokeCircle(defaultExit.position.x, defaultExit.position.y, defaultExit.radius);
+      }
     }
 
     this.drawTacticalMapTemplate(graphics, tacticalMap);
@@ -657,10 +696,12 @@ export class MissionScene extends Phaser.Scene {
       this.drawPath(graphics, corridor.path, 3, 0x62d3c8, 0.3);
     }
 
-    for (const vessel of tacticalMap.vesselPaths) {
-      this.drawPath(graphics, vessel.points, vessel.width, 0x79314d, 0.7);
-      this.drawPath(graphics, vessel.points, Math.max(4, vessel.width * 0.34), 0xd94f6a, 0.48);
-      this.drawPath(graphics, vessel.points, 2, 0xff9faf, 0.28);
+    if (!this.layerBVessels) {
+      for (const vessel of tacticalMap.vesselPaths) {
+        this.drawPath(graphics, vessel.points, vessel.width, 0x79314d, 0.7);
+        this.drawPath(graphics, vessel.points, Math.max(4, vessel.width * 0.34), 0xd94f6a, 0.48);
+        this.drawPath(graphics, vessel.points, 2, 0xff9faf, 0.28);
+      }
     }
 
     for (const obstacle of tacticalMap.obstacles) {

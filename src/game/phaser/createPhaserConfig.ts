@@ -32,7 +32,7 @@ export function createPhaserConfig(
     backgroundColor: "#101820",
     scene: [
       new BootScene(),
-      new PreloadScene(),
+      new PreloadScene(map),
       new MissionScene(bridge, missionId, preparation),
       new UIScene(),
     ],
