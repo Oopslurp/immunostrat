@@ -19,6 +19,11 @@ export type ProceduralVesselStyle = {
   jitterAmount: number;
 };
 
+export type PixelVesselBranch = {
+  anchorIndex: number;
+  points: MapPoint[];
+};
+
 const BODY_COLORS = [0x7e253c, 0x872b44] as const;
 
 export function getProceduralVesselStyle(
@@ -127,6 +132,115 @@ export function createVesselHighlightPath(
     return {
       x: Math.round(point.x - (tangentY / tangentLength) * offset),
       y: Math.round(point.y + (tangentX / tangentLength) * offset),
+    };
+  });
+}
+
+export function createPixelVesselBranches(
+  points: MapPoint[],
+  vesselId: string,
+  bodyWidth: number,
+): PixelVesselBranch[] {
+  if (points.length < 10 || bodyWidth <= 0) {
+    return [];
+  }
+
+  const candidates = [] as Array<{ index: number; score: number }>;
+  const desiredBranchCount = Math.min(
+    7,
+    Math.max(5, Math.round(points.length / 12)),
+  );
+  const candidateCount = Math.min(
+    points.length - 4,
+    desiredBranchCount * 2,
+  );
+  const usedIndices = new Set<number>();
+
+  for (let slot = 0; slot < candidateCount; slot += 1) {
+    const progress = candidateCount === 1 ? 0.5 : slot / (candidateCount - 1);
+    const index = Math.round(2 + progress * (points.length - 5));
+
+    if (usedIndices.has(index)) {
+      continue;
+    }
+
+    usedIndices.add(index);
+    candidates.push({
+      index,
+      score: deterministicVesselValue(vesselId, index, 211),
+    });
+  }
+
+  const branchCount = Math.min(desiredBranchCount, candidates.length);
+  const selectedCandidates = candidates
+    .sort((left, right) => right.score - left.score)
+    .slice(0, branchCount)
+    .sort((left, right) => left.index - right.index);
+
+  const initialSide =
+    deterministicVesselValue(vesselId, points.length, 223) > 0.5 ? 1 : -1;
+
+  return selectedCandidates.map(({ index }, branchIndex) => {
+    const previous = points[index - 1];
+    const anchor = points[index];
+    const next = points[index + 1];
+    const tangentX = next.x - previous.x;
+    const tangentY = next.y - previous.y;
+    const tangentLength = Math.hypot(tangentX, tangentY) || 1;
+    const unitTangentX = tangentX / tangentLength;
+    const unitTangentY = tangentY / tangentLength;
+    const unitNormalX = -unitTangentY;
+    const unitNormalY = unitTangentX;
+    const side = branchIndex % 2 === 0 ? initialSide : -initialSide;
+    const length =
+      11 +
+      Math.round(deterministicVesselValue(vesselId, index, 227) * 7) +
+      Math.max(1, Math.round(bodyWidth * 0.45));
+    const bend =
+      (deterministicVesselValue(vesselId, index, 229) * 2 - 1) *
+      Math.max(3, length * 0.3);
+
+    return {
+      anchorIndex: index,
+      points: [
+        { ...anchor },
+        {
+          x: Math.round(
+            anchor.x +
+              unitNormalX * side * length * 0.18 +
+              unitTangentX * length * 0.14,
+          ),
+          y: Math.round(
+            anchor.y +
+              unitNormalY * side * length * 0.18 +
+              unitTangentY * length * 0.14,
+          ),
+        },
+        {
+          x: Math.round(
+            anchor.x +
+              unitNormalX * side * length * 0.56 +
+              unitTangentX * (length * 0.27 + bend * 0.35),
+          ),
+          y: Math.round(
+            anchor.y +
+              unitNormalY * side * length * 0.56 +
+              unitTangentY * (length * 0.27 + bend * 0.35),
+          ),
+        },
+        {
+          x: Math.round(
+            anchor.x +
+              unitNormalX * side * length +
+              unitTangentX * (length * 0.38 + bend),
+          ),
+          y: Math.round(
+            anchor.y +
+              unitNormalY * side * length +
+              unitTangentY * (length * 0.38 + bend),
+          ),
+        },
+      ],
     };
   });
 }

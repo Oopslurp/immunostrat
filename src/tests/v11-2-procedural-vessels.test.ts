@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { tacticalMapDefinitions } from "../game/data/tacticalMaps";
 import {
+  createPixelVesselBranches,
   createPixelVesselPath,
   createVesselHighlightPath,
   deterministicVesselValue,
@@ -44,6 +45,30 @@ describe("V11.2 procedural Layer B vessels", () => {
     expect(deterministicVesselValue("blood-main", 2, 4)).toBe(
       deterministicVesselValue("blood-main", 2, 4),
     );
+  });
+
+  it("adds only a few deterministic visual branches without mutating the path", () => {
+    const points = Array.from({ length: 72 }, (_, index) => ({
+      x: index * 4,
+      y: 30 + (index % 5),
+    }));
+    const snapshot = JSON.stringify(points);
+    const first = createPixelVesselBranches(points, "blood-branching", 5);
+    const second = createPixelVesselBranches(points, "blood-branching", 5);
+
+    expect(first).toEqual(second);
+    expect(first.length).toBeGreaterThanOrEqual(5);
+    expect(first.length).toBeLessThanOrEqual(7);
+    expect(first.every((branch) => branch.points.length === 4)).toBe(true);
+    expect(
+      first.every((branch) =>
+        points.some(
+          (point) =>
+            point.x === branch.points[0].x && point.y === branch.points[0].y,
+        ),
+      ),
+    ).toBe(true);
+    expect(JSON.stringify(points)).toBe(snapshot);
   });
 
   it("creates a deterministic highlight without mutating vessel paths", () => {

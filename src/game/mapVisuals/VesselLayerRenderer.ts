@@ -6,6 +6,7 @@ import type {
 } from "../data/tacticalMaps";
 import {
   createPixelVesselPath,
+  createPixelVesselBranches,
   createVesselHighlightPath,
   deterministicVesselValue,
   getProceduralVesselStyle,
@@ -41,15 +42,26 @@ export function createVesselLayer(
         style.jitterAmount,
       ),
     };
-  });
+  }).map((styledVessel) => ({
+    ...styledVessel,
+    branches: createPixelVesselBranches(
+      styledVessel.pixelPath,
+      styledVessel.vessel.id,
+      toRasterWidth(styledVessel.style.body.width),
+    ),
+  }));
 
+  drawBranchLayerPass(sourceGraphics, styledVessels, "shadow");
   drawLayerPass(sourceGraphics, styledVessels, "shadow");
+  drawBranchLayerPass(sourceGraphics, styledVessels, "body");
   drawLayerPass(sourceGraphics, styledVessels, "body");
 
   for (const styledVessel of styledVessels) {
     drawOrganicEdgePixels(sourceGraphics, styledVessel);
+    drawOrganicJunctionBodies(sourceGraphics, styledVessel);
   }
 
+  drawBranchLayerPass(sourceGraphics, styledVessels, "inner");
   drawLayerPass(sourceGraphics, styledVessels, "inner");
 
   for (const styledVessel of styledVessels) {
@@ -64,6 +76,8 @@ export function createVesselLayer(
       toRasterStyle(styledVessel.style.highlight),
       false,
     );
+    drawOrganicJunctionCores(sourceGraphics, styledVessel);
+    drawBranchHighlights(sourceGraphics, styledVessel);
     drawInternalDetails(sourceGraphics, styledVessel);
   }
 
@@ -84,6 +98,7 @@ type StyledVessel = {
   vessel: VesselPathDefinition;
   style: ReturnType<typeof getProceduralVesselStyle>;
   pixelPath: MapPoint[];
+  branches: ReturnType<typeof createPixelVesselBranches>;
 };
 
 function drawLayerPass(
@@ -97,6 +112,36 @@ function drawLayerPass(
       styledVessel.pixelPath,
       toRasterStyle(styledVessel.style[layer]),
     );
+  }
+}
+
+function drawBranchLayerPass(
+  graphics: Phaser.GameObjects.Graphics,
+  vessels: StyledVessel[],
+  layer: "shadow" | "body" | "inner",
+): void {
+  for (const styledVessel of vessels) {
+    const mainStyle = toRasterStyle(styledVessel.style[layer]);
+    const branchStyle = {
+      ...mainStyle,
+      width:
+        layer === "shadow"
+          ? Math.max(2, Math.round(mainStyle.width * 0.58))
+          : Math.max(1, Math.round(mainStyle.width * 0.46)),
+      alpha: mainStyle.alpha * 0.58,
+    };
+
+    for (const branch of styledVessel.branches) {
+      const proximalPoints = branch.points.slice(0, 3);
+      const distalPoints = branch.points.slice(2);
+
+      drawPixelPath(graphics, proximalPoints, branchStyle);
+      drawPixelPath(graphics, distalPoints, {
+        ...branchStyle,
+        width: Math.max(1, branchStyle.width - 1),
+        alpha: branchStyle.alpha * 0.88,
+      });
+    }
   }
 }
 
@@ -157,6 +202,68 @@ function drawOrganicEdgePixels(
   }
 }
 
+function drawOrganicJunctionBodies(
+  graphics: Phaser.GameObjects.Graphics,
+  styledVessel: StyledVessel,
+): void {
+  const { vessel, style } = styledVessel;
+  const bodyStyle = toRasterStyle(style.body);
+  const controlPoints = vessel.points.slice(1, -1);
+
+  graphics.fillStyle(bodyStyle.color, bodyStyle.alpha * 0.72);
+
+  for (let index = 0; index < controlPoints.length; index += 1) {
+    const point = controlPoints[index];
+    const pixelPoint = {
+      x: Math.round(point.x / VESSEL_PIXEL_SCALE),
+      y: Math.round(point.y / VESSEL_PIXEL_SCALE),
+    };
+    const radiusVariation =
+      deterministicVesselValue(vessel.id, index, 307) > 0.62 ? 0.5 : 0;
+
+    graphics.fillCircle(
+      pixelPoint.x,
+      pixelPoint.y,
+      bodyStyle.width / 2 + radiusVariation,
+    );
+  }
+}
+
+function drawOrganicJunctionCores(
+  graphics: Phaser.GameObjects.Graphics,
+  styledVessel: StyledVessel,
+): void {
+  const { vessel, style } = styledVessel;
+  const innerStyle = toRasterStyle(style.inner);
+
+  graphics.fillStyle(innerStyle.color, innerStyle.alpha * 0.62);
+
+  for (const point of vessel.points.slice(1, -1)) {
+    graphics.fillCircle(
+      Math.round(point.x / VESSEL_PIXEL_SCALE),
+      Math.round(point.y / VESSEL_PIXEL_SCALE),
+      Math.max(1, innerStyle.width / 2),
+    );
+  }
+}
+
+function drawBranchHighlights(
+  graphics: Phaser.GameObjects.Graphics,
+  styledVessel: StyledVessel,
+): void {
+  const highlightStyle = toRasterStyle(styledVessel.style.highlight);
+  const branchHighlight = {
+    ...highlightStyle,
+    width: 1,
+    alpha: highlightStyle.alpha * 0.38,
+  };
+
+  for (const branch of styledVessel.branches) {
+    const highlightPath = createVesselHighlightPath(branch.points.slice(0, 3), 1);
+    drawPixelPath(graphics, highlightPath, branchHighlight, false);
+  }
+}
+
 function drawInternalDetails(
   graphics: Phaser.GameObjects.Graphics,
   styledVessel: StyledVessel,
@@ -165,8 +272,8 @@ function drawInternalDetails(
   const bodyWidth = toRasterWidth(style.body.width);
   const detailRadius = Math.max(1, toRasterWidth(style.detailDark.width) / 2);
 
-  for (let index = 3; index < pixelPath.length - 3; index += 4) {
-    if (deterministicVesselValue(vessel.id, index, 17) < 0.28) {
+  for (let index = 3; index < pixelPath.length - 3; index += 5) {
+    if (deterministicVesselValue(vessel.id, index, 17) < 0.34) {
       continue;
     }
 
@@ -185,6 +292,16 @@ function drawInternalDetails(
     graphics.fillCircle(x, y, detailRadius);
     graphics.fillStyle(style.detailLight.color, style.detailLight.alpha);
     graphics.fillRect(x, y, 1, 1);
+
+    if (deterministicVesselValue(vessel.id, index, 53) > 0.82) {
+      graphics.fillStyle(style.detailDark.color, style.detailDark.alpha * 0.5);
+      graphics.fillRect(
+        Math.round(x + tangentX / length),
+        Math.round(y + tangentY / length),
+        1,
+        1,
+      );
+    }
   }
 }
 

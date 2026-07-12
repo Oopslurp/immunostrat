@@ -1,6 +1,9 @@
 import Phaser from "phaser";
 import type { TacticalMapDefinition } from "../../data/tacticalMaps";
-import { getLayerABackgroundForMap } from "../../mapVisuals/mapVisualAssets";
+import {
+  DIAPEDESIS_ENTRY_MARKER_ASSET,
+  getLayerABackgroundForMap,
+} from "../../mapVisuals/mapVisualAssets";
 
 export class PreloadScene extends Phaser.Scene {
   constructor(private readonly tacticalMap: TacticalMapDefinition) {
@@ -14,6 +17,12 @@ export class PreloadScene extends Phaser.Scene {
       this.load.image(background.key, background.url);
     }
 
+    if (!this.textures.exists(DIAPEDESIS_ENTRY_MARKER_ASSET.key)) {
+      this.load.image(
+        DIAPEDESIS_ENTRY_MARKER_ASSET.key,
+        DIAPEDESIS_ENTRY_MARKER_ASSET.url,
+      );
+    }
   }
 
   create() {

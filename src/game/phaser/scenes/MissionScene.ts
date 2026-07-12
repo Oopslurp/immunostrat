@@ -25,8 +25,12 @@ import {
   getLymphExitForMissionMap,
   type TacticalMapDefinition,
 } from "../../data/tacticalMaps";
-import { getLayerABackgroundForMap } from "../../mapVisuals/mapVisualAssets";
+import {
+  DIAPEDESIS_ENTRY_MARKER_ASSET,
+  getLayerABackgroundForMap,
+} from "../../mapVisuals/mapVisualAssets";
 import { createVesselLayer } from "../../mapVisuals/VesselLayerRenderer";
+import { createLymphLayer } from "../../mapVisuals/LymphLayerRenderer";
 import type { GameBridge, GameSnapshot } from "../GameBridge";
 import { Simulation } from "../../simulation/core/Simulation";
 import type { GameCommand } from "../../simulation/core/commands";
@@ -59,7 +63,9 @@ export class MissionScene extends Phaser.Scene {
   private simulation: Simulation;
   private layerABackground?: Phaser.GameObjects.Image;
   private layerBVessels?: Phaser.GameObjects.RenderTexture;
+  private layerCLymph?: Phaser.GameObjects.RenderTexture;
   private dynamicLayer?: Phaser.GameObjects.Graphics;
+  private diapedesisMarkers = new Map<string, Phaser.GameObjects.Image>();
   private bridgeUnsubscribe?: () => void;
   private snapshotElapsedMs = 0;
   private lastPublishedStatus: GameState["status"] | null = null;
@@ -93,7 +99,9 @@ export class MissionScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     this.setupLayerABackground(map);
     this.layerBVessels = createVesselLayer(this, map);
+    this.layerCLymph = createLymphLayer(this, map);
     this.dynamicLayer = this.add.graphics();
+    this.setupDiapedesisMarkers(map);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cleanupBridge());
     this.events.once(Phaser.Scenes.Events.DESTROY, () => this.cleanupBridge());
@@ -166,6 +174,7 @@ export class MissionScene extends Phaser.Scene {
     this.rightDragStartScreen = null;
     this.rightDragLastScreen = null;
     this.rightDragMoved = false;
+    this.diapedesisMarkers.clear();
   }
 
   private setupLayerABackground(tacticalMap: TacticalMapDefinition): void {
@@ -191,6 +200,41 @@ export class MissionScene extends Phaser.Scene {
       .setScale(coverScale)
       .setAlpha(background.opacity)
       .setDepth(-100);
+  }
+
+  private setupDiapedesisMarkers(tacticalMap: TacticalMapDefinition): void {
+    if (!this.textures.exists(DIAPEDESIS_ENTRY_MARKER_ASSET.key)) {
+      return;
+    }
+
+    const seen = new Set<string>();
+    const entryPoints = [
+      ...tacticalMap.reinforcementEntryPoints,
+      ...tacticalMap.diapedesisPoints,
+    ].filter((entryPoint) => {
+      if (seen.has(entryPoint.id)) {
+        return false;
+      }
+
+      seen.add(entryPoint.id);
+      return true;
+    });
+
+    for (const entryPoint of entryPoints) {
+      const marker = this.add.image(
+        entryPoint.position.x,
+        entryPoint.position.y,
+        DIAPEDESIS_ENTRY_MARKER_ASSET.key,
+      );
+      const targetDiameter = Math.max(48, entryPoint.spawnRadius * 2.15);
+      const uniformScale = targetDiameter / Math.max(marker.width, marker.height);
+
+      marker
+        .setScale(uniformScale)
+        .setAlpha(entryPoint.isDefault ? 1 : 0.9)
+        .setDepth(2);
+      this.diapedesisMarkers.set(entryPoint.id, marker);
+    }
   }
 
   private handleCommand(command: GameCommand) {
@@ -575,7 +619,6 @@ export class MissionScene extends Phaser.Scene {
 
     graphics.clear();
     this.drawMap(graphics, state);
-    this.drawEntryPoints(graphics, state);
     this.drawTissueCells(graphics, state);
     this.drawAntiviralZone(graphics, state);
     this.drawInflammatoryZones(graphics, state);
@@ -654,14 +697,7 @@ export class MissionScene extends Phaser.Scene {
         entryVisual.radius,
       );
 
-      const defaultEntry =
-        tacticalMap.reinforcementEntryPoints[0] ?? tacticalMap.diapedesisPoints[0];
       const defaultExit = tacticalMap.lymphaticExits[0];
-
-      if (defaultEntry) {
-        graphics.fillStyle(0xffc76b, 0.72);
-        graphics.fillCircle(defaultEntry.position.x, defaultEntry.position.y, 10);
-      }
 
       if (defaultExit) {
         graphics.fillStyle(0x62d3c8, 0.16);
@@ -692,6 +728,10 @@ export class MissionScene extends Phaser.Scene {
     }
 
     for (const corridor of tacticalMap.corridors) {
+      if (corridor.tags.includes("lymph")) {
+        continue;
+      }
+
       this.drawPath(graphics, corridor.path, corridor.width, 0x54c875, 0.12);
       this.drawPath(graphics, corridor.path, 3, 0x62d3c8, 0.3);
     }
@@ -728,15 +768,6 @@ export class MissionScene extends Phaser.Scene {
       graphics.fillStyle(0xb69cff, 0.72);
       graphics.fillRect(choke.position.x - 6, choke.position.y - 16, 12, 32);
       graphics.fillRect(choke.position.x - 16, choke.position.y - 6, 32, 12);
-    }
-
-    for (const entryPoint of tacticalMap.diapedesisPoints) {
-      graphics.fillStyle(0x3fa7ff, 0.2);
-      graphics.fillCircle(entryPoint.position.x, entryPoint.position.y, entryPoint.spawnRadius);
-      graphics.lineStyle(entryPoint.isDefault ? 4 : 2, 0x8bd8ff, 0.82);
-      graphics.strokeCircle(entryPoint.position.x, entryPoint.position.y, entryPoint.spawnRadius);
-      graphics.fillStyle(0x8bd8ff, 0.9);
-      graphics.fillCircle(entryPoint.position.x, entryPoint.position.y, 7);
     }
 
     for (const exit of tacticalMap.lymphaticExits) {
@@ -794,35 +825,6 @@ export class MissionScene extends Phaser.Scene {
       const current = points[index];
 
       graphics.lineBetween(previous.x, previous.y, current.x, current.y);
-    }
-  }
-
-  private drawEntryPoints(graphics: Phaser.GameObjects.Graphics, state: GameState) {
-    const seen = new Set<string>();
-    const entryPoints = [
-      ...state.tacticalMap.reinforcementEntryPoints,
-      ...state.tacticalMap.diapedesisPoints,
-    ].filter((entryPoint) => {
-      if (seen.has(entryPoint.id)) {
-        return false;
-      }
-
-      seen.add(entryPoint.id);
-
-      return true;
-    });
-
-    for (const entryPoint of entryPoints) {
-      const color = entryPoint.allowedUnitTypes?.includes("dendriticCell")
-        ? 0xb69cff
-        : entryPoint.allowedUnitTypes?.includes("neutrophil")
-          ? 0x62d3c8
-          : 0xffc76b;
-
-      graphics.fillStyle(color, 0.15);
-      graphics.fillCircle(entryPoint.position.x, entryPoint.position.y, entryPoint.spawnRadius);
-      graphics.lineStyle(2, color, 0.62);
-      graphics.strokeCircle(entryPoint.position.x, entryPoint.position.y, entryPoint.spawnRadius);
     }
   }
 

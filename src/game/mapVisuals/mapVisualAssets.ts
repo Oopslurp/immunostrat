@@ -5,6 +5,7 @@ import mapBgLymphUrl from "../../assets/maps/v11/backgrounds/map_bg_lymph.png";
 import mapBgMixedUrl from "../../assets/maps/v11/backgrounds/map_bg_mixed.png";
 import mapBgSkinMultiUrl from "../../assets/maps/v11/backgrounds/map_bg_skin_multi.png";
 import mapBgSkinSmallWoundUrl from "../../assets/maps/v11/backgrounds/map_bg_skin_small_wound.png";
+import diapedesisEntryRingUrl from "../../assets/maps/v11/markers/diapedesis-entry-ring.png";
 import type {
   TacticalMapDefinition,
   TacticalMapId,
@@ -95,6 +96,11 @@ export const MAP_LAYER_A_BACKGROUNDS: LayerABackgroundAsset[] = Object.values(
 
 export const MAP_LAYER_A_FALLBACK_BACKGROUND =
   MAP_LAYER_A_BACKGROUND_BY_TEMPLATE.infinite_large_tissue_template;
+
+export const DIAPEDESIS_ENTRY_MARKER_ASSET = {
+  key: "v11-diapedesis-entry-ring",
+  url: diapedesisEntryRingUrl,
+} as const;
 
 export function getLayerABackgroundForMap(
   tacticalMap: TacticalMapDefinition,
