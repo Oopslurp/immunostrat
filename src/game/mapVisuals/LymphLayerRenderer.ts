@@ -35,6 +35,10 @@ export function createLymphLayer(
   }));
 
   for (const route of styledRoutes) {
+    drawPath(graphics, route.path, toRasterStyle(style.glow));
+  }
+
+  for (const route of styledRoutes) {
     drawPath(graphics, route.path, toRasterStyle(style.shadow));
   }
 
@@ -148,6 +152,7 @@ function drawFadingBridge(
 
   const body = toRasterStyle(style.body);
   const inner = toRasterStyle(style.inner);
+  const glow = toRasterStyle(style.glow);
 
   for (let index = 1; index < points.length; index += 1) {
     const progress = index / (points.length - 1);
@@ -155,6 +160,13 @@ function drawFadingBridge(
     const innerWidth = Math.max(1, Math.round(inner.width * (1 - progress * 0.8)));
     const fade = Math.max(0.08, 1 - progress * 0.9);
 
+    graphics.lineStyle(glow.width, glow.color, glow.alpha * fade * 0.8);
+    graphics.lineBetween(
+      points[index - 1].x,
+      points[index - 1].y,
+      points[index].x,
+      points[index].y,
+    );
     graphics.lineStyle(bodyWidth, body.color, body.alpha * fade);
     graphics.lineBetween(
       points[index - 1].x,

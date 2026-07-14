@@ -115,9 +115,14 @@ describe("V3 adaptive response", () => {
     };
     const delivered = stepSimulation(nearLymphNode, 16);
 
-    expect(delivered.resources.antigens).toBe(
-      balanceValues.debris.antigenValue * balanceValues.adaptive.dendriticCarryCapacity,
-    );
+    const transiting = delivered.entities["dendritic-test"];
+
+    expect(delivered.resources.antigens).toBe(0);
+    expect(transiting.kind).toBe("dendriticCell");
+    if (transiting.kind !== "dendriticCell") {
+      throw new Error("Expected a dendritic cell");
+    }
+    expect(transiting.lymphTransit?.phase).toBe("following");
   });
 
   it("research unlocks plasmocytes and massive neutralization", () => {

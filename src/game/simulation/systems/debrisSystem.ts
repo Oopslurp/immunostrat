@@ -1,4 +1,5 @@
 import { balanceValues } from "../../data/balance";
+import { createLymphRoutes, type LymphRoute } from "../../data/lymphRoutes";
 import { missionDefinitions } from "../../data/missions";
 import { getLymphExitForMissionMap } from "../../data/tacticalMaps";
 import { pathogenDefinitions } from "../../data/pathogens";
@@ -11,6 +12,7 @@ import {
   isVirus,
   type AdvancedThreatEntity,
   type BacteriumEntity,
+  type DendriticCellEntity,
   type VirusEntity,
 } from "../entities";
 import { canCreateDebris } from "./entityLimitSystem";
@@ -20,7 +22,7 @@ export function applyDebrisSystem(state: GameState, deltaMs: number): void {
   convertDeadBacteriaToDebris(state);
   convertDeadVirusesToDebris(state);
   convertDeadAdvancedThreatsToDebris(state);
-  processDendriticCells(state);
+  processDendriticCells(state, deltaMs);
 }
 
 function decayDebris(state: GameState, deltaMs: number): void {
@@ -115,7 +117,7 @@ function createAdvancedThreatDebris(
   };
 }
 
-function processDendriticCells(state: GameState): void {
+function processDendriticCells(state: GameState, deltaMs: number): void {
   const mission = missionDefinitions[state.missionId];
   const lymphNode =
     getLymphExitForMissionMap(state.tacticalMap) ??
@@ -128,25 +130,14 @@ function processDendriticCells(state: GameState): void {
       continue;
     }
 
-    if (
-      entity.carriedDebrisCount > 0 &&
-      distance(entity.position, lymphNode) <= adaptive.lymphNodeRange
-    ) {
-      const deliveredAntigens = entity.carriedAntigenValue;
-      const deliveredSignals = entity.carriedDebrisCount;
+    if (entity.lymphTransit?.phase === "away") {
+      processDendriticReturn(state, entity, deltaMs);
+      continue;
+    }
 
-      state.resources.antigens = Math.min(
-        balanceValues.maxAntigens,
-        state.resources.antigens + deliveredAntigens,
-      );
-      state.missionStats.antigensCollected += deliveredAntigens;
-      state.missionStats.lymphSignalsDelivered += deliveredSignals;
-      entity.carriedAntigenValue = 0;
-      entity.carriedDebrisCount = 0;
-      entity.targetPosition = null;
-      entity.tacticalState = "guardingArea";
-      entity.orderAnchor = { ...lymphNode };
-      entity.lastOrderFeedback = "Signal lymphatique livre";
+    if (entity.lymphTransit?.phase === "following") {
+      advanceDendriticAlongLymph(state, entity);
+      continue;
     }
 
     if (entity.carriedDebrisCount < adaptive.dendriticCarryCapacity) {
@@ -168,10 +159,7 @@ function processDendriticCells(state: GameState): void {
     }
 
     if (entity.carriedDebrisCount >= adaptive.dendriticCarryCapacity) {
-      entity.targetPosition = { x: lymphNode.x, y: lymphNode.y };
-      entity.orderAnchor = { ...entity.targetPosition };
-      entity.tacticalState = "deliveringToLymph";
-      entity.lastOrderFeedback = "Dendritique livre un signal lymphatique";
+      beginDendriticLymphTransit(state, entity, lymphNode);
       continue;
     }
 
@@ -185,11 +173,186 @@ function processDendriticCells(state: GameState): void {
     }
 
     if (entity.carriedDebrisCount > 0) {
-      entity.targetPosition = { x: lymphNode.x, y: lymphNode.y };
-      entity.orderAnchor = { ...entity.targetPosition };
-      entity.tacticalState = "deliveringToLymph";
+      beginDendriticLymphTransit(state, entity, lymphNode);
     }
   }
+}
+
+function beginDendriticLymphTransit(
+  state: GameState,
+  entity: DendriticCellEntity,
+  fallbackExit: { x: number; y: number },
+): void {
+  const route = findNearestLymphRoute(state, entity.position);
+
+  if (!route) {
+    entity.targetPosition = { ...fallbackExit };
+    entity.orderAnchor = { ...fallbackExit };
+    entity.tacticalState = "deliveringToLymph";
+    entity.lastOrderFeedback = "Dendritique rejoint la sortie lymphatique";
+    return;
+  }
+
+  const startIndex = findNearestPointIndex(route.path, entity.position);
+
+  entity.lymphTransit = {
+    exitId: route.exitId,
+    routePointIndex: startIndex,
+    routePathLength: route.path.length,
+    phase: "following",
+    returnRemainingMs: 0,
+    visualAlpha: 1,
+  };
+  entity.targetPosition = { ...route.path[startIndex] };
+  entity.orderAnchor = { ...route.path[startIndex] };
+  entity.idleTargetPosition = null;
+  entity.explicitTargetEntityId = null;
+  entity.tacticalState = "deliveringToLymph";
+  entity.lastOrderFeedback = "Dendritique suit la lymphe";
+}
+
+function advanceDendriticAlongLymph(
+  state: GameState,
+  entity: DendriticCellEntity,
+): void {
+  const transit = entity.lymphTransit;
+  const route = transit
+    ? createLymphRoutes(state.tacticalMap).find(
+        (candidate) => candidate.exitId === transit.exitId,
+      )
+    : undefined;
+
+  if (!transit || !route) {
+    entity.lymphTransit = undefined;
+    return;
+  }
+
+  const routePoints = [...route.path, ...route.offMapBridge.slice(1)];
+  const expectedTarget = routePoints[transit.routePointIndex];
+
+  if (entity.targetPosition) {
+    if (
+      expectedTarget &&
+      distance(entity.targetPosition, expectedTarget) > 1
+    ) {
+      entity.targetPosition = { ...expectedTarget };
+      entity.orderAnchor = { ...expectedTarget };
+    }
+    updateDendriticFade(transit, routePoints.length);
+    return;
+  }
+
+  transit.routePointIndex += 1;
+
+  if (transit.routePointIndex < routePoints.length) {
+    entity.targetPosition = { ...routePoints[transit.routePointIndex] };
+    entity.orderAnchor = { ...entity.targetPosition };
+    entity.tacticalState = "deliveringToLymph";
+    updateDendriticFade(transit, routePoints.length);
+    return;
+  }
+
+  deliverDendriticAntigens(state, entity);
+  transit.phase = "away";
+  transit.returnRemainingMs = balanceValues.adaptive.dendriticLymphReturnMs;
+  transit.visualAlpha = 0;
+  entity.targetPosition = null;
+  entity.idleTargetPosition = null;
+  entity.tacticalState = "inLymphTransit";
+  entity.lastOrderFeedback = "Signal livre hors carte";
+  state.selectedEntityIds = state.selectedEntityIds.filter(
+    (entityId) => entityId !== entity.id,
+  );
+}
+
+function processDendriticReturn(
+  state: GameState,
+  entity: DendriticCellEntity,
+  deltaMs: number,
+): void {
+  const transit = entity.lymphTransit;
+
+  if (!transit) {
+    return;
+  }
+
+  transit.returnRemainingMs = Math.max(0, transit.returnRemainingMs - deltaMs);
+
+  if (transit.returnRemainingMs > 0) {
+    return;
+  }
+
+  const exit = state.tacticalMap.lymphaticExits.find(
+    (candidate) => candidate.id === transit.exitId,
+  );
+
+  if (exit) {
+    entity.position = { ...exit.position };
+    entity.orderAnchor = { ...exit.position };
+  }
+
+  entity.lymphTransit = undefined;
+  entity.targetPosition = null;
+  entity.idleTargetPosition = null;
+  entity.tacticalState = "guardingArea";
+  entity.lastOrderFeedback = "Dendritique revenue de la lymphe";
+}
+
+function deliverDendriticAntigens(
+  state: GameState,
+  entity: DendriticCellEntity,
+): void {
+  const deliveredAntigens = entity.carriedAntigenValue;
+  const deliveredSignals = entity.carriedDebrisCount;
+
+  state.resources.antigens = Math.min(
+    balanceValues.maxAntigens,
+    state.resources.antigens + deliveredAntigens,
+  );
+  state.missionStats.antigensCollected += deliveredAntigens;
+  state.missionStats.lymphSignalsDelivered += deliveredSignals;
+  entity.carriedAntigenValue = 0;
+  entity.carriedDebrisCount = 0;
+}
+
+function updateDendriticFade(
+  transit: NonNullable<DendriticCellEntity["lymphTransit"]>,
+  routePointCount: number,
+): void {
+  const offMapSteps = Math.max(1, routePointCount - transit.routePathLength);
+  const offMapProgress = Math.max(
+    0,
+    transit.routePointIndex - (transit.routePathLength - 1),
+  );
+
+  transit.visualAlpha = Math.max(0.08, 1 - offMapProgress / offMapSteps);
+}
+
+function findNearestLymphRoute(
+  state: GameState,
+  position: { x: number; y: number },
+): LymphRoute | null {
+  return createLymphRoutes(state.tacticalMap)
+    .map((route) => ({
+      route,
+      distance: Math.min(
+        ...route.path.map((point) => distance(position, point)),
+      ),
+    }))
+    .sort((left, right) => left.distance - right.distance)[0]?.route ?? null;
+}
+
+function findNearestPointIndex(
+  points: Array<{ x: number; y: number }>,
+  position: { x: number; y: number },
+): number {
+  return points.reduce(
+    (nearestIndex, point, index) =>
+      distance(position, point) < distance(position, points[nearestIndex])
+        ? index
+        : nearestIndex,
+    0,
+  );
 }
 
 function findNearestDebris(

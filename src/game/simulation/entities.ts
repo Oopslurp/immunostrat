@@ -30,6 +30,7 @@ export type ImmuneUnitEntity = {
     | "engagingNearbyTarget"
     | "collectingAntigen"
     | "deliveringToLymph"
+    | "inLymphTransit"
     | "retreating"
     | "holdingPosition";
   orderAnchor?: Vector2 | null;
@@ -41,6 +42,14 @@ export type ImmuneUnitEntity = {
   lifeRemainingMs?: number;
   carriedAntigenValue: number;
   carriedDebrisCount: number;
+  lymphTransit?: {
+    exitId: string;
+    routePointIndex: number;
+    routePathLength: number;
+    phase: "following" | "away";
+    returnRemainingMs: number;
+    visualAlpha: number;
+  };
 };
 
 export type MacrophageEntity = ImmuneUnitEntity & {

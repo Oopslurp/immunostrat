@@ -3,6 +3,7 @@ import type { TacticalMapDefinition } from "../../data/tacticalMaps";
 import {
   DIAPEDESIS_ENTRY_MARKER_ASSET,
   getLayerABackgroundForMap,
+  LYMPHATIC_EXIT_MARKER_ASSET,
 } from "../../mapVisuals/mapVisualAssets";
 
 export class PreloadScene extends Phaser.Scene {
@@ -21,6 +22,13 @@ export class PreloadScene extends Phaser.Scene {
       this.load.image(
         DIAPEDESIS_ENTRY_MARKER_ASSET.key,
         DIAPEDESIS_ENTRY_MARKER_ASSET.url,
+      );
+    }
+
+    if (!this.textures.exists(LYMPHATIC_EXIT_MARKER_ASSET.key)) {
+      this.load.image(
+        LYMPHATIC_EXIT_MARKER_ASSET.key,
+        LYMPHATIC_EXIT_MARKER_ASSET.url,
       );
     }
   }

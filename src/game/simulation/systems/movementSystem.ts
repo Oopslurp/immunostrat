@@ -2,7 +2,12 @@ import { balanceValues } from "../../data/balance";
 import { missionDefinitions } from "../../data/missions";
 import { distance, moveToward, stableHash, type Vector2 } from "../../types/shared";
 import type { GameState } from "../core/GameState";
-import { isBacterium, isImmuneUnit, type ImmuneUnitEntity } from "../entities";
+import {
+  isBacterium,
+  isDendriticCell,
+  isImmuneUnit,
+  type ImmuneUnitEntity,
+} from "../entities";
 import { getRuntimeMapBalance } from "./runtimeMapBalance";
 
 export function applyMovementSystem(state: GameState, deltaMs: number): void {
@@ -12,6 +17,13 @@ export function applyMovementSystem(state: GameState, deltaMs: number): void {
 
   for (const entity of Object.values(state.entities)) {
     if (isImmuneUnit(entity)) {
+      if (
+        isDendriticCell(entity) &&
+        entity.lymphTransit?.phase === "away"
+      ) {
+        continue;
+      }
+
       const anchor = entity.orderAnchor ?? entity.targetPosition ?? entity.position;
       const leashRadius = entity.leashRadius ?? entity.attackRange + 120;
 
@@ -53,6 +65,7 @@ export function applyMovementSystem(state: GameState, deltaMs: number): void {
       } else if (
         entity.tacticalState !== "holdingPosition" &&
         entity.tacticalState !== "deliveringToLymph" &&
+        entity.tacticalState !== "inLymphTransit" &&
         entity.tacticalState !== "collectingAntigen"
       ) {
         applyIdleMovement(state, entity, maxMoveScale);

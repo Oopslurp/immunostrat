@@ -59,6 +59,7 @@ export const balanceValues = {
   adaptive: {
     lymphNodeRange: 42,
     dendriticCarryCapacity: 3,
+    dendriticLymphReturnMs: 2000,
     bacterialAnalysisDamageMultiplier: 1.14,
     bacterialAnalysisAntigenCost: 18,
     viralAnalysisAntigenCost: 22,

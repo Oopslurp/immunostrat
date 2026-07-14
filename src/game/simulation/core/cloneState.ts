@@ -72,6 +72,9 @@ export function cloneState(state: GameState): GameState {
           ...(isImmuneUnit(entity) && entity.orderAnchor
             ? { orderAnchor: { ...entity.orderAnchor } }
             : {}),
+          ...(entity.kind === "dendriticCell" && entity.lymphTransit
+            ? { lymphTransit: { ...entity.lymphTransit } }
+            : {}),
         },
       ]),
     ),

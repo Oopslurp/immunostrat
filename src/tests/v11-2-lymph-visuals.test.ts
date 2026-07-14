@@ -33,17 +33,17 @@ describe("V11.2 procedural lymph visuals", () => {
     }
   });
 
-  it("ends every off-map bridge on a map boundary", () => {
+  it("extends every off-map bridge beyond a map boundary", () => {
     for (const tacticalMap of Object.values(tacticalMapDefinitions)) {
       for (const route of createLymphVisualRoutes(tacticalMap)) {
         const end = route.offMapBridge[route.offMapBridge.length - 1];
-        const onBoundary =
-          end.x === 0 ||
-          end.y === 0 ||
-          end.x === tacticalMap.worldWidth ||
-          end.y === tacticalMap.worldHeight;
+        const beyondBoundary =
+          end.x < 0 ||
+          end.y < 0 ||
+          end.x > tacticalMap.worldWidth ||
+          end.y > tacticalMap.worldHeight;
 
-        expect(onBoundary).toBe(true);
+        expect(beyondBoundary).toBe(true);
       }
     }
   });
@@ -55,6 +55,14 @@ describe("V11.2 procedural lymph visuals", () => {
     expect(lymph.body.width).toBeLessThan(blood.body.width);
     expect(lymph.body.alpha).toBeLessThan(blood.body.alpha);
     expect(lymph.shadow.alpha).toBeLessThan(blood.shadow.alpha);
+  });
+
+  it("adds a wider fluorescent underglow without widening the lymph body", () => {
+    const lymph = getProceduralLymphStyle();
+
+    expect(lymph.glow.width).toBeGreaterThan(lymph.body.width);
+    expect(lymph.glow.alpha).toBeLessThan(lymph.body.alpha);
+    expect(lymph.glow.color).toBe(0xeaff45);
   });
 
   it("creates a stable pixel path without Math.random", () => {

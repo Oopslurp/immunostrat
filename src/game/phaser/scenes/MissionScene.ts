@@ -28,6 +28,7 @@ import {
 import {
   DIAPEDESIS_ENTRY_MARKER_ASSET,
   getLayerABackgroundForMap,
+  LYMPHATIC_EXIT_MARKER_ASSET,
 } from "../../mapVisuals/mapVisualAssets";
 import { createVesselLayer } from "../../mapVisuals/VesselLayerRenderer";
 import { createLymphLayer } from "../../mapVisuals/LymphLayerRenderer";
@@ -66,6 +67,7 @@ export class MissionScene extends Phaser.Scene {
   private layerCLymph?: Phaser.GameObjects.RenderTexture;
   private dynamicLayer?: Phaser.GameObjects.Graphics;
   private diapedesisMarkers = new Map<string, Phaser.GameObjects.Image>();
+  private lymphaticExitMarkers = new Map<string, Phaser.GameObjects.Image>();
   private bridgeUnsubscribe?: () => void;
   private snapshotElapsedMs = 0;
   private lastPublishedStatus: GameState["status"] | null = null;
@@ -102,6 +104,7 @@ export class MissionScene extends Phaser.Scene {
     this.layerCLymph = createLymphLayer(this, map);
     this.dynamicLayer = this.add.graphics();
     this.setupDiapedesisMarkers(map);
+    this.setupLymphaticExitMarkers(map);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cleanupBridge());
     this.events.once(Phaser.Scenes.Events.DESTROY, () => this.cleanupBridge());
@@ -175,6 +178,7 @@ export class MissionScene extends Phaser.Scene {
     this.rightDragLastScreen = null;
     this.rightDragMoved = false;
     this.diapedesisMarkers.clear();
+    this.lymphaticExitMarkers.clear();
   }
 
   private setupLayerABackground(tacticalMap: TacticalMapDefinition): void {
@@ -234,6 +238,25 @@ export class MissionScene extends Phaser.Scene {
         .setAlpha(entryPoint.isDefault ? 1 : 0.9)
         .setDepth(2);
       this.diapedesisMarkers.set(entryPoint.id, marker);
+    }
+  }
+
+  private setupLymphaticExitMarkers(tacticalMap: TacticalMapDefinition): void {
+    if (!this.textures.exists(LYMPHATIC_EXIT_MARKER_ASSET.key)) {
+      return;
+    }
+
+    for (const exit of tacticalMap.lymphaticExits) {
+      const marker = this.add.image(
+        exit.position.x,
+        exit.position.y,
+        LYMPHATIC_EXIT_MARKER_ASSET.key,
+      );
+      const targetDiameter = Math.max(56, exit.radius * 2.4);
+      const uniformScale = targetDiameter / Math.max(marker.width, marker.height);
+
+      marker.setScale(uniformScale).setDepth(2);
+      this.lymphaticExitMarkers.set(exit.id, marker);
     }
   }
 
@@ -707,12 +730,13 @@ export class MissionScene extends Phaser.Scene {
       }
     }
 
-    this.drawTacticalMapTemplate(graphics, tacticalMap);
+    this.drawTacticalMapTemplate(graphics, tacticalMap, hasLayerABackground);
   }
 
   private drawTacticalMapTemplate(
     graphics: Phaser.GameObjects.Graphics,
     tacticalMap: TacticalMapDefinition,
+    hasLayerABackground: boolean,
   ): void {
     for (const zone of tacticalMap.tissueZones) {
       const color =
@@ -732,8 +756,17 @@ export class MissionScene extends Phaser.Scene {
         continue;
       }
 
-      this.drawPath(graphics, corridor.path, corridor.width, 0x54c875, 0.12);
-      this.drawPath(graphics, corridor.path, 3, 0x62d3c8, 0.3);
+      if (!hasLayerABackground) {
+        this.drawPath(graphics, corridor.path, corridor.width, 0x54c875, 0.12);
+      }
+
+      this.drawPath(
+        graphics,
+        corridor.path,
+        hasLayerABackground ? 2 : 3,
+        0x62d3c8,
+        hasLayerABackground ? 0.2 : 0.3,
+      );
     }
 
     if (!this.layerBVessels) {
@@ -770,13 +803,15 @@ export class MissionScene extends Phaser.Scene {
       graphics.fillRect(choke.position.x - 16, choke.position.y - 6, 32, 12);
     }
 
-    for (const exit of tacticalMap.lymphaticExits) {
-      graphics.fillStyle(0xf8d84a, 0.18);
-      graphics.fillCircle(exit.position.x, exit.position.y, exit.radius + 8);
-      graphics.lineStyle(4, 0xf8d84a, 0.8);
-      graphics.strokeCircle(exit.position.x, exit.position.y, exit.radius);
-      graphics.lineStyle(2, 0x99e27b, 0.58);
-      graphics.strokeCircle(exit.position.x, exit.position.y, exit.radius + 12);
+    if (!this.textures.exists(LYMPHATIC_EXIT_MARKER_ASSET.key)) {
+      for (const exit of tacticalMap.lymphaticExits) {
+        graphics.fillStyle(0xf8d84a, 0.18);
+        graphics.fillCircle(exit.position.x, exit.position.y, exit.radius + 8);
+        graphics.lineStyle(4, 0xf8d84a, 0.8);
+        graphics.strokeCircle(exit.position.x, exit.position.y, exit.radius);
+        graphics.lineStyle(2, 0x99e27b, 0.58);
+        graphics.strokeCircle(exit.position.x, exit.position.y, exit.radius + 12);
+      }
     }
   }
 
@@ -870,15 +905,28 @@ export class MissionScene extends Phaser.Scene {
   private drawEntities(graphics: Phaser.GameObjects.Graphics, state: GameState) {
     for (const entity of Object.values(state.entities)) {
       if (isImmuneUnit(entity)) {
-        graphics.fillStyle(getImmuneUnitColor(entity.kind), 0.95);
+        const transitAlpha = isDendriticCell(entity)
+          ? entity.lymphTransit?.visualAlpha ?? 1
+          : 1;
+
+        if (transitAlpha <= 0.01) {
+          continue;
+        }
+
+        const renderedRadius = entity.radius * (0.72 + transitAlpha * 0.28);
+
+        graphics.fillStyle(
+          getImmuneUnitColor(entity.kind),
+          0.95 * transitAlpha,
+        );
         if (isDendriticCell(entity)) {
           graphics.fillTriangle(
             entity.position.x,
-            entity.position.y - entity.radius,
-            entity.position.x - entity.radius,
-            entity.position.y + entity.radius,
-            entity.position.x + entity.radius,
-            entity.position.y + entity.radius,
+            entity.position.y - renderedRadius,
+            entity.position.x - renderedRadius,
+            entity.position.y + renderedRadius,
+            entity.position.x + renderedRadius,
+            entity.position.y + renderedRadius,
           );
         } else if (isPlasmocyte(entity)) {
           graphics.fillRoundedRect(
@@ -923,10 +971,14 @@ export class MissionScene extends Phaser.Scene {
         } else {
           graphics.fillCircle(entity.position.x, entity.position.y, entity.radius);
         }
-        graphics.lineStyle(3, 0xf5fbff, 0.22);
-        graphics.strokeCircle(entity.position.x, entity.position.y, entity.radius + 4);
+        graphics.lineStyle(3, 0xf5fbff, 0.22 * transitAlpha);
+        graphics.strokeCircle(
+          entity.position.x,
+          entity.position.y,
+          renderedRadius + 4,
+        );
 
-        if (state.selectedEntityIds.includes(entity.id)) {
+        if (transitAlpha >= 0.85 && state.selectedEntityIds.includes(entity.id)) {
           graphics.lineStyle(4, 0xffc76b, 0.95);
           graphics.strokeCircle(entity.position.x, entity.position.y, entity.radius + 10);
 
@@ -946,7 +998,7 @@ export class MissionScene extends Phaser.Scene {
           }
         }
 
-        if (entity.targetPosition) {
+        if (transitAlpha >= 0.85 && entity.targetPosition) {
           graphics.lineStyle(2, 0xffc76b, 0.45);
           graphics.lineBetween(
             entity.position.x,
@@ -957,7 +1009,15 @@ export class MissionScene extends Phaser.Scene {
           graphics.strokeCircle(entity.targetPosition.x, entity.targetPosition.y, 8);
         }
 
-        this.drawHealthBar(graphics, entity.position.x, entity.position.y - 34, entity.health, entity.maxHealth);
+        if (transitAlpha >= 0.85) {
+          this.drawHealthBar(
+            graphics,
+            entity.position.x,
+            entity.position.y - 34,
+            entity.health,
+            entity.maxHealth,
+          );
+        }
 
         if (isNeutrophil(entity) && entity.lifeRemainingMs !== undefined) {
           const lifeRatio = Phaser.Math.Clamp(
@@ -978,7 +1038,7 @@ export class MissionScene extends Phaser.Scene {
         }
 
         if (isDendriticCell(entity) && entity.carriedDebrisCount > 0) {
-          graphics.fillStyle(0xb69cff, 0.95);
+          graphics.fillStyle(0xb69cff, 0.95 * transitAlpha);
           for (let index = 0; index < entity.carriedDebrisCount; index += 1) {
             graphics.fillCircle(
               entity.position.x + entity.radius + index * 7,
