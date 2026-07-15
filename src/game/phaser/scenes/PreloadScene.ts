@@ -5,6 +5,10 @@ import {
   getLayerABackgroundForMap,
   LYMPHATIC_EXIT_MARKER_ASSET,
 } from "../../mapVisuals/mapVisualAssets";
+import {
+  preloadCombatCoreSource,
+  prepareCombatCoreTextures,
+} from "../../mapVisuals/combatSiteCoreAssets";
 
 export class PreloadScene extends Phaser.Scene {
   constructor(private readonly tacticalMap: TacticalMapDefinition) {
@@ -13,6 +17,8 @@ export class PreloadScene extends Phaser.Scene {
 
   preload() {
     const background = getLayerABackgroundForMap(this.tacticalMap);
+
+    preloadCombatCoreSource(this);
 
     if (!this.textures.exists(background.key)) {
       this.load.image(background.key, background.url);
@@ -34,6 +40,7 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   create() {
+    prepareCombatCoreTextures(this);
     this.scene.start("MissionScene");
     this.scene.launch("UIScene");
   }

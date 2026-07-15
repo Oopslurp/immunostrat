@@ -32,6 +32,7 @@ import {
 } from "../../mapVisuals/mapVisualAssets";
 import { createVesselLayer } from "../../mapVisuals/VesselLayerRenderer";
 import { createLymphLayer } from "../../mapVisuals/LymphLayerRenderer";
+import { CombatSiteLayerRenderer } from "../../mapVisuals/CombatSiteLayerRenderer";
 import type { GameBridge, GameSnapshot } from "../GameBridge";
 import { Simulation } from "../../simulation/core/Simulation";
 import type { GameCommand } from "../../simulation/core/commands";
@@ -65,7 +66,9 @@ export class MissionScene extends Phaser.Scene {
   private layerABackground?: Phaser.GameObjects.Image;
   private layerBVessels?: Phaser.GameObjects.RenderTexture;
   private layerCLymph?: Phaser.GameObjects.RenderTexture;
+  private mapLayer?: Phaser.GameObjects.Graphics;
   private dynamicLayer?: Phaser.GameObjects.Graphics;
+  private combatSiteRenderer?: CombatSiteLayerRenderer;
   private diapedesisMarkers = new Map<string, Phaser.GameObjects.Image>();
   private lymphaticExitMarkers = new Map<string, Phaser.GameObjects.Image>();
   private bridgeUnsubscribe?: () => void;
@@ -102,7 +105,9 @@ export class MissionScene extends Phaser.Scene {
     this.setupLayerABackground(map);
     this.layerBVessels = createVesselLayer(this, map);
     this.layerCLymph = createLymphLayer(this, map);
-    this.dynamicLayer = this.add.graphics();
+    this.mapLayer = this.add.graphics().setDepth(-72);
+    this.combatSiteRenderer = new CombatSiteLayerRenderer(this, map);
+    this.dynamicLayer = this.add.graphics().setDepth(0);
     this.setupDiapedesisMarkers(map);
     this.setupLymphaticExitMarkers(map);
 
@@ -154,7 +159,7 @@ export class MissionScene extends Phaser.Scene {
     this.updateCameraFromKeyboard(delta);
     const state = this.simulation.step(delta);
 
-    this.renderState(state);
+    this.renderState(state, delta);
     this.snapshotElapsedMs += delta;
 
     const statusChanged = state.status !== this.lastPublishedStatus;
@@ -177,6 +182,8 @@ export class MissionScene extends Phaser.Scene {
     this.rightDragStartScreen = null;
     this.rightDragLastScreen = null;
     this.rightDragMoved = false;
+    this.combatSiteRenderer?.destroy();
+    this.combatSiteRenderer = undefined;
     this.diapedesisMarkers.clear();
     this.lymphaticExitMarkers.clear();
   }
@@ -633,15 +640,18 @@ export class MissionScene extends Phaser.Scene {
     );
   }
 
-  private renderState(state: GameState) {
+  private renderState(state: GameState, deltaMs: number) {
+    const mapGraphics = this.mapLayer;
     const graphics = this.dynamicLayer;
 
-    if (!graphics) {
+    if (!mapGraphics || !graphics) {
       return;
     }
 
+    mapGraphics.clear();
     graphics.clear();
-    this.drawMap(graphics, state);
+    this.drawMap(mapGraphics, state);
+    this.combatSiteRenderer?.update(state, deltaMs);
     this.drawTissueCells(graphics, state);
     this.drawAntiviralZone(graphics, state);
     this.drawInflammatoryZones(graphics, state);
@@ -779,17 +789,6 @@ export class MissionScene extends Phaser.Scene {
 
     for (const obstacle of tacticalMap.obstacles) {
       this.drawTacticalShape(graphics, obstacle.shape, 0x071217, 0.24, 2, 0x9eb27f, 0.2);
-    }
-
-    for (const site of tacticalMap.combatSites) {
-      graphics.fillStyle(0xff7f33, 0.12);
-      graphics.fillCircle(site.position.x, site.position.y, site.radius);
-      graphics.lineStyle(4, site.initialStatus === "critical" ? 0xff4f5d : 0xff9f43, 0.62);
-      graphics.strokeCircle(site.position.x, site.position.y, site.radius);
-      graphics.fillStyle(0x9b243d, 0.78);
-      graphics.fillCircle(site.position.x, site.position.y, 18);
-      graphics.lineStyle(3, 0xffe18a, 0.84);
-      graphics.strokeCircle(site.position.x, site.position.y, 24);
     }
 
     for (const spawnZone of tacticalMap.pathogenSpawnZones) {

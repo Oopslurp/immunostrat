@@ -3263,8 +3263,11 @@
   top: 5.45rem;
   left: 0.9rem;
   width: min(278px, calc(42vw - 1rem));
-  min-height: 340px;
-  padding: 1rem 0.96rem 0.94rem;
+  height: auto;
+  aspect-ratio: 2 / 3;
+  min-height: 0;
+  padding: 1.08rem 1.78rem 1.38rem;
+  overflow: hidden;
   background:
     linear-gradient(180deg, rgba(3, 8, 15, 0.58), rgba(3, 8, 15, 0.36)),
     url("../assets/battle-hud/hud-squad-panel-clean.png") center / 100% 100% no-repeat;
@@ -3312,7 +3315,7 @@
   display: grid;
   gap: 0.08rem;
   border-bottom: 1px solid rgba(98, 211, 200, 0.16);
-  padding-bottom: 0.46rem;
+  padding: 0 0.12rem 0.38rem;
 }
 
 .battle-selection-summary strong {
@@ -3330,8 +3333,8 @@
 .battle-squad-slots {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.42rem;
-  padding: 0.08rem 0.22rem;
+  gap: 0.34rem;
+  padding: 0.04rem 0.1rem;
 }
 
 .battle-squad-slot {
@@ -3426,6 +3429,21 @@
 .battle-details-panel > div {
   display: grid;
   gap: 0.42rem;
+}
+
+.battle-selection-panel .battle-composition-list {
+  min-height: 0;
+  max-height: 82px;
+  overflow-y: auto;
+  padding-right: 0.08rem;
+  scrollbar-width: thin;
+}
+
+.battle-selection-panel .battle-selection-note {
+  margin: 0;
+  padding: 0 0.12rem;
+  line-height: 1.28;
+  overflow-wrap: anywhere;
 }
 
 .battle-composition-list span,
@@ -3793,6 +3811,12 @@
   .battle-selection-panel,
   .battle-objective-panel {
     margin-top: 0.6rem;
+  }
+
+  .battle-selection-panel {
+    height: auto;
+    aspect-ratio: auto;
+    overflow: visible;
   }
 
   .game-page .battle-command-bar {
