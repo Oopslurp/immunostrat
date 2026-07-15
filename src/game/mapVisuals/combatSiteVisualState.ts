@@ -181,7 +181,7 @@ export function createCorruptionPattern(
         ? 4 + Math.floor(deterministicValue(site.id, index, 29) * 5)
         : 5 + Math.floor(deterministicValue(site.id, index, 29) * 8),
       color: corruptionColor,
-      alpha: 0.12 + (1 - radialProgress) * 0.13,
+      alpha: 0.045 + (1 - radialProgress) * 0.065,
       radialProgress,
       pulseOffset: deterministicValue(site.id, index, 37) * Math.PI * 2,
     };
@@ -221,7 +221,7 @@ export function createCorruptionBranches(
       points: primaryPoints,
       width: 5 + Math.floor(deterministicValue(site.id, index, 109) * 3),
       color: corruptionColor,
-      alpha: 0.18 + deterministicValue(site.id, index, 127) * 0.08,
+      alpha: 0.09 + deterministicValue(site.id, index, 127) * 0.045,
       radialProgress: endRadius / site.radius,
       generation: "primary",
     });
@@ -251,7 +251,9 @@ export function createCorruptionBranches(
         points: childPoints,
         width: 3 + Math.floor(deterministicValue(site.id, index * 2 + childIndex, 149) * 2),
         color: corruptionColor,
-        alpha: 0.14 + deterministicValue(site.id, index * 2 + childIndex, 151) * 0.07,
+        alpha:
+          0.065 +
+          deterministicValue(site.id, index * 2 + childIndex, 151) * 0.04,
         radialProgress:
           Math.hypot(childPoints.at(-1)?.x ?? 0, childPoints.at(-1)?.y ?? 0) /
           site.radius,

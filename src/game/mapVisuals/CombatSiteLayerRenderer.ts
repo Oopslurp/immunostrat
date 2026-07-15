@@ -399,8 +399,6 @@ export class CombatSiteLayerRenderer {
       const ringColor =
         site.initialStatus === "critical" ? 0xff5966 : 0xffa43b;
 
-      this.zoneLayer.fillStyle(0xff7f33, 0.055 + pulse * 0.35);
-      this.zoneLayer.fillCircle(site.position.x, site.position.y, site.radius);
       this.zoneLayer.lineStyle(3, ringColor, 0.68 + pulse);
       this.zoneLayer.strokeCircle(site.position.x, site.position.y, site.radius);
 

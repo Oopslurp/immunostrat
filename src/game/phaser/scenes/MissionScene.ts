@@ -33,6 +33,7 @@ import {
 import { createVesselLayer } from "../../mapVisuals/VesselLayerRenderer";
 import { createLymphLayer } from "../../mapVisuals/LymphLayerRenderer";
 import { CombatSiteLayerRenderer } from "../../mapVisuals/CombatSiteLayerRenderer";
+import { InflammationFieldRenderer } from "../../mapVisuals/InflammationFieldRenderer";
 import type { GameBridge, GameSnapshot } from "../GameBridge";
 import { Simulation } from "../../simulation/core/Simulation";
 import type { GameCommand } from "../../simulation/core/commands";
@@ -69,6 +70,7 @@ export class MissionScene extends Phaser.Scene {
   private mapLayer?: Phaser.GameObjects.Graphics;
   private dynamicLayer?: Phaser.GameObjects.Graphics;
   private combatSiteRenderer?: CombatSiteLayerRenderer;
+  private inflammationFieldRenderer?: InflammationFieldRenderer;
   private diapedesisMarkers = new Map<string, Phaser.GameObjects.Image>();
   private lymphaticExitMarkers = new Map<string, Phaser.GameObjects.Image>();
   private bridgeUnsubscribe?: () => void;
@@ -106,6 +108,7 @@ export class MissionScene extends Phaser.Scene {
     this.layerBVessels = createVesselLayer(this, map);
     this.layerCLymph = createLymphLayer(this, map);
     this.mapLayer = this.add.graphics().setDepth(-72);
+    this.inflammationFieldRenderer = new InflammationFieldRenderer(this, map);
     this.combatSiteRenderer = new CombatSiteLayerRenderer(this, map);
     this.dynamicLayer = this.add.graphics().setDepth(0);
     this.setupDiapedesisMarkers(map);
@@ -184,6 +187,8 @@ export class MissionScene extends Phaser.Scene {
     this.rightDragMoved = false;
     this.combatSiteRenderer?.destroy();
     this.combatSiteRenderer = undefined;
+    this.inflammationFieldRenderer?.destroy();
+    this.inflammationFieldRenderer = undefined;
     this.diapedesisMarkers.clear();
     this.lymphaticExitMarkers.clear();
   }
@@ -651,10 +656,10 @@ export class MissionScene extends Phaser.Scene {
     mapGraphics.clear();
     graphics.clear();
     this.drawMap(mapGraphics, state);
+    this.inflammationFieldRenderer?.update(state, deltaMs);
     this.combatSiteRenderer?.update(state, deltaMs);
     this.drawTissueCells(graphics, state);
     this.drawAntiviralZone(graphics, state);
-    this.drawInflammatoryZones(graphics, state);
     this.drawBiofilms(graphics, state);
     this.drawDebris(graphics, state);
     this.drawEntities(graphics, state);
@@ -1152,20 +1157,6 @@ export class MissionScene extends Phaser.Scene {
       );
       graphics.lineStyle(1, 0xf5fbff, 0.3);
       graphics.strokeCircle(debris.position.x, debris.position.y, 10);
-    }
-  }
-
-  private drawInflammatoryZones(
-    graphics: Phaser.GameObjects.Graphics,
-    state: GameState,
-  ) {
-    for (const zone of state.inflammatoryZones) {
-      const alpha = Phaser.Math.Clamp(zone.intensity, 0.08, 0.42);
-
-      graphics.fillStyle(0xff7f33, alpha * 0.45);
-      graphics.fillCircle(zone.position.x, zone.position.y, zone.radius);
-      graphics.lineStyle(2, 0xffc76b, alpha);
-      graphics.strokeCircle(zone.position.x, zone.position.y, zone.radius);
     }
   }
 
