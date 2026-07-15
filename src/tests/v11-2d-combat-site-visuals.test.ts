@@ -7,6 +7,8 @@ import {
   getCombatCoreFrameKey,
 } from "../game/mapVisuals/combatSiteCoreAssets";
 import {
+  advanceCorruptionProgress,
+  createCorruptionBranches,
   createCorruptionPattern,
   createLostTissuePattern,
   getHostileCountsByCombatSite,
@@ -40,14 +42,47 @@ describe("V11.2D combat-site visuals", () => {
     const second = createCorruptionPattern(site);
 
     expect(first).toEqual(second);
-    expect(first).toHaveLength(46);
+    expect(first).toHaveLength(118);
     expect(
       first.every(
-        (spot) => Math.hypot(spot.x, spot.y) <= site.radius * 1.16,
+        (spot) =>
+          Math.hypot(spot.x, spot.y) + spot.size / 2 <= site.radius * 0.96,
       ),
     ).toBe(true);
-    expect(first.every((spot) => spot.alpha < 0.25)).toBe(true);
+    expect(new Set(first.map((spot) => spot.color))).toEqual(new Set([0x713b8f]));
+    expect(first.every((spot) => spot.alpha < 0.26)).toBe(true);
     expect(JSON.stringify(site)).toBe(snapshot);
+  });
+
+  it("builds deterministic primary and secondary spore branches inside the local site", () => {
+    const site = tacticalMapDefinitions.skin_small_wound_fixed.combatSites[0];
+    const branches = createCorruptionBranches(site);
+
+    expect(branches).toEqual(createCorruptionBranches(site));
+    expect(branches).toHaveLength(36);
+    expect(branches.filter((branch) => branch.generation === "primary")).toHaveLength(12);
+    expect(branches.filter((branch) => branch.generation === "secondary")).toHaveLength(24);
+    expect(new Set(branches.map((branch) => branch.color))).toEqual(new Set([0x713b8f]));
+    expect(
+      branches.every(
+        (branch) =>
+          branch.points.every(
+            (point) => Math.hypot(point.x, point.y) <= site.radius * 0.98,
+          ),
+      ),
+    ).toBe(true);
+  });
+
+  it("opens and closes local corruption over one second", () => {
+    const halfwayOpen = advanceCorruptionProgress(0, true, 500);
+    const fullyOpen = advanceCorruptionProgress(halfwayOpen, true, 500);
+    const halfwayClosed = advanceCorruptionProgress(fullyOpen, false, 500);
+    const fullyClosed = advanceCorruptionProgress(halfwayClosed, false, 500);
+
+    expect(halfwayOpen).toBe(0.5);
+    expect(fullyOpen).toBe(1);
+    expect(halfwayClosed).toBe(0.5);
+    expect(fullyClosed).toBe(0);
   });
 
   it("creates deterministic lost-tissue pixels inside the local site", () => {

@@ -10,12 +10,15 @@ import {
   type CombatCoreAnimationState,
 } from "./combatSiteCoreAssets";
 import {
+  advanceCorruptionProgress,
+  createCorruptionBranches,
   createCorruptionPattern,
   createLostTissuePattern,
   getHostileCountsByCombatSite,
   getUpcomingCombatSiteActivation,
   isCombatSiteLocallyLost,
   type CombatSiteVisualPhase,
+  type CorruptionBranch,
   type CorruptionSpot,
   type LostTissuePixel,
 } from "./combatSiteVisualState";
@@ -39,6 +42,7 @@ type CombatSiteRuntime = {
   activeElapsedMs: number;
   clearElapsedMs: number;
   corruptionProgress: number;
+  corruptionBranches: CorruptionBranch[];
   corruptionPattern: CorruptionSpot[];
   lostPattern: LostTissuePixel[];
 };
@@ -86,6 +90,7 @@ export class CombatSiteLayerRenderer {
         activeElapsedMs: 0,
         clearElapsedMs: 0,
         corruptionProgress: 0,
+        corruptionBranches: createCorruptionBranches(site),
         corruptionPattern: createCorruptionPattern(site),
         lostPattern: createLostTissuePattern(site),
       });
@@ -152,14 +157,11 @@ export class CombatSiteLayerRenderer {
       runtime.activeElapsedMs >= CORRUPTION_DELAY_MS
         ? 1
         : 0;
-    const corruptionStep = deltaMs / CORRUPTION_TRANSITION_MS;
-    const corruptionDifference = corruptionTarget - runtime.corruptionProgress;
-    runtime.corruptionProgress = Phaser.Math.Clamp(
-      runtime.corruptionProgress +
-        Math.sign(corruptionDifference) *
-          Math.min(corruptionStep, Math.abs(corruptionDifference)),
-      0,
-      1,
+    runtime.corruptionProgress = advanceCorruptionProgress(
+      runtime.corruptionProgress,
+      corruptionTarget === 1,
+      deltaMs,
+      CORRUPTION_TRANSITION_MS,
     );
 
     const nextPhase = this.getNextPhase(
@@ -275,12 +277,20 @@ export class CombatSiteLayerRenderer {
       }
 
       const { site } = runtime;
-      this.corruptionLayer.fillStyle(0x9c3040, 0.028 * progress);
-      this.corruptionLayer.fillCircle(
-        site.position.x,
-        site.position.y,
-        site.radius * (0.24 + progress * 0.78),
-      );
+
+      for (const branch of runtime.corruptionBranches) {
+        const reveal = Phaser.Math.Clamp(
+          (progress - branch.radialProgress + 0.42) / 0.42,
+          0,
+          1,
+        );
+
+        if (reveal <= 0) {
+          continue;
+        }
+
+        this.drawCorruptionBranch(site, branch, reveal, progress);
+      }
 
       for (const spot of runtime.corruptionPattern) {
         const reveal = Phaser.Math.Clamp(
@@ -293,7 +303,7 @@ export class CombatSiteLayerRenderer {
           continue;
         }
 
-        const pulse = 0.92 + Math.sin(elapsedMs * 0.0022 + spot.pulseOffset) * 0.08;
+        const pulse = 0.94 + Math.sin(elapsedMs * 0.0022 + spot.pulseOffset) * 0.06;
         const size = Math.max(2, Math.round(spot.size * (0.72 + progress * 0.28)));
         this.corruptionLayer.fillStyle(
           spot.color,
@@ -307,11 +317,55 @@ export class CombatSiteLayerRenderer {
         );
       }
 
-      this.corruptionLayer.fillStyle(0xff6a3d, 0.065 * progress);
-      this.corruptionLayer.fillCircle(
-        site.position.x,
-        site.position.y,
-        22 + progress * 16,
+    }
+  }
+
+  private drawCorruptionBranch(
+    site: CombatSiteDefinition,
+    branch: CorruptionBranch,
+    reveal: number,
+    progress: number,
+  ): void {
+    const segmentCount = branch.points.length - 1;
+    const alpha = branch.alpha * progress * (0.72 + reveal * 0.28);
+
+    this.corruptionLayer.lineStyle(branch.width, branch.color, alpha);
+
+    for (let index = 0; index < segmentCount; index += 1) {
+      const segmentStart = index / segmentCount;
+      const segmentReveal = Phaser.Math.Clamp(
+        (reveal - segmentStart) * segmentCount,
+        0,
+        1,
+      );
+
+      if (segmentReveal <= 0) {
+        break;
+      }
+
+      const start = branch.points[index];
+      const target = branch.points[index + 1];
+
+      if (!start || !target) {
+        continue;
+      }
+
+      const endX = Phaser.Math.Linear(start.x, target.x, segmentReveal);
+      const endY = Phaser.Math.Linear(start.y, target.y, segmentReveal);
+      this.corruptionLayer.lineBetween(
+        site.position.x + start.x,
+        site.position.y + start.y,
+        site.position.x + endX,
+        site.position.y + endY,
+      );
+
+      const jointSize = branch.generation === "primary" ? branch.width + 2 : branch.width;
+      this.corruptionLayer.fillStyle(branch.color, alpha);
+      this.corruptionLayer.fillRect(
+        Math.round(site.position.x + endX - jointSize / 2),
+        Math.round(site.position.y + endY - jointSize / 2),
+        jointSize,
+        jointSize,
       );
     }
   }
