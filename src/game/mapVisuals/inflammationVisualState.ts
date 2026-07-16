@@ -188,7 +188,7 @@ export function createCytokineSignals(
       durationMs: Math.round(lerp(1_450, 2_250, deterministicValue(site.id, index, 73))),
       phaseOffsetMs: Math.round(deterministicValue(site.id, index, 79) * 2_000),
       size: 2 + Math.floor(deterministicValue(site.id, index, 83) * 3),
-      color: deterministicValue(site.id, index, 89) > 0.45 ? 0xffc34d : 0xf08b35,
+      color: deterministicValue(site.id, index, 89) > 0.45 ? 0xffdb70 : 0xffad47,
     };
   });
 }

@@ -158,6 +158,7 @@ export function createCorruptionPattern(
   spotCount = 118,
 ): CorruptionSpot[] {
   const corruptionColor = 0x713b8f;
+  const corruptionAlpha = 0.65;
 
   return Array.from({ length: spotCount }, (_, index) => {
     const angle = deterministicValue(site.id, index, 11) * Math.PI * 2;
@@ -181,7 +182,7 @@ export function createCorruptionPattern(
         ? 4 + Math.floor(deterministicValue(site.id, index, 29) * 5)
         : 5 + Math.floor(deterministicValue(site.id, index, 29) * 8),
       color: corruptionColor,
-      alpha: 0.045 + (1 - radialProgress) * 0.065,
+      alpha: corruptionAlpha,
       radialProgress,
       pulseOffset: deterministicValue(site.id, index, 37) * Math.PI * 2,
     };
@@ -194,6 +195,7 @@ export function createCorruptionBranches(
 ): CorruptionBranch[] {
   const branches: CorruptionBranch[] = [];
   const corruptionColor = 0x713b8f;
+  const corruptionAlpha = 0.65;
   const siteRotation = deterministicValue(site.id, 0, 89) * Math.PI * 2;
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
 
@@ -221,7 +223,7 @@ export function createCorruptionBranches(
       points: primaryPoints,
       width: 5 + Math.floor(deterministicValue(site.id, index, 109) * 3),
       color: corruptionColor,
-      alpha: 0.09 + deterministicValue(site.id, index, 127) * 0.045,
+      alpha: corruptionAlpha,
       radialProgress: endRadius / site.radius,
       generation: "primary",
     });
@@ -251,9 +253,7 @@ export function createCorruptionBranches(
         points: childPoints,
         width: 3 + Math.floor(deterministicValue(site.id, index * 2 + childIndex, 149) * 2),
         color: corruptionColor,
-        alpha:
-          0.065 +
-          deterministicValue(site.id, index * 2 + childIndex, 151) * 0.04,
+        alpha: corruptionAlpha,
         radialProgress:
           Math.hypot(childPoints.at(-1)?.x ?? 0, childPoints.at(-1)?.y ?? 0) /
           site.radius,

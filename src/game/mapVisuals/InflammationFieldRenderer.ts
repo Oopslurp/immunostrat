@@ -209,7 +209,7 @@ export class InflammationFieldRenderer {
     for (let index = 0; index < signalCount; index += 1) {
       const signal = runtime.signals[index];
       const frame = getCytokineSignalFrame(signal, elapsedMs);
-      const alpha = frame.alpha * runtime.progress * 0.94;
+      const alpha = frame.alpha * runtime.progress * 0.98;
       const size = Math.max(1, signal.size - (frame.progress > 0.72 ? 1 : 0));
 
       this.signalLayer.fillStyle(signal.color, alpha);
@@ -221,7 +221,7 @@ export class InflammationFieldRenderer {
       );
 
       if (size >= 3) {
-        this.signalLayer.fillStyle(0xffe08a, alpha * 0.48);
+        this.signalLayer.fillStyle(0xfff0b0, alpha * 0.58);
         this.signalLayer.fillRect(
           Math.round(frame.position.x),
           Math.round(frame.position.y),

@@ -50,9 +50,7 @@ describe("V11.2D combat-site visuals", () => {
       ),
     ).toBe(true);
     expect(new Set(first.map((spot) => spot.color))).toEqual(new Set([0x713b8f]));
-    expect(first.every((spot) => spot.alpha >= 0.045 && spot.alpha <= 0.11)).toBe(
-      true,
-    );
+    expect(first.every((spot) => spot.alpha === 0.65)).toBe(true);
     expect(JSON.stringify(site)).toBe(snapshot);
   });
 
@@ -65,7 +63,7 @@ describe("V11.2D combat-site visuals", () => {
     expect(branches.filter((branch) => branch.generation === "primary")).toHaveLength(12);
     expect(branches.filter((branch) => branch.generation === "secondary")).toHaveLength(24);
     expect(new Set(branches.map((branch) => branch.color))).toEqual(new Set([0x713b8f]));
-    expect(branches.every((branch) => branch.alpha <= 0.135)).toBe(true);
+    expect(branches.every((branch) => branch.alpha === 0.65)).toBe(true);
     expect(
       branches.every(
         (branch) =>
