@@ -753,17 +753,19 @@ export class MissionScene extends Phaser.Scene {
     tacticalMap: TacticalMapDefinition,
     hasLayerABackground: boolean,
   ): void {
-    for (const zone of tacticalMap.tissueZones) {
-      const color =
-        zone.status === "infected"
-          ? 0x9fcf58
-          : zone.status === "inflamed"
-            ? 0xd7b75b
-            : zone.status === "fragile"
-              ? 0x78b96c
-              : 0x65b878;
+    if (!hasLayerABackground) {
+      for (const zone of tacticalMap.tissueZones) {
+        const color =
+          zone.status === "infected"
+            ? 0x9fcf58
+            : zone.status === "inflamed"
+              ? 0xd7b75b
+              : zone.status === "fragile"
+                ? 0x78b96c
+                : 0x65b878;
 
-      this.drawTacticalShape(graphics, zone.shape, color, 0.14, 2, 0xceeaa2, 0.24);
+        this.drawTacticalShape(graphics, zone.shape, color, 0.14, 2, 0xceeaa2, 0.24);
+      }
     }
 
     for (const corridor of tacticalMap.corridors) {
@@ -992,12 +994,6 @@ export class MissionScene extends Phaser.Scene {
               entity.orderAnchor.x,
               entity.orderAnchor.y,
               entity.engagementRadius ?? entity.attackRange,
-            );
-            graphics.lineStyle(1, 0xf5fbff, 0.18);
-            graphics.strokeCircle(
-              entity.orderAnchor.x,
-              entity.orderAnchor.y,
-              entity.leashRadius ?? entity.attackRange + 120,
             );
           }
         }

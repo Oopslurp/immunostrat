@@ -10,11 +10,15 @@ import { getHostileCountsByCombatSite } from "./combatSiteVisualState";
 import {
   advanceInflammationFieldProgress,
   createCytokineSignals,
+  createInflammationBoundary,
   createInflammationPatches,
   createInflammationPulsePixels,
   getCytokineSignalFrame,
+  getInflammationBreathFrame,
+  getInflammationFieldRadius,
   getInflammationVisualProfile,
   type CytokineSignal,
+  type InflammationBoundaryPoint,
   type InflammationPatch,
   type InflammationPulsePixel,
   type InflammationVisualProfile,
@@ -31,8 +35,10 @@ export const INFLAMMATION_SIGNAL_DEPTH = -68;
 
 type InflammationSiteRuntime = {
   site: CombatSiteDefinition;
+  fieldRadius: number;
   progress: number;
   active: boolean;
+  boundary: InflammationBoundaryPoint[];
   patches: InflammationPatch[];
   pulsePixels: InflammationPulsePixel[];
   signals: CytokineSignal[];
@@ -80,14 +86,23 @@ export class InflammationFieldRenderer {
           responseWidth: style.inner.width,
         };
       });
-    this.sites = tacticalMap.combatSites.map((site) => ({
-      site,
-      progress: 0,
-      active: false,
-      patches: createInflammationPatches(site),
-      pulsePixels: createInflammationPulsePixels(site),
-      signals: createCytokineSignals(site, tacticalMap.vesselPaths),
-    }));
+    this.sites = tacticalMap.combatSites.map((site) => {
+      const fieldRadius = getInflammationFieldRadius(
+        site,
+        tacticalMap.tissueZones,
+      );
+
+      return {
+        site,
+        fieldRadius,
+        progress: 0,
+        active: false,
+        boundary: createInflammationBoundary(site),
+        patches: createInflammationPatches(site, fieldRadius),
+        pulsePixels: createInflammationPulsePixels(site),
+        signals: createCytokineSignals(site, tacticalMap.vesselPaths),
+      };
+    });
   }
 
   update(state: GameState, deltaMs: number): void {
@@ -110,7 +125,7 @@ export class InflammationFieldRenderer {
         continue;
       }
 
-      this.drawLocalVesselResponse(runtime, profile);
+      this.drawLocalVesselResponse(runtime, profile, state.elapsedMs);
       this.drawInflammationField(runtime, profile, state.elapsedMs);
       this.drawInflammationPulse(runtime, profile, state.elapsedMs);
       this.drawCytokineSignals(runtime, profile, state.elapsedMs);
@@ -131,10 +146,13 @@ export class InflammationFieldRenderer {
     elapsedMs: number,
   ): void {
     const { site } = runtime;
-    const expansion = 0.88 + runtime.progress * 0.12;
+    const breath = getInflammationBreathFrame(profile, elapsedMs);
+    const expansion = (0.88 + runtime.progress * 0.12) * breath.scale;
+
+    this.drawIrregularField(runtime, profile, breath.amount, expansion);
 
     for (const patch of runtime.patches) {
-      const shimmer = 0.9 + Math.sin(elapsedMs * 0.0018 + patch.phase) * 0.1;
+      const shimmer = 0.88 + Math.sin(elapsedMs * 0.0018 + patch.phase) * 0.12;
       const alpha =
         profile.fieldAlpha * runtime.progress * patch.alphaWeight * shimmer;
       const x = site.position.x + patch.x * expansion;
@@ -162,6 +180,48 @@ export class InflammationFieldRenderer {
     }
   }
 
+  private drawIrregularField(
+    runtime: InflammationSiteRuntime,
+    profile: InflammationVisualProfile,
+    breathAmount: number,
+    expansion: number,
+  ): void {
+    const points = runtime.boundary.map((point) => {
+      const localRipple = 1 + Math.sin(point.phase + breathAmount * Math.PI) * 0.018;
+      const radius = runtime.fieldRadius * point.radiusRatio * expansion * localRipple;
+
+      return {
+        x: runtime.site.position.x + Math.cos(point.angle) * radius,
+        y: runtime.site.position.y + Math.sin(point.angle) * radius,
+      };
+    });
+
+    this.fillPolygon(points, 0xc95052, profile.fieldAlpha * runtime.progress * 0.42);
+
+    const innerPoints = points.map((point) => ({
+      x: runtime.site.position.x + (point.x - runtime.site.position.x) * 0.72,
+      y: runtime.site.position.y + (point.y - runtime.site.position.y) * 0.72,
+    }));
+    this.fillPolygon(innerPoints, 0xe06a4f, profile.fieldAlpha * runtime.progress * 0.28);
+  }
+
+  private fillPolygon(points: MapPoint[], color: number, alpha: number): void {
+    const first = points[0];
+
+    if (!first) {
+      return;
+    }
+
+    this.fieldLayer.fillStyle(color, alpha);
+    this.fieldLayer.beginPath();
+    this.fieldLayer.moveTo(first.x, first.y);
+    for (let index = 1; index < points.length; index += 1) {
+      this.fieldLayer.lineTo(points[index].x, points[index].y);
+    }
+    this.fieldLayer.closePath();
+    this.fieldLayer.fillPath();
+  }
+
   private drawInflammationPulse(
     runtime: InflammationSiteRuntime,
     profile: InflammationVisualProfile,
@@ -170,32 +230,75 @@ export class InflammationFieldRenderer {
     const pulseProgress =
       ((elapsedMs % profile.pulseDurationMs) + profile.pulseDurationMs) %
       profile.pulseDurationMs / profile.pulseDurationMs;
-    const radius = runtime.site.radius * (0.16 + pulseProgress * 0.82);
-    const fade = Math.pow(1 - pulseProgress, 1.45);
+    const radius = runtime.fieldRadius * (0.1 + pulseProgress * 0.88);
+    const fade = Math.pow(1 - pulseProgress, 1.25);
 
     for (let index = 0; index < runtime.pulsePixels.length; index += 1) {
-      if ((index + Math.floor(pulseProgress * 8)) % 5 === 0) {
+      if ((index + Math.floor(pulseProgress * 7)) % 6 === 0) {
         continue;
       }
 
       const pixel = runtime.pulsePixels[index];
-      const wobble = 1 + Math.sin(elapsedMs * 0.002 + pixel.angle * 3) * 0.025;
-      const x = runtime.site.position.x + Math.cos(pixel.angle) * radius * wobble;
-      const y = runtime.site.position.y + Math.sin(pixel.angle) * radius * wobble;
+      const localRadius = radius * (1 + pixel.radialOffset);
+      const startAngle = pixel.angle - pixel.span / 2;
+      const endAngle = pixel.angle + pixel.span / 2;
       const alpha =
-        profile.fieldAlpha *
+        profile.pulseAlpha *
         runtime.progress *
         fade *
         pixel.alphaWeight *
-        0.82;
+        1;
 
-      this.fieldLayer.fillStyle(0xffb43f, alpha);
-      this.fieldLayer.fillRect(
-        Math.round(x - pixel.size / 2),
-        Math.round(y - pixel.size / 2),
-        pixel.size,
-        pixel.size,
+      this.drawPulseArc(
+        runtime.site.position,
+        localRadius,
+        startAngle,
+        endAngle,
+        pixel.thickness,
+        alpha,
       );
+    }
+  }
+
+  private drawPulseArc(
+    center: MapPoint,
+    radius: number,
+    startAngle: number,
+    endAngle: number,
+    thickness: number,
+    alpha: number,
+  ): void {
+    const pointCount = 4;
+    const points = Array.from({ length: pointCount }, (_, index) => {
+      const ratio = index / (pointCount - 1);
+      const angle = startAngle + (endAngle - startAngle) * ratio;
+      const organicOffset = Math.sin(angle * 5 + radius * 0.017) * 1.5;
+
+      return {
+        x: center.x + Math.cos(angle) * (radius + organicOffset),
+        y: center.y + Math.sin(angle) * (radius + organicOffset),
+      };
+    });
+
+    this.strokePolyline(points, thickness * 1.85, 0x9f3548, alpha * 0.68);
+    this.strokePolyline(points, thickness, 0xffb04d, alpha);
+    this.strokePolyline(points, Math.max(1.5, thickness * 0.3), 0xffe09a, alpha * 0.72);
+  }
+
+  private strokePolyline(
+    points: MapPoint[],
+    width: number,
+    color: number,
+    alpha: number,
+  ): void {
+    this.fieldLayer.lineStyle(width, color, alpha);
+
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const start = points[index];
+      const end = points[index + 1];
+      this.fieldLayer.lineBetween(start.x, start.y, end.x, end.y);
+      this.fieldLayer.fillStyle(color, alpha);
+      this.fieldLayer.fillCircle(end.x, end.y, width / 2);
     }
   }
 
@@ -235,9 +338,12 @@ export class InflammationFieldRenderer {
   private drawLocalVesselResponse(
     runtime: InflammationSiteRuntime,
     profile: InflammationVisualProfile,
+    elapsedMs: number,
   ): void {
-    const responseRadius = runtime.site.radius * 1.28;
-    const alpha = profile.vesselAlpha * runtime.progress;
+    const responseRadius = runtime.fieldRadius * 0.82;
+    const breath = getInflammationBreathFrame(profile, elapsedMs);
+    const alpha =
+      profile.vesselAlpha * runtime.progress * (0.84 + breath.amount * 0.16);
 
     for (const path of this.vesselPaths) {
       for (let index = 0; index < path.points.length - 1; index += 1) {
@@ -252,7 +358,9 @@ export class InflammationFieldRenderer {
           continue;
         }
 
-        const width = path.responseWidth + profile.vesselWidthBoost;
+        const width =
+          path.responseWidth +
+          profile.vesselWidthBoost * (0.84 + breath.amount * 0.16);
         this.drawWarmVesselSegment(clipped.start, clipped.end, width, alpha);
       }
     }
@@ -264,16 +372,22 @@ export class InflammationFieldRenderer {
     width: number,
     alpha: number,
   ): void {
-    this.vesselResponseLayer.lineStyle(width, 0xd95a49, alpha);
+    this.vesselResponseLayer.lineStyle(width + 2, 0x713448, alpha * 0.28);
     this.vesselResponseLayer.beginPath();
     this.vesselResponseLayer.moveTo(start.x, start.y);
     this.vesselResponseLayer.lineTo(end.x, end.y);
     this.vesselResponseLayer.strokePath();
-    this.vesselResponseLayer.fillStyle(0xd95a49, alpha);
+
+    this.vesselResponseLayer.lineStyle(width, 0xc9565b, alpha);
+    this.vesselResponseLayer.beginPath();
+    this.vesselResponseLayer.moveTo(start.x, start.y);
+    this.vesselResponseLayer.lineTo(end.x, end.y);
+    this.vesselResponseLayer.strokePath();
+    this.vesselResponseLayer.fillStyle(0xc9565b, alpha);
     this.vesselResponseLayer.fillCircle(start.x, start.y, width / 2);
     this.vesselResponseLayer.fillCircle(end.x, end.y, width / 2);
 
-    this.vesselResponseLayer.lineStyle(1, 0xffa464, alpha * 0.72);
+    this.vesselResponseLayer.lineStyle(1, 0xf29a78, alpha * 0.58);
     this.vesselResponseLayer.beginPath();
     this.vesselResponseLayer.moveTo(start.x, start.y - 1);
     this.vesselResponseLayer.lineTo(end.x, end.y - 1);

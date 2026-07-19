@@ -1,6 +1,7 @@
 import type {
   CombatSiteDefinition,
   MapPoint,
+  TacticalMapDefinition,
   VesselPathDefinition,
 } from "../data/tacticalMaps";
 import { stableHash } from "../types/shared";
@@ -10,10 +11,18 @@ export type InflammationVisualLevel = "low" | "medium" | "high";
 export type InflammationVisualProfile = {
   level: InflammationVisualLevel;
   fieldAlpha: number;
+  pulseAlpha: number;
   pulseDurationMs: number;
+  breathAmplitude: number;
   signalCount: number;
   vesselAlpha: number;
   vesselWidthBoost: number;
+};
+
+export type InflammationBoundaryPoint = {
+  angle: number;
+  radiusRatio: number;
+  phase: number;
 };
 
 export type InflammationPatch = {
@@ -28,7 +37,9 @@ export type InflammationPatch = {
 
 export type InflammationPulsePixel = {
   angle: number;
-  size: number;
+  span: number;
+  thickness: number;
+  radialOffset: number;
   alphaWeight: number;
 };
 
@@ -42,10 +53,45 @@ export type CytokineSignal = {
   color: number;
 };
 
-const FIELD_PATCH_COUNT = 64;
-const PULSE_PIXEL_COUNT = 24;
+const FIELD_PATCH_COUNT = 88;
+const FIELD_BOUNDARY_POINT_COUNT = 32;
+const PULSE_PIXEL_COUNT = 28;
 const MAX_CYTOKINE_SIGNALS = 10;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+
+// Matches the former macrophage leash footprint without exposing the RTS leash.
+const INFLAMMATION_FIELD_RADIUS_RATIO = 1.86;
+
+export function getInflammationFieldRadius(
+  site: CombatSiteDefinition,
+  tissueZones: TacticalMapDefinition["tissueZones"] = [],
+): number {
+  const localTissueZone = tissueZones
+    .flatMap((zone) => {
+      if (zone.shape.kind !== "circle") {
+        return [];
+      }
+
+      return [{
+        radius: zone.shape.radius,
+        distance: Math.hypot(
+          zone.shape.position.x - site.position.x,
+          zone.shape.position.y - site.position.y,
+        ),
+      }];
+    })
+    .filter(
+      ({ radius, distance }) =>
+        distance <= Math.max(site.radius * 0.5, radius * 0.4),
+    )
+    .sort((left, right) => left.distance - right.distance)[0];
+
+  if (localTissueZone) {
+    return localTissueZone.radius;
+  }
+
+  return site.radius * INFLAMMATION_FIELD_RADIUS_RATIO;
+}
 
 export function getInflammationVisualProfile(
   inflammationValue: number,
@@ -57,11 +103,13 @@ export function getInflammationVisualProfile(
 
     return {
       level: "low",
-      fieldAlpha: lerp(0.04, 0.07, ratio),
-      pulseDurationMs: lerp(1_500, 1_400, ratio),
+      fieldAlpha: lerp(0.2, 0.24, ratio),
+      pulseAlpha: lerp(0.38, 0.46, ratio),
+      pulseDurationMs: lerp(2_350, 2_100, ratio),
+      breathAmplitude: lerp(0.035, 0.055, ratio),
       signalCount: 3 + Math.floor(ratio * 2),
-      vesselAlpha: lerp(0.025, 0.045, ratio),
-      vesselWidthBoost: lerp(0.4, 0.8, ratio),
+      vesselAlpha: lerp(0.22, 0.29, ratio),
+      vesselWidthBoost: lerp(2.2, 3.2, ratio),
     };
   }
 
@@ -70,11 +118,13 @@ export function getInflammationVisualProfile(
 
     return {
       level: "medium",
-      fieldAlpha: lerp(0.075, 0.11, ratio),
-      pulseDurationMs: lerp(1_350, 1_200, ratio),
+      fieldAlpha: lerp(0.25, 0.3, ratio),
+      pulseAlpha: lerp(0.47, 0.56, ratio),
+      pulseDurationMs: lerp(2_000, 1_700, ratio),
+      breathAmplitude: lerp(0.06, 0.08, ratio),
       signalCount: 5 + Math.floor(ratio * 3),
-      vesselAlpha: lerp(0.055, 0.09, ratio),
-      vesselWidthBoost: lerp(0.9, 1.7, ratio),
+      vesselAlpha: lerp(0.3, 0.39, ratio),
+      vesselWidthBoost: lerp(3.3, 4.6, ratio),
     };
   }
 
@@ -82,11 +132,39 @@ export function getInflammationVisualProfile(
 
   return {
     level: "high",
-    fieldAlpha: lerp(0.115, 0.155, ratio),
-    pulseDurationMs: lerp(1_150, 1_020, ratio),
+    fieldAlpha: lerp(0.31, 0.37, ratio),
+    pulseAlpha: lerp(0.57, 0.68, ratio),
+    pulseDurationMs: lerp(1_650, 1_350, ratio),
+    breathAmplitude: lerp(0.085, 0.11, ratio),
     signalCount: Math.min(10, 8 + Math.floor(ratio * 3)),
-    vesselAlpha: lerp(0.1, 0.14, ratio),
-    vesselWidthBoost: lerp(1.8, 2.8, ratio),
+    vesselAlpha: lerp(0.4, 0.5, ratio),
+    vesselWidthBoost: lerp(4.8, 6.2, ratio),
+  };
+}
+
+export function createInflammationBoundary(
+  site: CombatSiteDefinition,
+): InflammationBoundaryPoint[] {
+  return Array.from({ length: FIELD_BOUNDARY_POINT_COUNT }, (_, index) => ({
+    angle:
+      (index / FIELD_BOUNDARY_POINT_COUNT) * Math.PI * 2 +
+      (deterministicValue(site.id, index, 101) - 0.5) * 0.08,
+    radiusRatio: lerp(0.82, 1, deterministicValue(site.id, index, 103)),
+    phase: deterministicValue(site.id, index, 107) * Math.PI * 2,
+  }));
+}
+
+export function getInflammationBreathFrame(
+  profile: InflammationVisualProfile,
+  elapsedMs: number,
+): { amount: number; scale: number } {
+  const cycle = positiveModulo(elapsedMs, profile.pulseDurationMs) /
+    profile.pulseDurationMs;
+  const amount = 0.5 - Math.cos(cycle * Math.PI * 2) * 0.5;
+
+  return {
+    amount,
+    scale: 1 + (amount * 2 - 1) * profile.breathAmplitude,
   };
 }
 
@@ -107,21 +185,22 @@ export function advanceInflammationFieldProgress(
 
 export function createInflammationPatches(
   site: CombatSiteDefinition,
+  fieldRadius = getInflammationFieldRadius(site),
 ): InflammationPatch[] {
   return Array.from({ length: FIELD_PATCH_COUNT }, (_, index) => {
     const angularNoise = deterministicValue(site.id, index, 11) - 0.5;
     const angle = index * GOLDEN_ANGLE + angularNoise * 0.42;
     const radialNoise = deterministicValue(site.id, index, 13);
-    const radiusRatio = 0.16 + Math.sqrt(radialNoise) * 0.78;
-    const width = site.radius * lerp(0.055, 0.15, deterministicValue(site.id, index, 17));
-    const height = site.radius * lerp(0.04, 0.12, deterministicValue(site.id, index, 19));
+    const radiusRatio = 0.08 + Math.sqrt(radialNoise) * 0.84;
+    const width = fieldRadius * lerp(0.07, 0.16, deterministicValue(site.id, index, 17));
+    const height = fieldRadius * lerp(0.05, 0.13, deterministicValue(site.id, index, 19));
 
     return {
-      x: Math.cos(angle) * site.radius * radiusRatio,
-      y: Math.sin(angle) * site.radius * radiusRatio,
+      x: Math.cos(angle) * fieldRadius * radiusRatio,
+      y: Math.sin(angle) * fieldRadius * radiusRatio,
       width,
       height,
-      alphaWeight: lerp(0.32, 0.82, deterministicValue(site.id, index, 23)),
+      alphaWeight: lerp(0.46, 0.9, deterministicValue(site.id, index, 23)),
       phase: deterministicValue(site.id, index, 29) * Math.PI * 2,
       color:
         deterministicValue(site.id, index, 31) > 0.58 ? 0xffad43 : 0xed7b32,
@@ -136,11 +215,10 @@ export function createInflammationPulsePixels(
     angle:
       (index / PULSE_PIXEL_COUNT) * Math.PI * 2 +
       (deterministicValue(site.id, index, 41) - 0.5) * 0.16,
-    size: Math.max(
-      2,
-      Math.round(site.radius * lerp(0.018, 0.038, deterministicValue(site.id, index, 43))),
-    ),
-    alphaWeight: lerp(0.38, 0.86, deterministicValue(site.id, index, 47)),
+    span: lerp(0.14, 0.28, deterministicValue(site.id, index, 43)),
+    thickness: lerp(5, 8, deterministicValue(site.id, index, 45)),
+    radialOffset: lerp(-0.025, 0.025, deterministicValue(site.id, index, 46)),
+    alphaWeight: lerp(0.46, 0.88, deterministicValue(site.id, index, 47)),
   }));
 }
 
@@ -259,7 +337,12 @@ function collectNearbyVesselPoints(
 }
 
 function deterministicValue(siteId: string, index: number, salt: number): number {
-  return stableHash(`${siteId}:${index}:${salt}`) / 0xffffffff;
+  let value = stableHash(`${siteId}:${index}:${salt}`);
+  value = Math.imul(value ^ (value >>> 16), 0x7feb352d);
+  value = Math.imul(value ^ (value >>> 15), 0x846ca68b);
+  value = (value ^ (value >>> 16)) >>> 0;
+
+  return value / 0xffffffff;
 }
 
 function positiveModulo(value: number, divisor: number): number {

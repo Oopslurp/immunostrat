@@ -7,9 +7,12 @@ import {
 import {
   advanceInflammationFieldProgress,
   createCytokineSignals,
+  createInflammationBoundary,
   createInflammationPatches,
   createInflammationPulsePixels,
   getCytokineSignalFrame,
+  getInflammationBreathFrame,
+  getInflammationFieldRadius,
   getInflammationVisualProfile,
 } from "../game/mapVisuals/inflammationVisualState";
 import { createInitialState } from "../game/simulation/core/createInitialState";
@@ -25,40 +28,84 @@ describe("V11.2D local inflammation field", () => {
     const high = getInflammationVisualProfile(100);
 
     expect(low.level).toBe("low");
-    expect(low.fieldAlpha).toBeGreaterThanOrEqual(0.04);
-    expect(low.fieldAlpha).toBeLessThanOrEqual(0.07);
+    expect(low.fieldAlpha).toBeGreaterThanOrEqual(0.2);
+    expect(low.fieldAlpha).toBeLessThanOrEqual(0.24);
+    expect(low.vesselAlpha).toBeGreaterThanOrEqual(0.22);
+    expect(low.vesselWidthBoost).toBeGreaterThanOrEqual(2.2);
     expect(low.signalCount).toBeGreaterThanOrEqual(3);
     expect(low.signalCount).toBeLessThanOrEqual(4);
 
     expect(medium.level).toBe("medium");
-    expect(medium.fieldAlpha).toBeGreaterThanOrEqual(0.075);
-    expect(medium.fieldAlpha).toBeLessThanOrEqual(0.11);
+    expect(medium.fieldAlpha).toBeGreaterThanOrEqual(0.25);
+    expect(medium.fieldAlpha).toBeLessThanOrEqual(0.3);
     expect(medium.signalCount).toBeGreaterThanOrEqual(5);
     expect(medium.signalCount).toBeLessThanOrEqual(7);
 
     expect(high.level).toBe("high");
-    expect(high.fieldAlpha).toBeLessThanOrEqual(0.16);
+    expect(high.fieldAlpha).toBeLessThanOrEqual(0.37);
     expect(high.signalCount).toBe(10);
-    expect(high.vesselWidthBoost).toBeLessThanOrEqual(3);
-    expect(high.pulseDurationMs).toBeGreaterThanOrEqual(1_000);
-    expect(high.pulseDurationMs).toBeLessThanOrEqual(1_500);
+    expect(high.vesselWidthBoost).toBeLessThanOrEqual(6.2);
+    expect(high.pulseDurationMs).toBeGreaterThanOrEqual(1_350);
+    expect(high.pulseDurationMs).toBeLessThanOrEqual(1_650);
   });
 
-  it("creates a deterministic pixel-organic field contained around the yellow circle", () => {
+  it("keeps a visible floor and deterministic breathing at very low inflammation", () => {
+    const profile = getInflammationVisualProfile(1);
+    const start = getInflammationBreathFrame(profile, 0);
+    const expanded = getInflammationBreathFrame(
+      profile,
+      profile.pulseDurationMs / 2,
+    );
+
+    expect(profile.fieldAlpha).toBeGreaterThanOrEqual(0.2);
+    expect(profile.pulseAlpha).toBeGreaterThanOrEqual(0.38);
+    expect(start.scale).toBeLessThan(1);
+    expect(expanded.scale).toBeGreaterThan(1);
+  });
+
+  it("creates a deterministic irregular boundary instead of a perfect circle", () => {
+    const boundary = createInflammationBoundary(site);
+
+    expect(boundary).toEqual(createInflammationBoundary(site));
+    expect(boundary).toHaveLength(32);
+    expect(new Set(boundary.map((point) => point.radiusRatio.toFixed(3))).size)
+      .toBeGreaterThan(12);
+  });
+
+  it("reuses the former leash-sized footprint without exposing the RTS leash", () => {
+    expect(getInflammationFieldRadius(site)).toBeCloseTo(site.radius * 1.86);
+    expect(getInflammationFieldRadius(site)).toBeGreaterThan(site.radius);
+  });
+
+  it("reuses a local tissue-zone radius as the inflammation footprint", () => {
+    const localZone = {
+      ...smallMap.tissueZones[0],
+      shape: {
+        ...smallMap.tissueZones[0].shape,
+        position: { ...site.position },
+        radius: 310,
+      },
+    };
+
+    expect(getInflammationFieldRadius(site, [localZone])).toBe(310);
+  });
+
+  it("creates a deterministic pixel-organic field around the tactical circle", () => {
     const snapshot = JSON.stringify(site);
     const first = createInflammationPatches(site);
+    const fieldRadius = getInflammationFieldRadius(site);
 
     expect(first).toEqual(createInflammationPatches(site));
-    expect(first).toHaveLength(64);
+    expect(first).toHaveLength(88);
     expect(
       first.every(
         (patch) =>
           Math.hypot(patch.x, patch.y) +
             Math.hypot(patch.width / 2, patch.height / 2) <=
-          site.radius * 1.08,
+          fieldRadius * 1.08,
       ),
     ).toBe(true);
-    expect(first.every((patch) => patch.alphaWeight <= 0.82)).toBe(true);
+    expect(first.every((patch) => patch.alphaWeight <= 0.9)).toBe(true);
     expect(JSON.stringify(site)).toBe(snapshot);
   });
 
@@ -66,8 +113,9 @@ describe("V11.2D local inflammation field", () => {
     const pixels = createInflammationPulsePixels(site);
 
     expect(pixels).toEqual(createInflammationPulsePixels(site));
-    expect(pixels).toHaveLength(24);
-    expect(pixels.every((pixel) => pixel.size >= 2)).toBe(true);
+    expect(pixels).toHaveLength(28);
+    expect(pixels.every((pixel) => pixel.thickness >= 5)).toBe(true);
+    expect(pixels.every((pixel) => pixel.span > 0)).toBe(true);
     expect(pixels.every((pixel) => pixel.alphaWeight < 0.9)).toBe(true);
   });
 
@@ -189,7 +237,8 @@ describe("V11.2D local inflammation field", () => {
     renderer.update(state, 750);
 
     expect(graphics[0].strokeCount).toBeGreaterThan(0);
-    expect(graphics[1].fillRectCount).toBeGreaterThan(64);
+    expect(graphics[1].fillRectCount).toBeGreaterThanOrEqual(88);
+    expect(graphics[1].strokeCount).toBeGreaterThan(0);
     expect(graphics[2].fillRectCount).toBeGreaterThanOrEqual(10);
 
     delete state.entities[bacterium.id];
@@ -207,6 +256,7 @@ class FakeGraphics {
   depth = 0;
   fillRectCount = 0;
   strokeCount = 0;
+  fillPathCount = 0;
   destroyed = false;
 
   setDepth(depth: number): this {
@@ -217,6 +267,7 @@ class FakeGraphics {
   clear(): this {
     this.fillRectCount = 0;
     this.strokeCount = 0;
+    this.fillPathCount = 0;
     return this;
   }
 
@@ -249,7 +300,21 @@ class FakeGraphics {
     return this;
   }
 
+  closePath(): this {
+    return this;
+  }
+
+  fillPath(): this {
+    this.fillPathCount += 1;
+    return this;
+  }
+
   strokePath(): this {
+    this.strokeCount += 1;
+    return this;
+  }
+
+  lineBetween(): this {
     this.strokeCount += 1;
     return this;
   }
