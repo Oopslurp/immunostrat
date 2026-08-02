@@ -1,0 +1,13 @@
+{
+  "entityType": "antibodyProjectile",
+  "frameSize": [48, 40],
+  "padding": 2,
+  "alignment": "center",
+  "background": { "mode": "alpha" },
+  "animations": [
+    { "name": "right", "rowBox": [0, 0, 192, 40], "columns": 4, "frameRate": 14, "repeat": -1 },
+    { "name": "upRight", "rowBox": [0, 40, 192, 40], "columns": 4, "frameRate": 14, "repeat": -1 },
+    { "name": "downRight", "rowBox": [0, 80, 192, 40], "columns": 4, "frameRate": 14, "repeat": -1 },
+    { "name": "left", "rowBox": [0, 120, 192, 40], "columns": 4, "frameRate": 14, "repeat": -1 }
+  ]
+}

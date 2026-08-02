@@ -1,0 +1,11 @@
+{
+  "entityType": "antibodyImpact",
+  "frameSize": [48, 40],
+  "padding": 2,
+  "alignment": "center",
+  "background": { "mode": "alpha" },
+  "animations": [
+    { "name": "impact", "rowBox": [0, 0, 384, 40], "columns": 8, "frameRate": 18, "repeat": 0 },
+    { "name": "fixed", "rowBox": [0, 40, 384, 40], "columns": 8, "frameRate": 10, "repeat": -1 }
+  ]
+}

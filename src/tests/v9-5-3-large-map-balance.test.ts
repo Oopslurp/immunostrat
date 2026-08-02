@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { balanceValues } from "../game/data/balance";
 import { getMapScaleBalance } from "../game/data/mapScaleBalance";
 import { generateTacticalMapFromTemplate } from "../game/data/tacticalMapGenerator";
 import { getPathogenSpawnPositionForWave } from "../game/data/tacticalMaps";
@@ -69,16 +70,72 @@ describe("V9.5.3 large map balance", () => {
       0,
       1,
     );
-    const firstSiteSpawn = map.pathogenSpawnZones.find(
-      (zone) => zone.combatSiteId === firstSite.id,
+    const nearestSite = [...map.combatSites].sort(
+      (a, b) =>
+        Math.hypot(
+          (spawnPosition?.x ?? 0) - a.position.x,
+          (spawnPosition?.y ?? 0) - a.position.y,
+        ) -
+        Math.hypot(
+          (spawnPosition?.x ?? 0) - b.position.x,
+          (spawnPosition?.y ?? 0) - b.position.y,
+        ),
+    )[0];
+    const distanceFromFirstSite = Math.hypot(
+      (spawnPosition?.x ?? 0) - firstSite.position.x,
+      (spawnPosition?.y ?? 0) - firstSite.position.y,
     );
 
     expect(spawnPosition).toBeTruthy();
-    expect(firstSiteSpawn).toBeTruthy();
-    expect(Math.abs((spawnPosition?.x ?? 0) - (firstSiteSpawn?.position.x ?? 0))).toBeLessThan(
-      firstSiteSpawn?.radius ?? 300,
+    expect(nearestSite.id).toBe(firstSite.id);
+    expect(distanceFromFirstSite - firstSite.radius).toBeGreaterThanOrEqual(
+      balanceValues.pathogenSpawnSafety.infiniteClearance,
     );
   });
+
+  it.each([
+    ["campaign", "skin_multi_wound_template", "campaign-spawn-safety"],
+    ["bodyBattle", "blood_vessel_crossroads_template", "body-spawn-safety"],
+    ["infinite", "infinite_large_tissue_template", "infinite-spawn-safety"],
+  ] as const)(
+    "keeps %s pathogens outside combat sites",
+    (mode, templateId, seed) => {
+      const map = generateTacticalMapFromTemplate({
+        templateId,
+        seed,
+        mode,
+        difficulty: "normal",
+        regionType: mode === "infinite" ? "mixed" : "skin",
+        threatType: "bacterial",
+      });
+      const spawnPosition = getPathogenSpawnPositionForWave(
+        map,
+        "cocciRapid",
+        0,
+        0,
+        1,
+      );
+      const requiredClearance =
+        mode === "infinite"
+          ? balanceValues.pathogenSpawnSafety.infiniteClearance
+          : mode === "bodyBattle"
+            ? balanceValues.pathogenSpawnSafety.bodyBattleClearance
+            : balanceValues.pathogenSpawnSafety.campaignClearance;
+
+      expect(spawnPosition).toBeTruthy();
+      expect(
+        Math.min(
+          ...map.combatSites.map(
+            (site) =>
+              Math.hypot(
+                (spawnPosition?.x ?? 0) - site.position.x,
+                (spawnPosition?.y ?? 0) - site.position.y,
+              ) - site.radius,
+          ),
+        ),
+      ).toBeGreaterThanOrEqual(requiredClearance);
+    },
+  );
 
   it("regenerates tissue only after a stable delay", () => {
     let state = createInitialState("woundBacteriaV1", {});

@@ -20,13 +20,18 @@ import {
   type VirusEntity,
 } from "../entities";
 import { isTreatmentActive } from "./treatmentSystem";
+import { launchAntibodySalvo } from "./antibodyProjectileSystem";
 
 export function applyCombatSystem(state: GameState, deltaMs: number): void {
   processPhagocytosis(state, deltaMs);
   const pathogens = Object.values(state.entities).filter(isHostilePathogen);
 
   for (const entity of Object.values(state.entities)) {
-    if (!isImmuneUnit(entity)) {
+    if (!isImmuneUnit(entity) || entity.health <= 0) {
+      continue;
+    }
+
+    if (isNeutrophil(entity) && entity.deathState) {
       continue;
     }
 
@@ -84,14 +89,26 @@ export function applyCombatSystem(state: GameState, deltaMs: number): void {
       continue;
     }
 
-    if (isBacterium(target) && isMacrophage(entity) && canPhagocytose(target)) {
+    const damage = calculateDamage(state, entity, target);
+
+    if (isPlasmocyte(entity)) {
+      launchAntibodySalvo(state, entity, target, damage);
+      entity.attackCooldownRemainingMs = entity.attackCooldownMs;
+      continue;
+    }
+
+    if (
+      isBacterium(target) &&
+      isMacrophage(entity) &&
+      canFinishWithPhagocytosis(target, damage)
+    ) {
       startPhagocytosis(state, entity, target);
       entity.attackCooldownRemainingMs =
         entity.attackCooldownMs + balanceValues.combat.macrophagePhagocytosisDurationMs;
       continue;
     }
 
-    target.health -= calculateDamage(state, entity, target);
+    target.health -= damage;
     entity.attackCooldownRemainingMs = entity.attackCooldownMs;
 
     state.inflammation.value = Math.min(
@@ -105,7 +122,8 @@ export function applyCombatSystem(state: GameState, deltaMs: number): void {
     addInflammatoryZone(state, entity, target);
     state.effects.push({
       id: `effect-${state.nextEffectNumber}`,
-      kind: isPlasmocyte(entity) ? "antibody" : "attack",
+      sourceEntityId: entity.id,
+      kind: "attack",
       position: { ...target.position },
       radius: target.radius + balanceValues.attackEffectRadiusBonus,
       ttlMs: balanceValues.attackEffectTtlMs,
@@ -164,6 +182,7 @@ function attackInfectedCell(
   );
   state.effects.push({
     id: `effect-${state.nextEffectNumber}`,
+    sourceEntityId: immuneUnit.id,
     kind: "cytotoxic",
     position: { ...cell.position },
     radius: cell.radius + balanceValues.attackEffectRadiusBonus,
@@ -234,11 +253,15 @@ function processPhagocytosis(state: GameState, deltaMs: number): void {
   }
 }
 
-function canPhagocytose(target: BacteriumEntity): boolean {
+function canFinishWithPhagocytosis(
+  target: BacteriumEntity,
+  incomingDamage: number,
+): boolean {
   return (
     !target.phagocytosedByEntityId &&
-    target.health <= balanceValues.combat.macrophagePhagocytosisMaxHealth &&
-    target.maxHealth <= balanceValues.combat.macrophagePhagocytosisMaxHealth
+    target.maxHealth <= balanceValues.combat.macrophagePhagocytosisMaxHealth &&
+    target.health > 0 &&
+    incomingDamage >= target.health
   );
 }
 

@@ -46,6 +46,11 @@ export function cloneState(state: GameState): GameState {
       ...zone,
       position: { ...zone.position },
     })),
+    netTraps: state.netTraps.map((trap) => ({
+      ...trap,
+      position: { ...trap.position },
+      capturedEntityIds: [...trap.capturedEntityIds],
+    })),
     productionCooldowns: { ...state.productionCooldowns },
     adaptiveResearch: { ...state.adaptiveResearch },
     antiviral: {
@@ -79,6 +84,11 @@ export function cloneState(state: GameState): GameState {
       ]),
     ),
     selectedEntityIds: [...state.selectedEntityIds],
+    antibodyProjectiles: state.antibodyProjectiles.map((projectile) => ({
+      ...projectile,
+      position: { ...projectile.position },
+      startPosition: { ...projectile.startPosition },
+    })),
     effects: state.effects.map((effect) => ({
       ...effect,
       position: { ...effect.position },

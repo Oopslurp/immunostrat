@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { balanceValues } from "../game/data/balance";
 import { missionDefinitions } from "../game/data/missions";
 import { pathogenDefinitions } from "../game/data/pathogens";
+import { getCombatSiteAtOrderPosition } from "../game/data/tacticalMaps";
 import { unitDefinitions } from "../game/data/units";
 import { applyCommand } from "../game/simulation/core/commands";
 import { createInitialState } from "../game/simulation/core/createInitialState";
@@ -9,6 +11,7 @@ import { stepSimulation } from "../game/simulation/core/stepSimulation";
 import { spawnBacterium } from "../game/simulation/pathogens/createBacterium";
 import { spawnVirus } from "../game/simulation/pathogens/createVirus";
 import { applyCombatSystem } from "../game/simulation/systems/combatSystem";
+import { applyMovementSystem } from "../game/simulation/systems/movementSystem";
 
 describe("V9.4 semi-guided RTS gameplay", () => {
   it("recruits immune units from mission entry points with tactical defaults", () => {
@@ -58,6 +61,87 @@ describe("V9.4 semi-guided RTS gameplay", () => {
     expect(macrophage.targetPosition).toEqual({ x: 540, y: 420 });
     expect(macrophage.orderAnchor).toEqual({ x: 540, y: 420 });
     expect(macrophage.tacticalState).toBe("movingToPoint");
+  });
+
+  it("recognizes only the central core of a combat site as a patrol order", () => {
+    const state = createInitialState("persistentInfectionV3");
+    const site = state.tacticalMap.combatSites[0];
+    const clickRadius = Math.max(
+      balanceValues.combatSiteOrders.minimumClickRadius,
+      site.radius * balanceValues.combatSiteOrders.clickRadiusRatio,
+    );
+
+    expect(
+      getCombatSiteAtOrderPosition(state.tacticalMap, {
+        x: site.position.x + clickRadius * 0.9,
+        y: site.position.y,
+      })?.id,
+    ).toBe(site.id);
+    expect(
+      getCombatSiteAtOrderPosition(state.tacticalMap, {
+        x: site.position.x + site.radius * 0.8,
+        y: site.position.y,
+      }),
+    ).toBeNull();
+  });
+
+  it("keeps units patrolling inside the ordered combat site", () => {
+    const state = createInitialState("persistentInfectionV3");
+    const site = state.tacticalMap.combatSites[0];
+    const macrophageIds = Object.values(state.entities)
+      .filter((entity) => entity.kind === "macrophage")
+      .slice(0, 3)
+      .map((entity) => entity.id);
+    let ordered = applyCommand(state, {
+      type: "selectEntities",
+      entityIds: macrophageIds,
+    });
+
+    ordered = applyCommand(ordered, {
+      type: "orderGuardArea",
+      position: site.position,
+      radius: site.radius,
+    });
+
+    for (const id of macrophageIds) {
+      const unit = ordered.entities[id];
+
+      expect(isImmuneUnit(unit)).toBe(true);
+      if (!isImmuneUnit(unit)) {
+        continue;
+      }
+
+      expect(unit.orderAnchor).toEqual(site.position);
+      expect(unit.tacticalState).toBe("movingToSite");
+      expect(
+        Math.hypot(
+          (unit.targetPosition?.x ?? 0) - site.position.x,
+          (unit.targetPosition?.y ?? 0) - site.position.y,
+        ),
+      ).toBeLessThan(site.radius);
+    }
+
+    for (let elapsedMs = 0; elapsedMs < 60_000; elapsedMs += 100) {
+      ordered.elapsedMs = elapsedMs;
+      applyMovementSystem(ordered, 100);
+    }
+
+    for (const id of macrophageIds) {
+      const unit = ordered.entities[id];
+
+      expect(isImmuneUnit(unit)).toBe(true);
+      if (!isImmuneUnit(unit)) {
+        continue;
+      }
+
+      expect(unit.tacticalState).toBe("guardingArea");
+      expect(
+        Math.hypot(
+          unit.position.x - site.position.x,
+          unit.position.y - site.position.y,
+        ),
+      ).toBeLessThan(site.radius);
+    }
   });
 
   it("does not auto-chase pathogens outside local engagement radius", () => {
@@ -155,8 +239,8 @@ describe("V9.4 semi-guided RTS gameplay", () => {
 
     applyCombatSystem(state, unitDefinitions.macrophage.attackCooldownMs);
 
-    expect(bacterium.phagocytosedByEntityId).toBe(macrophage.id);
-    expect(bacterium.health).toBe(bacteriumDefinition.maxHealth);
+    expect(bacterium.phagocytosedByEntityId).toBeUndefined();
+    expect(bacterium.health).toBeLessThan(bacteriumDefinition.maxHealth);
     expect(virus.health).toBe(pathogenDefinitions.respiratoryVirus.maxHealth);
   });
 

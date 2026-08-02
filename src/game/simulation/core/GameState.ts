@@ -80,6 +80,15 @@ export type BiofilmZone = {
   inflammationPerSecond: number;
 };
 
+export type NetTrapState = {
+  id: string;
+  sourceEntityId: EntityId;
+  position: Vector2;
+  remainingMs: number;
+  tickAccumulatorMs: number;
+  capturedEntityIds: EntityId[];
+};
+
 export type ProductionCooldowns = {
   neutrophilMs: number;
   massiveNeutralizationMs: number;
@@ -108,19 +117,37 @@ export type PathogenDebris = {
 
 export type CombatEffect = {
   id: string;
+  sourceEntityId?: EntityId;
   kind:
     | "attack"
     | "tissueDamage"
     | "antibody"
+    | "antibodyImpact"
     | "adaptive"
     | "phagocytosis"
     | "infection"
     | "antiviral"
     | "cytotoxic"
-    | "treatment";
+    | "treatment"
+    | "netTrap";
   position: Vector2;
   radius: number;
   ttlMs: number;
+};
+
+export type AntibodyProjectile = {
+  id: string;
+  sourceEntityId: EntityId;
+  targetEntityId: EntityId;
+  position: Vector2;
+  startPosition: Vector2;
+  damage: number;
+  elapsedMs: number;
+  durationMs: number;
+  launchDelayMs: number;
+  ttlMs: number;
+  arcDirection: -1 | 1;
+  arcHeight: number;
 };
 
 export type GameState = {
@@ -138,6 +165,7 @@ export type GameState = {
   inflammation: InflammationState;
   inflammatoryZones: InflammatoryZone[];
   biofilmZones: BiofilmZone[];
+  netTraps: NetTrapState[];
   productionCooldowns: ProductionCooldowns;
   adaptiveResearch: AdaptiveResearchState;
   antiviral: AntiviralState;
@@ -148,5 +176,7 @@ export type GameState = {
   nextEntityNumber: number;
   nextEffectNumber: number;
   nextDebrisNumber: number;
+  nextNetTrapNumber: number;
+  antibodyProjectiles: AntibodyProjectile[];
   effects: CombatEffect[];
 };

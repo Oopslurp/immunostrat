@@ -1,15 +1,16 @@
 import { balanceValues } from "../../data/balance";
 import { missionDefinitions } from "../../data/missions";
+import { pathogenDefinitions } from "../../data/pathogens";
 import { distance, stableHash } from "../../types/shared";
 import type { GameState } from "../core/GameState";
-import { isBacterium, isImmuneUnit, type BacteriumEntity } from "../entities";
+import {
+  isBacterium,
+  isControllableImmuneUnit,
+  type BacteriumEntity,
+} from "../entities";
 import { spawnBacterium } from "../pathogens/createBacterium";
 import { canSpawnPathogen } from "./entityLimitSystem";
 import { getRuntimeMapBalance } from "./runtimeMapBalance";
-
-const BACTERIA_DUPLICATION_ON_ATTACK_CHANCE = 0.35;
-const BACTERIA_DUPLICATION_COOLDOWN_MS = 5000;
-const BACTERIA_DUPLICATION_DAMAGE_MULTIPLIER = 0.75;
 
 export function applyTissueSystem(state: GameState, deltaMs: number): void {
   const mission = missionDefinitions[state.missionId];
@@ -71,7 +72,9 @@ export function applyTissueSystem(state: GameState, deltaMs: number): void {
       targetCell.health = Math.max(0, targetCell.health - tissueDamage);
       state.tissue.health = Math.max(
         0,
-        state.tissue.health - tissueDamage * 0.55,
+        state.tissue.health -
+          tissueDamage *
+            balanceValues.tissueCells.directHitTissueDamageMultiplier,
       );
 
       if (targetCell.health <= 0 && targetCell.status !== "destroyed") {
@@ -106,6 +109,13 @@ function tryDuplicateBacteriumAfterAttack(
   state: GameState,
   bacterium: BacteriumEntity,
 ): void {
+  const duplication = balanceValues.bacterialDuplication;
+  const definition = pathogenDefinitions[bacterium.pathogenTypeId];
+
+  if (definition.specialBehavior !== "proliferator") {
+    return;
+  }
+
   if (!canSpawnPathogen(state, bacterium.pathogenTypeId)) {
     return;
   }
@@ -114,12 +124,19 @@ function tryDuplicateBacteriumAfterAttack(
     return;
   }
 
+  if (
+    (bacterium.attackCloneGeneration ?? 0) >= duplication.maxCloneGenerations ||
+    (bacterium.attackClonesCreated ?? 0) >= duplication.maxClonesPerBacterium
+  ) {
+    return;
+  }
+
   const seed = stableHash(
     `${bacterium.id}-${state.elapsedMs}-${state.nextEntityNumber}-attack-duplication`,
   );
   const roll = (seed % 1000) / 1000;
 
-  if (roll >= BACTERIA_DUPLICATION_ON_ATTACK_CHANCE) {
+  if (roll >= duplication.onAttackChance) {
     return;
   }
 
@@ -135,13 +152,15 @@ function tryDuplicateBacteriumAfterAttack(
   );
   const child = spawnBacterium(state, bacterium.pathogenTypeId, position);
 
-  bacterium.duplicationCooldownMs = BACTERIA_DUPLICATION_COOLDOWN_MS;
-  child.health = Math.max(1, child.maxHealth * 0.65);
-  child.tissueDamage *= BACTERIA_DUPLICATION_DAMAGE_MULTIPLIER;
-  child.duplicationCooldownMs = BACTERIA_DUPLICATION_COOLDOWN_MS;
+  bacterium.attackClonesCreated = (bacterium.attackClonesCreated ?? 0) + 1;
+  bacterium.duplicationCooldownMs = duplication.cooldownMs;
+  child.attackCloneGeneration = (bacterium.attackCloneGeneration ?? 0) + 1;
+  child.health = Math.max(1, child.maxHealth * duplication.cloneHealthMultiplier);
+  child.tissueDamage *= duplication.cloneDamageMultiplier;
+  child.duplicationCooldownMs = duplication.cooldownMs;
   child.attackCooldownRemainingMs = Math.max(
-    child.attackCooldownMs * 0.75,
-    500,
+    child.attackCooldownMs * duplication.cloneInitialAttackDelayMultiplier,
+    duplication.cloneMinimumInitialAttackDelayMs,
   );
 }
 
@@ -164,7 +183,7 @@ function findNearestImmuneUnitTarget(
   let nearestDistance = Number.POSITIVE_INFINITY;
 
   for (const entity of Object.values(state.entities)) {
-    if (!isImmuneUnit(entity)) {
+    if (!isControllableImmuneUnit(entity)) {
       continue;
     }
 
@@ -176,7 +195,7 @@ function findNearestImmuneUnitTarget(
     }
   }
 
-  return nearest && isImmuneUnit(nearest) ? nearest : null;
+  return nearest && isControllableImmuneUnit(nearest) ? nearest : null;
 }
 
 function findNearestAttackableTissueCell(

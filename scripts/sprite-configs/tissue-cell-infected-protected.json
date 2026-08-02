@@ -1,0 +1,21 @@
+{
+  "entityType": "tissueCellInfectedProtected",
+  "frameSize": [64, 64],
+  "padding": 2,
+  "alignment": "center",
+  "scale": 0.17,
+  "background": {
+    "mode": "chroma-variance",
+    "threshold": 12,
+    "minimumComponentSize": 8
+  },
+  "animations": [
+    {
+      "name": "infectedProtected",
+      "rowBox": [0, 160, 2508, 360],
+      "columns": 8,
+      "frameRate": 8,
+      "repeat": -1
+    }
+  ]
+}

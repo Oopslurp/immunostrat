@@ -1,0 +1,14 @@
+{
+  "entityType": "tissueCell",
+  "frameSize": [64, 64],
+  "padding": 2,
+  "alignment": "center",
+  "background": { "mode": "alpha" },
+  "animations": [
+    { "name": "healthy", "rowBox": [0, 0, 512, 64], "columns": 8, "frameRate": 7, "repeat": -1 },
+    { "name": "infected", "rowBox": [0, 64, 512, 64], "columns": 8, "frameRate": 8, "repeat": -1 },
+    { "name": "destroyed", "rowBox": [0, 128, 512, 64], "columns": 8, "frameRate": 9, "repeat": 0 },
+    { "name": "protected", "rowBox": [0, 192, 512, 64], "columns": 8, "frameRate": 8, "repeat": -1 },
+    { "name": "infectedProtected", "rowBox": [0, 256, 512, 64], "columns": 8, "frameRate": 8, "repeat": -1 }
+  ]
+}

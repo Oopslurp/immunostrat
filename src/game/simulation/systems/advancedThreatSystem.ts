@@ -6,6 +6,7 @@ import type { GameState, TissueCellState } from "../core/GameState";
 import {
   isAdvancedThreat,
   isCytotoxicT,
+  isControllableImmuneUnit,
   isImmuneUnit,
   isNkCell,
   type AdvancedThreatEntity,
@@ -115,6 +116,10 @@ function updateAdvancedSpawn(
   const definition = pathogenDefinitions[entity.pathogenTypeId];
   const spreadRateMultiplier = getRuntimeMapBalance(state).spreadRateMultiplier;
 
+  if ((entity.netMovementMultiplier ?? 1) <= 0) {
+    return;
+  }
+
   if (!definition.spawn) {
     return;
   }
@@ -169,7 +174,9 @@ function updateAdvancedMovement(
   entity.position = moveToward(
     entity.position,
     target,
-    entity.movementSpeed * (deltaMs / 1000),
+    entity.movementSpeed *
+      (entity.netMovementMultiplier ?? 1) *
+      (deltaMs / 1000),
   );
 }
 
@@ -182,6 +189,10 @@ function updateAdvancedAttack(
   const mapBalance = getRuntimeMapBalance(state);
   const tissueDamage = entity.tissueDamage * mapBalance.pathogenDamageMultiplier;
 
+  if ((entity.netMovementMultiplier ?? 1) <= 0) {
+    return;
+  }
+
   entity.attackCooldownRemainingMs = Math.max(
     0,
     entity.attackCooldownRemainingMs - deltaMs,
@@ -192,7 +203,7 @@ function updateAdvancedAttack(
   }
 
   const immuneTarget = Object.values(state.entities)
-    .filter(isImmuneUnit)
+    .filter(isControllableImmuneUnit)
     .sort(
       (a, b) =>
         distance(a.position, entity.position) - distance(b.position, entity.position),
@@ -216,7 +227,12 @@ function updateAdvancedAttack(
         entity.tissueAttackRange + targetCell.radius
     ) {
       targetCell.health = Math.max(0, targetCell.health - tissueDamage);
-      state.tissue.health = Math.max(0, state.tissue.health - tissueDamage * 0.5);
+      state.tissue.health = Math.max(
+        0,
+        state.tissue.health -
+          tissueDamage *
+            balanceValues.tissueCells.directHitTissueDamageMultiplier,
+      );
 
       if (targetCell.health <= 0) {
         targetCell.status = "destroyed";

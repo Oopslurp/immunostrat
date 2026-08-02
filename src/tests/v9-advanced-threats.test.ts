@@ -47,7 +47,7 @@ describe("V9 advanced threats", () => {
     state.entities = {};
     state.waves.currentWaveIndex = missionDefinitions.skinFungalOutbreak.waves.length;
     spawnAdvancedThreat(state, "fungalColony", { x: 700, y: 400 });
-    applyAdvancedThreatSystem(state, 5300);
+    applyAdvancedThreatSystem(state, 7000);
 
     expect(
       Object.values(state.entities).some(

@@ -1,0 +1,42 @@
+{
+  "entityType": "tissueCell",
+  "frameSize": [64, 64],
+  "padding": 4,
+  "alignment": "center",
+  "scale": 0.3,
+  "background": {
+    "mode": "chroma-variance",
+    "threshold": 12,
+    "minimumComponentSize": 8
+  },
+  "animations": [
+    {
+      "name": "healthy",
+      "rowBox": [0, 65, 1448, 155],
+      "columns": 8,
+      "frameRate": 7,
+      "repeat": -1
+    },
+    {
+      "name": "infected",
+      "rowBox": [0, 320, 1448, 160],
+      "columns": 8,
+      "frameRate": 8,
+      "repeat": -1
+    },
+    {
+      "name": "destroyed",
+      "rowBox": [0, 590, 1448, 145],
+      "columns": 8,
+      "frameRate": 9,
+      "repeat": 0
+    },
+    {
+      "name": "protected",
+      "rowBox": [0, 830, 1448, 165],
+      "columns": 8,
+      "frameRate": 8,
+      "repeat": -1
+    }
+  ]
+}

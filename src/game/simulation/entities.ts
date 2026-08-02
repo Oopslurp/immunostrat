@@ -60,6 +60,14 @@ export type MacrophageEntity = ImmuneUnitEntity & {
 export type NeutrophilEntity = ImmuneUnitEntity & {
   kind: "neutrophil";
   unitTypeId: "neutrophil";
+  deathState?: "death" | "netBurst";
+  deathRemainingMs?: number;
+  netTrapCreated?: boolean;
+};
+
+export type NetAffectedPathogenFields = {
+  netTrapId?: string;
+  netMovementMultiplier?: number;
 };
 
 export type DendriticCellEntity = ImmuneUnitEntity & {
@@ -82,7 +90,7 @@ export type CytotoxicTEntity = ImmuneUnitEntity & {
   unitTypeId: "cytotoxicT";
 };
 
-export type BacteriumEntity = {
+export type BacteriumEntity = NetAffectedPathogenFields & {
   id: EntityId;
   kind: "bacterium";
   pathogenTypeId: PathogenTypeId;
@@ -106,9 +114,11 @@ export type BacteriumEntity = {
   specialCooldownRemainingMs?: number;
   spawnedChildrenCount?: number;
   duplicationCooldownMs?: number;
+  attackCloneGeneration?: number;
+  attackClonesCreated?: number;
 };
 
-export type VirusEntity = {
+export type VirusEntity = NetAffectedPathogenFields & {
   id: EntityId;
   kind: "virus";
   pathogenTypeId: PathogenTypeId;
@@ -124,7 +134,7 @@ export type VirusEntity = {
   lifeRemainingMs: number;
 };
 
-export type AdvancedThreatEntity = {
+export type AdvancedThreatEntity = NetAffectedPathogenFields & {
   id: EntityId;
   kind: "advancedThreat";
   pathogenTypeId: PathogenTypeId;
@@ -167,6 +177,12 @@ export function isImmuneUnit(entity: GameEntity): entity is ImmuneUnitEntity {
     entity.kind === "nkCell" ||
     entity.kind === "cytotoxicT"
   );
+}
+
+export function isControllableImmuneUnit(
+  entity: GameEntity,
+): entity is ImmuneUnitEntity {
+  return isImmuneUnit(entity) && !(isNeutrophil(entity) && entity.deathState);
 }
 
 export function isDendriticCell(

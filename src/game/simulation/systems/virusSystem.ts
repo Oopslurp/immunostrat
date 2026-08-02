@@ -86,6 +86,10 @@ function moveVirusTowardHealthyCell(
     getRuntimeMapBalance(state).infectionRateMultiplier;
 
   if (distance(virus.position, target.position) <= infectionRange + target.radius) {
+    if ((virus.netMovementMultiplier ?? 1) <= 0) {
+      return;
+    }
+
     infectCell(state, target, virus);
     delete state.entities[virus.id];
     return;
@@ -94,7 +98,10 @@ function moveVirusTowardHealthyCell(
   virus.position = moveToward(
     virus.position,
     target.position,
-    virus.movementSpeed * speedMultiplier * (deltaMs / 1000),
+    virus.movementSpeed *
+      speedMultiplier *
+      (virus.netMovementMultiplier ?? 1) *
+      (deltaMs / 1000),
   );
 }
 

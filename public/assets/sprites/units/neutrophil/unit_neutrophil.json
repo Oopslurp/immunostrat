@@ -1,0 +1,1542 @@
+{
+  "entityType": "neutrophil",
+  "source": "D:\\Mathieu's data\\Vibe learning\\Immunos\\neutrophile-spritesheet.png",
+  "sourceSize": [
+    1448,
+    1086
+  ],
+  "sourceMode": "RGB",
+  "background": {
+    "mode": "chroma-variance",
+    "threshold": 3,
+    "minimumComponentSize": 8,
+    "fillEnclosedHoles": true
+  },
+  "output": "public\\assets\\sprites\\units\\neutrophil\\unit_neutrophil.png",
+  "outputSize": [
+    512,
+    448
+  ],
+  "frameSize": [
+    64,
+    64
+  ],
+  "columns": 8,
+  "rows": 7,
+  "frameCount": 56,
+  "contentFrameCount": 54,
+  "padding": 2,
+  "alignment": "bottom-center",
+  "commonScale": 0.32967032967032966,
+  "animations": [
+    {
+      "name": "idle",
+      "startFrame": 0,
+      "endFrame": 7,
+      "frameRate": 7,
+      "repeat": -1
+    },
+    {
+      "name": "move",
+      "startFrame": 8,
+      "endFrame": 15,
+      "frameRate": 11,
+      "repeat": -1
+    },
+    {
+      "name": "attack",
+      "startFrame": 16,
+      "endFrame": 22,
+      "frameRate": 13,
+      "repeat": 0
+    },
+    {
+      "name": "netBurst",
+      "startFrame": 24,
+      "endFrame": 30,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    {
+      "name": "netTrap",
+      "startFrame": 32,
+      "endFrame": 39,
+      "frameRate": 8,
+      "repeat": -1
+    },
+    {
+      "name": "hurt",
+      "startFrame": 40,
+      "endFrame": 47,
+      "frameRate": 14,
+      "repeat": 0
+    },
+    {
+      "name": "dead",
+      "startFrame": 48,
+      "endFrame": 55,
+      "frameRate": 10,
+      "repeat": 0
+    }
+  ],
+  "frames": [
+    {
+      "animation": "idle",
+      "index": 0,
+      "sourceRect": [
+        184,
+        15,
+        152,
+        140
+      ],
+      "contentBounds": [
+        24,
+        9,
+        132,
+        127
+      ],
+      "contentSize": [
+        108,
+        118
+      ],
+      "outputBounds": [
+        14,
+        23,
+        36,
+        39
+      ],
+      "sheetFrame": 0
+    },
+    {
+      "animation": "idle",
+      "index": 1,
+      "sourceRect": [
+        336,
+        15,
+        153,
+        140
+      ],
+      "contentBounds": [
+        20,
+        23,
+        131,
+        128
+      ],
+      "contentSize": [
+        111,
+        105
+      ],
+      "outputBounds": [
+        13,
+        27,
+        37,
+        35
+      ],
+      "sheetFrame": 1
+    },
+    {
+      "animation": "idle",
+      "index": 2,
+      "sourceRect": [
+        489,
+        15,
+        150,
+        140
+      ],
+      "contentBounds": [
+        22,
+        22,
+        129,
+        127
+      ],
+      "contentSize": [
+        107,
+        105
+      ],
+      "outputBounds": [
+        14,
+        27,
+        35,
+        35
+      ],
+      "sheetFrame": 2
+    },
+    {
+      "animation": "idle",
+      "index": 3,
+      "sourceRect": [
+        639,
+        15,
+        150,
+        140
+      ],
+      "contentBounds": [
+        23,
+        21,
+        131,
+        128
+      ],
+      "contentSize": [
+        108,
+        107
+      ],
+      "outputBounds": [
+        14,
+        27,
+        36,
+        35
+      ],
+      "sheetFrame": 3
+    },
+    {
+      "animation": "idle",
+      "index": 4,
+      "sourceRect": [
+        789,
+        15,
+        149,
+        140
+      ],
+      "contentBounds": [
+        22,
+        8,
+        130,
+        126
+      ],
+      "contentSize": [
+        108,
+        118
+      ],
+      "outputBounds": [
+        14,
+        23,
+        36,
+        39
+      ],
+      "sheetFrame": 4
+    },
+    {
+      "animation": "idle",
+      "index": 5,
+      "sourceRect": [
+        938,
+        15,
+        149,
+        140
+      ],
+      "contentBounds": [
+        20,
+        7,
+        130,
+        127
+      ],
+      "contentSize": [
+        110,
+        120
+      ],
+      "outputBounds": [
+        14,
+        22,
+        36,
+        40
+      ],
+      "sheetFrame": 5
+    },
+    {
+      "animation": "idle",
+      "index": 6,
+      "sourceRect": [
+        1087,
+        15,
+        150,
+        140
+      ],
+      "contentBounds": [
+        20,
+        5,
+        132,
+        127
+      ],
+      "contentSize": [
+        112,
+        122
+      ],
+      "outputBounds": [
+        13,
+        22,
+        37,
+        40
+      ],
+      "sheetFrame": 6
+    },
+    {
+      "animation": "idle",
+      "index": 7,
+      "sourceRect": [
+        1237,
+        15,
+        203,
+        140
+      ],
+      "contentBounds": [
+        20,
+        7,
+        139,
+        127
+      ],
+      "contentSize": [
+        119,
+        120
+      ],
+      "outputBounds": [
+        12,
+        22,
+        39,
+        40
+      ],
+      "sheetFrame": 7
+    },
+    {
+      "animation": "move",
+      "index": 0,
+      "sourceRect": [
+        184,
+        170,
+        151,
+        130
+      ],
+      "contentBounds": [
+        21,
+        12,
+        131,
+        107
+      ],
+      "contentSize": [
+        110,
+        95
+      ],
+      "outputBounds": [
+        14,
+        31,
+        36,
+        31
+      ],
+      "sheetFrame": 8
+    },
+    {
+      "animation": "move",
+      "index": 1,
+      "sourceRect": [
+        335,
+        170,
+        161,
+        130
+      ],
+      "contentBounds": [
+        23,
+        14,
+        147,
+        108
+      ],
+      "contentSize": [
+        124,
+        94
+      ],
+      "outputBounds": [
+        11,
+        31,
+        41,
+        31
+      ],
+      "sheetFrame": 9
+    },
+    {
+      "animation": "move",
+      "index": 2,
+      "sourceRect": [
+        496,
+        170,
+        157,
+        130
+      ],
+      "contentBounds": [
+        16,
+        12,
+        142,
+        106
+      ],
+      "contentSize": [
+        126,
+        94
+      ],
+      "outputBounds": [
+        11,
+        31,
+        42,
+        31
+      ],
+      "sheetFrame": 10
+    },
+    {
+      "animation": "move",
+      "index": 3,
+      "sourceRect": [
+        653,
+        170,
+        159,
+        130
+      ],
+      "contentBounds": [
+        15,
+        16,
+        151,
+        108
+      ],
+      "contentSize": [
+        136,
+        92
+      ],
+      "outputBounds": [
+        9,
+        32,
+        45,
+        30
+      ],
+      "sheetFrame": 11
+    },
+    {
+      "animation": "move",
+      "index": 4,
+      "sourceRect": [
+        812,
+        170,
+        147,
+        130
+      ],
+      "contentBounds": [
+        9,
+        16,
+        135,
+        106
+      ],
+      "contentSize": [
+        126,
+        90
+      ],
+      "outputBounds": [
+        11,
+        32,
+        42,
+        30
+      ],
+      "sheetFrame": 12
+    },
+    {
+      "animation": "move",
+      "index": 5,
+      "sourceRect": [
+        959,
+        170,
+        148,
+        130
+      ],
+      "contentBounds": [
+        15,
+        16,
+        140,
+        105
+      ],
+      "contentSize": [
+        125,
+        89
+      ],
+      "outputBounds": [
+        11,
+        33,
+        41,
+        29
+      ],
+      "sheetFrame": 13
+    },
+    {
+      "animation": "move",
+      "index": 6,
+      "sourceRect": [
+        1107,
+        170,
+        153,
+        130
+      ],
+      "contentBounds": [
+        8,
+        18,
+        137,
+        106
+      ],
+      "contentSize": [
+        129,
+        88
+      ],
+      "outputBounds": [
+        10,
+        33,
+        43,
+        29
+      ],
+      "sheetFrame": 14
+    },
+    {
+      "animation": "move",
+      "index": 7,
+      "sourceRect": [
+        1260,
+        170,
+        180,
+        130
+      ],
+      "contentBounds": [
+        20,
+        23,
+        142,
+        106
+      ],
+      "contentSize": [
+        122,
+        83
+      ],
+      "outputBounds": [
+        12,
+        35,
+        40,
+        27
+      ],
+      "sheetFrame": 15
+    },
+    {
+      "animation": "attack",
+      "index": 0,
+      "sourceRect": [
+        184,
+        315,
+        163,
+        125
+      ],
+      "contentBounds": [
+        26,
+        11,
+        146,
+        98
+      ],
+      "contentSize": [
+        120,
+        87
+      ],
+      "outputBounds": [
+        12,
+        33,
+        40,
+        29
+      ],
+      "sheetFrame": 16
+    },
+    {
+      "animation": "attack",
+      "index": 1,
+      "sourceRect": [
+        347,
+        315,
+        184,
+        125
+      ],
+      "contentBounds": [
+        21,
+        11,
+        171,
+        97
+      ],
+      "contentSize": [
+        150,
+        86
+      ],
+      "outputBounds": [
+        7,
+        34,
+        49,
+        28
+      ],
+      "sheetFrame": 17
+    },
+    {
+      "animation": "attack",
+      "index": 2,
+      "sourceRect": [
+        531,
+        315,
+        184,
+        125
+      ],
+      "contentBounds": [
+        12,
+        12,
+        169,
+        96
+      ],
+      "contentSize": [
+        157,
+        84
+      ],
+      "outputBounds": [
+        6,
+        34,
+        52,
+        28
+      ],
+      "sheetFrame": 18
+    },
+    {
+      "animation": "attack",
+      "index": 3,
+      "sourceRect": [
+        715,
+        315,
+        187,
+        125
+      ],
+      "contentBounds": [
+        19,
+        13,
+        174,
+        98
+      ],
+      "contentSize": [
+        155,
+        85
+      ],
+      "outputBounds": [
+        6,
+        34,
+        51,
+        28
+      ],
+      "sheetFrame": 19
+    },
+    {
+      "animation": "attack",
+      "index": 4,
+      "sourceRect": [
+        902,
+        315,
+        197,
+        125
+      ],
+      "contentBounds": [
+        18,
+        12,
+        183,
+        100
+      ],
+      "contentSize": [
+        165,
+        88
+      ],
+      "outputBounds": [
+        5,
+        33,
+        54,
+        29
+      ],
+      "sheetFrame": 20
+    },
+    {
+      "animation": "attack",
+      "index": 5,
+      "sourceRect": [
+        1099,
+        315,
+        159,
+        125
+      ],
+      "contentBounds": [
+        15,
+        13,
+        135,
+        102
+      ],
+      "contentSize": [
+        120,
+        89
+      ],
+      "outputBounds": [
+        12,
+        33,
+        40,
+        29
+      ],
+      "sheetFrame": 21
+    },
+    {
+      "animation": "attack",
+      "index": 6,
+      "sourceRect": [
+        1258,
+        315,
+        182,
+        125
+      ],
+      "contentBounds": [
+        27,
+        13,
+        135,
+        102
+      ],
+      "contentSize": [
+        108,
+        89
+      ],
+      "outputBounds": [
+        14,
+        33,
+        36,
+        29
+      ],
+      "sheetFrame": 22
+    },
+    {
+      "animation": "netBurst",
+      "index": 0,
+      "sourceRect": [
+        184,
+        435,
+        156,
+        175
+      ],
+      "contentBounds": [
+        3,
+        19,
+        150,
+        149
+      ],
+      "contentSize": [
+        147,
+        130
+      ],
+      "outputBounds": [
+        8,
+        19,
+        48,
+        43
+      ],
+      "sheetFrame": 24
+    },
+    {
+      "animation": "netBurst",
+      "index": 1,
+      "sourceRect": [
+        340,
+        435,
+        166,
+        175
+      ],
+      "contentBounds": [
+        8,
+        13,
+        158,
+        149
+      ],
+      "contentSize": [
+        150,
+        136
+      ],
+      "outputBounds": [
+        7,
+        17,
+        49,
+        45
+      ],
+      "sheetFrame": 25
+    },
+    {
+      "animation": "netBurst",
+      "index": 2,
+      "sourceRect": [
+        506,
+        435,
+        174,
+        175
+      ],
+      "contentBounds": [
+        11,
+        15,
+        164,
+        149
+      ],
+      "contentSize": [
+        153,
+        134
+      ],
+      "outputBounds": [
+        7,
+        18,
+        50,
+        44
+      ],
+      "sheetFrame": 26
+    },
+    {
+      "animation": "netBurst",
+      "index": 3,
+      "sourceRect": [
+        680,
+        435,
+        175,
+        175
+      ],
+      "contentBounds": [
+        10,
+        12,
+        167,
+        152
+      ],
+      "contentSize": [
+        157,
+        140
+      ],
+      "outputBounds": [
+        6,
+        16,
+        52,
+        46
+      ],
+      "sheetFrame": 27
+    },
+    {
+      "animation": "netBurst",
+      "index": 4,
+      "sourceRect": [
+        855,
+        435,
+        181,
+        175
+      ],
+      "contentBounds": [
+        9,
+        10,
+        174,
+        155
+      ],
+      "contentSize": [
+        165,
+        145
+      ],
+      "outputBounds": [
+        5,
+        14,
+        54,
+        48
+      ],
+      "sheetFrame": 28
+    },
+    {
+      "animation": "netBurst",
+      "index": 5,
+      "sourceRect": [
+        1036,
+        435,
+        182,
+        175
+      ],
+      "contentBounds": [
+        8,
+        13,
+        180,
+        153
+      ],
+      "contentSize": [
+        172,
+        140
+      ],
+      "outputBounds": [
+        3,
+        16,
+        57,
+        46
+      ],
+      "sheetFrame": 29
+    },
+    {
+      "animation": "netBurst",
+      "index": 6,
+      "sourceRect": [
+        1218,
+        435,
+        222,
+        175
+      ],
+      "contentBounds": [
+        4,
+        16,
+        186,
+        154
+      ],
+      "contentSize": [
+        182,
+        138
+      ],
+      "outputBounds": [
+        2,
+        17,
+        60,
+        45
+      ],
+      "sheetFrame": 30
+    },
+    {
+      "animation": "netTrap",
+      "index": 0,
+      "sourceRect": [
+        174,
+        610,
+        153,
+        145
+      ],
+      "contentBounds": [
+        10,
+        22,
+        149,
+        126
+      ],
+      "contentSize": [
+        139,
+        104
+      ],
+      "outputBounds": [
+        9,
+        28,
+        46,
+        34
+      ],
+      "sheetFrame": 32
+    },
+    {
+      "animation": "netTrap",
+      "index": 1,
+      "sourceRect": [
+        327,
+        610,
+        157,
+        145
+      ],
+      "contentBounds": [
+        9,
+        27,
+        152,
+        126
+      ],
+      "contentSize": [
+        143,
+        99
+      ],
+      "outputBounds": [
+        8,
+        29,
+        47,
+        33
+      ],
+      "sheetFrame": 33
+    },
+    {
+      "animation": "netTrap",
+      "index": 2,
+      "sourceRect": [
+        484,
+        610,
+        154,
+        145
+      ],
+      "contentBounds": [
+        7,
+        29,
+        148,
+        127
+      ],
+      "contentSize": [
+        141,
+        98
+      ],
+      "outputBounds": [
+        9,
+        30,
+        46,
+        32
+      ],
+      "sheetFrame": 34
+    },
+    {
+      "animation": "netTrap",
+      "index": 3,
+      "sourceRect": [
+        638,
+        610,
+        153,
+        145
+      ],
+      "contentBounds": [
+        8,
+        24,
+        147,
+        125
+      ],
+      "contentSize": [
+        139,
+        101
+      ],
+      "outputBounds": [
+        9,
+        29,
+        46,
+        33
+      ],
+      "sheetFrame": 35
+    },
+    {
+      "animation": "netTrap",
+      "index": 4,
+      "sourceRect": [
+        791,
+        610,
+        155,
+        145
+      ],
+      "contentBounds": [
+        4,
+        16,
+        149,
+        127
+      ],
+      "contentSize": [
+        145,
+        111
+      ],
+      "outputBounds": [
+        8,
+        25,
+        48,
+        37
+      ],
+      "sheetFrame": 36
+    },
+    {
+      "animation": "netTrap",
+      "index": 5,
+      "sourceRect": [
+        946,
+        610,
+        155,
+        145
+      ],
+      "contentBounds": [
+        8,
+        21,
+        150,
+        126
+      ],
+      "contentSize": [
+        142,
+        105
+      ],
+      "outputBounds": [
+        8,
+        27,
+        47,
+        35
+      ],
+      "sheetFrame": 37
+    },
+    {
+      "animation": "netTrap",
+      "index": 6,
+      "sourceRect": [
+        1101,
+        610,
+        155,
+        145
+      ],
+      "contentBounds": [
+        7,
+        15,
+        148,
+        126
+      ],
+      "contentSize": [
+        141,
+        111
+      ],
+      "outputBounds": [
+        9,
+        25,
+        46,
+        37
+      ],
+      "sheetFrame": 38
+    },
+    {
+      "animation": "netTrap",
+      "index": 7,
+      "sourceRect": [
+        1256,
+        610,
+        184,
+        145
+      ],
+      "contentBounds": [
+        6,
+        15,
+        150,
+        125
+      ],
+      "contentSize": [
+        144,
+        110
+      ],
+      "outputBounds": [
+        8,
+        26,
+        47,
+        36
+      ],
+      "sheetFrame": 39
+    },
+    {
+      "animation": "hurt",
+      "index": 0,
+      "sourceRect": [
+        184,
+        755,
+        150,
+        145
+      ],
+      "contentBounds": [
+        15,
+        30,
+        129,
+        123
+      ],
+      "contentSize": [
+        114,
+        93
+      ],
+      "outputBounds": [
+        13,
+        31,
+        38,
+        31
+      ],
+      "sheetFrame": 40
+    },
+    {
+      "animation": "hurt",
+      "index": 1,
+      "sourceRect": [
+        334,
+        755,
+        156,
+        145
+      ],
+      "contentBounds": [
+        21,
+        23,
+        134,
+        124
+      ],
+      "contentSize": [
+        113,
+        101
+      ],
+      "outputBounds": [
+        13,
+        29,
+        37,
+        33
+      ],
+      "sheetFrame": 41
+    },
+    {
+      "animation": "hurt",
+      "index": 2,
+      "sourceRect": [
+        490,
+        755,
+        154,
+        145
+      ],
+      "contentBounds": [
+        23,
+        40,
+        134,
+        122
+      ],
+      "contentSize": [
+        111,
+        82
+      ],
+      "outputBounds": [
+        13,
+        35,
+        37,
+        27
+      ],
+      "sheetFrame": 42
+    },
+    {
+      "animation": "hurt",
+      "index": 3,
+      "sourceRect": [
+        644,
+        755,
+        152,
+        145
+      ],
+      "contentBounds": [
+        26,
+        41,
+        129,
+        126
+      ],
+      "contentSize": [
+        103,
+        85
+      ],
+      "outputBounds": [
+        15,
+        34,
+        34,
+        28
+      ],
+      "sheetFrame": 43
+    },
+    {
+      "animation": "hurt",
+      "index": 4,
+      "sourceRect": [
+        796,
+        755,
+        149,
+        145
+      ],
+      "contentBounds": [
+        25,
+        43,
+        128,
+        124
+      ],
+      "contentSize": [
+        103,
+        81
+      ],
+      "outputBounds": [
+        15,
+        35,
+        34,
+        27
+      ],
+      "sheetFrame": 44
+    },
+    {
+      "animation": "hurt",
+      "index": 5,
+      "sourceRect": [
+        945,
+        755,
+        149,
+        145
+      ],
+      "contentBounds": [
+        23,
+        30,
+        131,
+        124
+      ],
+      "contentSize": [
+        108,
+        94
+      ],
+      "outputBounds": [
+        14,
+        31,
+        36,
+        31
+      ],
+      "sheetFrame": 45
+    },
+    {
+      "animation": "hurt",
+      "index": 6,
+      "sourceRect": [
+        1094,
+        755,
+        149,
+        145
+      ],
+      "contentBounds": [
+        21,
+        26,
+        129,
+        124
+      ],
+      "contentSize": [
+        108,
+        98
+      ],
+      "outputBounds": [
+        14,
+        30,
+        36,
+        32
+      ],
+      "sheetFrame": 46
+    },
+    {
+      "animation": "hurt",
+      "index": 7,
+      "sourceRect": [
+        1243,
+        755,
+        197,
+        145
+      ],
+      "contentBounds": [
+        21,
+        30,
+        133,
+        129
+      ],
+      "contentSize": [
+        112,
+        99
+      ],
+      "outputBounds": [
+        13,
+        29,
+        37,
+        33
+      ],
+      "sheetFrame": 47
+    },
+    {
+      "animation": "dead",
+      "index": 0,
+      "sourceRect": [
+        184,
+        915,
+        151,
+        160
+      ],
+      "contentBounds": [
+        15,
+        23,
+        128,
+        115
+      ],
+      "contentSize": [
+        113,
+        92
+      ],
+      "outputBounds": [
+        13,
+        32,
+        37,
+        30
+      ],
+      "sheetFrame": 48
+    },
+    {
+      "animation": "dead",
+      "index": 1,
+      "sourceRect": [
+        335,
+        915,
+        156,
+        160
+      ],
+      "contentBounds": [
+        21,
+        33,
+        133,
+        116
+      ],
+      "contentSize": [
+        112,
+        83
+      ],
+      "outputBounds": [
+        13,
+        35,
+        37,
+        27
+      ],
+      "sheetFrame": 49
+    },
+    {
+      "animation": "dead",
+      "index": 2,
+      "sourceRect": [
+        491,
+        915,
+        153,
+        160
+      ],
+      "contentBounds": [
+        25,
+        38,
+        132,
+        118
+      ],
+      "contentSize": [
+        107,
+        80
+      ],
+      "outputBounds": [
+        14,
+        36,
+        35,
+        26
+      ],
+      "sheetFrame": 50
+    },
+    {
+      "animation": "dead",
+      "index": 3,
+      "sourceRect": [
+        644,
+        915,
+        150,
+        160
+      ],
+      "contentBounds": [
+        25,
+        51,
+        127,
+        117
+      ],
+      "contentSize": [
+        102,
+        66
+      ],
+      "outputBounds": [
+        15,
+        40,
+        34,
+        22
+      ],
+      "sheetFrame": 51
+    },
+    {
+      "animation": "dead",
+      "index": 4,
+      "sourceRect": [
+        794,
+        915,
+        152,
+        160
+      ],
+      "contentBounds": [
+        25,
+        62,
+        126,
+        115
+      ],
+      "contentSize": [
+        101,
+        53
+      ],
+      "outputBounds": [
+        15,
+        45,
+        33,
+        17
+      ],
+      "sheetFrame": 52
+    },
+    {
+      "animation": "dead",
+      "index": 5,
+      "sourceRect": [
+        946,
+        915,
+        155,
+        160
+      ],
+      "contentBounds": [
+        27,
+        67,
+        130,
+        117
+      ],
+      "contentSize": [
+        103,
+        50
+      ],
+      "outputBounds": [
+        15,
+        46,
+        34,
+        16
+      ],
+      "sheetFrame": 53
+    },
+    {
+      "animation": "dead",
+      "index": 6,
+      "sourceRect": [
+        1101,
+        915,
+        149,
+        160
+      ],
+      "contentBounds": [
+        27,
+        73,
+        126,
+        114
+      ],
+      "contentSize": [
+        99,
+        41
+      ],
+      "outputBounds": [
+        15,
+        48,
+        33,
+        14
+      ],
+      "sheetFrame": 54
+    },
+    {
+      "animation": "dead",
+      "index": 7,
+      "sourceRect": [
+        1250,
+        915,
+        190,
+        160
+      ],
+      "contentBounds": [
+        28,
+        82,
+        119,
+        111
+      ],
+      "contentSize": [
+        91,
+        29
+      ],
+      "outputBounds": [
+        17,
+        52,
+        30,
+        10
+      ],
+      "sheetFrame": 55
+    }
+  ]
+}

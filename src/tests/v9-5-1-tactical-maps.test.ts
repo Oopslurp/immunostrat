@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bodyRegionDefinitions } from "../game/bodyMap/bodyRegions";
+import { balanceValues } from "../game/data/balance";
 import { missionDefinitions } from "../game/data/missions";
 import {
   getEntryPointForUnitFromTacticalMap,
@@ -88,7 +89,7 @@ describe("V9.5.1 tactical map templates", () => {
     expect(macrophage?.position).toEqual(expected);
   });
 
-  it("uses combat-site spawn zones while keeping a safe fallback", () => {
+  it("uses combat-site approach lanes while keeping a safe fallback", () => {
     const map = missionDefinitions.skinBacterialSkirmish.map;
     const spawn = getPathogenSpawnPositionForWave(map, "cocciRapid", 1, 2);
     const template = getTacticalMapDefinition(map.tacticalMapId);
@@ -96,13 +97,18 @@ describe("V9.5.1 tactical map templates", () => {
 
     expect(spawn).toBeDefined();
     expect(
-      template.pathogenSpawnZones.some(
-        (zone) =>
-          spawn &&
-          Math.hypot(spawn.x - zone.position.x, spawn.y - zone.position.y) <=
-            zone.radius,
+      Math.min(
+        ...template.combatSites.map(
+          (site) =>
+            Math.hypot(
+              (spawn?.x ?? 0) - site.position.x,
+              (spawn?.y ?? 0) - site.position.y,
+            ) - site.radius,
+        ),
       ),
-    ).toBe(true);
+    ).toBeGreaterThanOrEqual(
+      balanceValues.pathogenSpawnSafety.campaignClearance,
+    );
     expect(fallback.id).toBe("skin_small_wound_fixed");
   });
 });

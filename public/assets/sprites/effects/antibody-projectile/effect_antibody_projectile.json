@@ -1,0 +1,500 @@
+{
+  "entityType": "antibodyProjectile",
+  "source": "D:\\Mathieu's data\\Vibe learning\\Immunos\\anticorps-1.png",
+  "sourceSize": [
+    1448,
+    1086
+  ],
+  "sourceMode": "RGB",
+  "background": {
+    "mode": "key-color",
+    "color": [
+      19,
+      236,
+      26
+    ],
+    "tolerance": 165,
+    "minimumComponentSize": 3,
+    "fillEnclosedHoles": true
+  },
+  "output": "public\\assets\\sprites\\effects\\antibody-projectile\\effect_antibody_projectile.png",
+  "outputSize": [
+    192,
+    160
+  ],
+  "frameSize": [
+    48,
+    40
+  ],
+  "columns": 4,
+  "rows": 4,
+  "frameCount": 16,
+  "contentFrameCount": 16,
+  "padding": 2,
+  "alignment": "center",
+  "commonScale": 0.375,
+  "animations": [
+    {
+      "name": "right",
+      "startFrame": 0,
+      "endFrame": 3,
+      "frameRate": 14,
+      "repeat": -1
+    },
+    {
+      "name": "upRight",
+      "startFrame": 4,
+      "endFrame": 7,
+      "frameRate": 14,
+      "repeat": -1
+    },
+    {
+      "name": "downRight",
+      "startFrame": 8,
+      "endFrame": 11,
+      "frameRate": 14,
+      "repeat": -1
+    },
+    {
+      "name": "left",
+      "startFrame": 12,
+      "endFrame": 15,
+      "frameRate": 14,
+      "repeat": -1
+    }
+  ],
+  "frames": [
+    {
+      "animation": "right",
+      "index": 0,
+      "sourceRect": [
+        0,
+        80,
+        362,
+        130
+      ],
+      "contentBounds": [
+        187,
+        28,
+        272,
+        107
+      ],
+      "contentSize": [
+        85,
+        79
+      ],
+      "outputBounds": [
+        8,
+        5,
+        32,
+        30
+      ],
+      "sheetFrame": 0
+    },
+    {
+      "animation": "right",
+      "index": 1,
+      "sourceRect": [
+        362,
+        80,
+        362,
+        130
+      ],
+      "contentBounds": [
+        138,
+        29,
+        237,
+        109
+      ],
+      "contentSize": [
+        99,
+        80
+      ],
+      "outputBounds": [
+        5,
+        5,
+        37,
+        30
+      ],
+      "sheetFrame": 1
+    },
+    {
+      "animation": "right",
+      "index": 2,
+      "sourceRect": [
+        724,
+        80,
+        362,
+        130
+      ],
+      "contentBounds": [
+        105,
+        30,
+        219,
+        111
+      ],
+      "contentSize": [
+        114,
+        81
+      ],
+      "outputBounds": [
+        2,
+        5,
+        43,
+        30
+      ],
+      "sheetFrame": 2
+    },
+    {
+      "animation": "right",
+      "index": 3,
+      "sourceRect": [
+        1086,
+        80,
+        362,
+        130
+      ],
+      "contentBounds": [
+        78,
+        34,
+        180,
+        111
+      ],
+      "contentSize": [
+        102,
+        77
+      ],
+      "outputBounds": [
+        5,
+        5,
+        38,
+        29
+      ],
+      "sheetFrame": 3
+    },
+    {
+      "animation": "upRight",
+      "index": 0,
+      "sourceRect": [
+        0,
+        330,
+        362,
+        130
+      ],
+      "contentBounds": [
+        197,
+        16,
+        281,
+        101
+      ],
+      "contentSize": [
+        84,
+        85
+      ],
+      "outputBounds": [
+        8,
+        4,
+        32,
+        32
+      ],
+      "sheetFrame": 4
+    },
+    {
+      "animation": "upRight",
+      "index": 1,
+      "sourceRect": [
+        362,
+        330,
+        362,
+        130
+      ],
+      "contentBounds": [
+        142,
+        20,
+        227,
+        105
+      ],
+      "contentSize": [
+        85,
+        85
+      ],
+      "outputBounds": [
+        8,
+        4,
+        32,
+        32
+      ],
+      "sheetFrame": 5
+    },
+    {
+      "animation": "upRight",
+      "index": 2,
+      "sourceRect": [
+        724,
+        330,
+        362,
+        130
+      ],
+      "contentBounds": [
+        109,
+        18,
+        207,
+        108
+      ],
+      "contentSize": [
+        98,
+        90
+      ],
+      "outputBounds": [
+        5,
+        3,
+        37,
+        34
+      ],
+      "sheetFrame": 6
+    },
+    {
+      "animation": "upRight",
+      "index": 3,
+      "sourceRect": [
+        1086,
+        330,
+        362,
+        130
+      ],
+      "contentBounds": [
+        80,
+        13,
+        162,
+        109
+      ],
+      "contentSize": [
+        82,
+        96
+      ],
+      "outputBounds": [
+        8,
+        2,
+        31,
+        36
+      ],
+      "sheetFrame": 7
+    },
+    {
+      "animation": "downRight",
+      "index": 0,
+      "sourceRect": [
+        0,
+        580,
+        362,
+        140
+      ],
+      "contentBounds": [
+        198,
+        28,
+        281,
+        113
+      ],
+      "contentSize": [
+        83,
+        85
+      ],
+      "outputBounds": [
+        8,
+        4,
+        31,
+        32
+      ],
+      "sheetFrame": 8
+    },
+    {
+      "animation": "downRight",
+      "index": 1,
+      "sourceRect": [
+        362,
+        580,
+        362,
+        140
+      ],
+      "contentBounds": [
+        143,
+        30,
+        225,
+        114
+      ],
+      "contentSize": [
+        82,
+        84
+      ],
+      "outputBounds": [
+        8,
+        4,
+        31,
+        32
+      ],
+      "sheetFrame": 9
+    },
+    {
+      "animation": "downRight",
+      "index": 2,
+      "sourceRect": [
+        724,
+        580,
+        362,
+        140
+      ],
+      "contentBounds": [
+        111,
+        30,
+        201,
+        118
+      ],
+      "contentSize": [
+        90,
+        88
+      ],
+      "outputBounds": [
+        7,
+        3,
+        34,
+        33
+      ],
+      "sheetFrame": 10
+    },
+    {
+      "animation": "downRight",
+      "index": 3,
+      "sourceRect": [
+        1086,
+        580,
+        362,
+        140
+      ],
+      "contentBounds": [
+        82,
+        30,
+        165,
+        121
+      ],
+      "contentSize": [
+        83,
+        91
+      ],
+      "outputBounds": [
+        8,
+        3,
+        31,
+        34
+      ],
+      "sheetFrame": 11
+    },
+    {
+      "animation": "left",
+      "index": 0,
+      "sourceRect": [
+        0,
+        835,
+        362,
+        135
+      ],
+      "contentBounds": [
+        190,
+        31,
+        272,
+        110
+      ],
+      "contentSize": [
+        82,
+        79
+      ],
+      "outputBounds": [
+        8,
+        5,
+        31,
+        30
+      ],
+      "sheetFrame": 12
+    },
+    {
+      "animation": "left",
+      "index": 1,
+      "sourceRect": [
+        362,
+        835,
+        362,
+        135
+      ],
+      "contentBounds": [
+        135,
+        33,
+        230,
+        113
+      ],
+      "contentSize": [
+        95,
+        80
+      ],
+      "outputBounds": [
+        6,
+        5,
+        36,
+        30
+      ],
+      "sheetFrame": 13
+    },
+    {
+      "animation": "left",
+      "index": 2,
+      "sourceRect": [
+        724,
+        835,
+        362,
+        135
+      ],
+      "contentBounds": [
+        107,
+        32,
+        204,
+        112
+      ],
+      "contentSize": [
+        97,
+        80
+      ],
+      "outputBounds": [
+        6,
+        5,
+        36,
+        30
+      ],
+      "sheetFrame": 14
+    },
+    {
+      "animation": "left",
+      "index": 3,
+      "sourceRect": [
+        1086,
+        835,
+        362,
+        135
+      ],
+      "contentBounds": [
+        80,
+        26,
+        168,
+        112
+      ],
+      "contentSize": [
+        88,
+        86
+      ],
+      "outputBounds": [
+        7,
+        4,
+        33,
+        32
+      ],
+      "sheetFrame": 15
+    }
+  ]
+}

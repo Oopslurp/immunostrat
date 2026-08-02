@@ -17,7 +17,7 @@ describe("V4.1 stabilization", () => {
     expect(map.lymphNode.x).toBeLessThan(map.bacteriaEntryZone.x - 700);
   });
 
-  it("macrophages phagocytose small bacteria over a short duration", () => {
+  it("macrophages attack first and execute small bacteria with a final phagocytosis", () => {
     const macrophage = unitDefinitions.macrophage;
     const coccus = pathogenDefinitions.cocciRapid;
     const state: GameState = {
@@ -65,15 +65,41 @@ describe("V4.1 stabilization", () => {
       },
     };
 
-    const captured = stepSimulation(state, 16);
+    const firstStrike = stepSimulation(state, 16);
+    const firstTarget = firstStrike.entities["coccus-test"];
+
+    expect(firstTarget.kind).toBe("bacterium");
+    if (firstTarget.kind !== "bacterium") {
+      throw new Error("Expected a struck bacterium");
+    }
+    expect(firstTarget.phagocytosedByEntityId).toBeUndefined();
+    expect(firstTarget.health).toBeLessThan(coccus.maxHealth);
+
+    const secondStrike = stepSimulation(
+      firstStrike,
+      macrophage.attackCooldownMs + 16,
+    );
+    const secondTarget = secondStrike.entities["coccus-test"];
+
+    expect(secondTarget.kind).toBe("bacterium");
+    if (secondTarget.kind !== "bacterium") {
+      throw new Error("Expected a twice-struck bacterium");
+    }
+    expect(secondTarget.phagocytosedByEntityId).toBeUndefined();
+    expect(secondTarget.health).toBeLessThan(firstTarget.health);
+
+    const captured = stepSimulation(
+      secondStrike,
+      macrophage.attackCooldownMs + 16,
+    );
     const target = captured.entities["coccus-test"];
 
     expect(target.kind).toBe("bacterium");
     if (target.kind !== "bacterium") {
-      throw new Error("Expected a captured bacterium");
+      throw new Error("Expected an executed bacterium");
     }
     expect(target.phagocytosedByEntityId).toBe("macrophage-test");
-    expect(target.health).toBe(coccus.maxHealth);
+    expect(target.health).toBe(secondTarget.health);
 
     const digested = stepSimulation(
       captured,
@@ -99,9 +125,13 @@ describe("V4.1 stabilization", () => {
     }
     expect(neutrophil.lifeRemainingMs).toBe(balanceValues.neutrophilLifetimeMs);
 
-    const expired = stepSimulation(
+    const dying = stepSimulation(
       produced,
       balanceValues.neutrophilLifetimeMs + 1000,
+    );
+    const expired = stepSimulation(
+      dying,
+      balanceValues.netosis.normalDeathDurationMs,
     );
 
     expect(

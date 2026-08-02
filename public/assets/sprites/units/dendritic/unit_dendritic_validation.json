@@ -1,0 +1,818 @@
+{
+  "input": "public\\assets\\sprites\\units\\dendritic\\unit_dendritic.png",
+  "size": [
+    512,
+    640
+  ],
+  "mode": "RGBA",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "transparentPixelCount": 259189,
+  "errors": [],
+  "warnings": [],
+  "frames": [
+    {
+      "frame": "idle[0]",
+      "bounds": [
+        7,
+        25,
+        56,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "idle[1]",
+      "bounds": [
+        9,
+        24,
+        55,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "idle[2]",
+      "bounds": [
+        9,
+        25,
+        54,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "idle[3]",
+      "bounds": [
+        8,
+        25,
+        55,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "idle[4]",
+      "bounds": [
+        8,
+        25,
+        55,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "idle[5]",
+      "bounds": [
+        9,
+        24,
+        55,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "idle[6]",
+      "bounds": [
+        9,
+        24,
+        55,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "idle[7]",
+      "bounds": [
+        9,
+        24,
+        55,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "move[0]",
+      "bounds": [
+        7,
+        27,
+        57,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "move[1]",
+      "bounds": [
+        6,
+        27,
+        58,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "move[2]",
+      "bounds": [
+        4,
+        26,
+        60,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "move[3]",
+      "bounds": [
+        5,
+        27,
+        58,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "move[4]",
+      "bounds": [
+        2,
+        27,
+        62,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "move[5]",
+      "bounds": [
+        6,
+        27,
+        58,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "move[6]",
+      "bounds": [
+        3,
+        28,
+        61,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "move[7]",
+      "bounds": [
+        4,
+        28,
+        60,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "collect[0]",
+      "bounds": [
+        7,
+        30,
+        57,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "collect[1]",
+      "bounds": [
+        3,
+        31,
+        60,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "collect[2]",
+      "bounds": [
+        5,
+        31,
+        58,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "collect[3]",
+      "bounds": [
+        5,
+        32,
+        58,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "collect[4]",
+      "bounds": [
+        6,
+        32,
+        57,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "collect[5]",
+      "bounds": [
+        5,
+        31,
+        58,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "collect[6]",
+      "bounds": [
+        5,
+        31,
+        59,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "collect[7]",
+      "bounds": [
+        5,
+        31,
+        58,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "carry[0]",
+      "bounds": [
+        8,
+        27,
+        56,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "carry[1]",
+      "bounds": [
+        7,
+        27,
+        56,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "carry[2]",
+      "bounds": [
+        9,
+        28,
+        56,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "carry[3]",
+      "bounds": [
+        7,
+        27,
+        56,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "carry[4]",
+      "bounds": [
+        6,
+        28,
+        57,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "carry[5]",
+      "bounds": [
+        7,
+        27,
+        57,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "carry[6]",
+      "bounds": [
+        5,
+        27,
+        58,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "carry[7]",
+      "bounds": [
+        4,
+        28,
+        60,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "signal[0]",
+      "bounds": [
+        8,
+        31,
+        56,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "signal[1]",
+      "bounds": [
+        4,
+        31,
+        59,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "signal[2]",
+      "bounds": [
+        3,
+        30,
+        60,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "signal[3]",
+      "bounds": [
+        4,
+        31,
+        59,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "signal[4]",
+      "bounds": [
+        5,
+        31,
+        58,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "signal[5]",
+      "bounds": [
+        2,
+        29,
+        62,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "signal[6]",
+      "bounds": [
+        3,
+        31,
+        61,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "signal[7]",
+      "bounds": [
+        2,
+        30,
+        61,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "hurt[0]",
+      "bounds": [
+        11,
+        25,
+        52,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "hurt[1]",
+      "bounds": [
+        10,
+        35,
+        54,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "hurt[2]",
+      "bounds": [
+        11,
+        35,
+        53,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "hurt[3]",
+      "bounds": [
+        10,
+        35,
+        53,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "hurt[4]",
+      "bounds": [
+        10,
+        36,
+        53,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "hurt[5]",
+      "bounds": [
+        10,
+        36,
+        54,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "hurt[6]",
+      "bounds": [
+        10,
+        36,
+        53,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "hurt[7]",
+      "bounds": [
+        11,
+        37,
+        53,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "dead[0]",
+      "bounds": [
+        8,
+        36,
+        55,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "dead[1]",
+      "bounds": [
+        7,
+        37,
+        57,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "dead[2]",
+      "bounds": [
+        7,
+        37,
+        56,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "dead[3]",
+      "bounds": [
+        7,
+        39,
+        57,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "dead[4]",
+      "bounds": [
+        7,
+        40,
+        57,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "dead[5]",
+      "bounds": [
+        7,
+        41,
+        57,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "dead[6]",
+      "bounds": [
+        7,
+        45,
+        56,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "dead[7]",
+      "bounds": [
+        11,
+        49,
+        53,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry1[0]",
+      "bounds": [
+        7,
+        25,
+        56,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry1[1]",
+      "bounds": [
+        6,
+        26,
+        58,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry1[2]",
+      "bounds": [
+        4,
+        27,
+        59,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry1[3]",
+      "bounds": [
+        4,
+        28,
+        59,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry1[4]",
+      "bounds": [
+        2,
+        24,
+        62,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry1[5]",
+      "bounds": [
+        5,
+        26,
+        59,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry1[6]",
+      "bounds": [
+        2,
+        29,
+        61,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry1[7]",
+      "bounds": [
+        4,
+        28,
+        60,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry2[0]",
+      "bounds": [
+        8,
+        25,
+        56,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry2[1]",
+      "bounds": [
+        5,
+        26,
+        58,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry2[2]",
+      "bounds": [
+        4,
+        29,
+        59,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry2[3]",
+      "bounds": [
+        4,
+        28,
+        59,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry2[4]",
+      "bounds": [
+        2,
+        25,
+        62,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry2[5]",
+      "bounds": [
+        4,
+        27,
+        59,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry2[6]",
+      "bounds": [
+        2,
+        28,
+        61,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry2[7]",
+      "bounds": [
+        2,
+        28,
+        61,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry3[0]",
+      "bounds": [
+        7,
+        28,
+        57,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry3[1]",
+      "bounds": [
+        5,
+        28,
+        58,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry3[2]",
+      "bounds": [
+        3,
+        28,
+        60,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry3[3]",
+      "bounds": [
+        5,
+        28,
+        59,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry3[4]",
+      "bounds": [
+        4,
+        27,
+        60,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry3[5]",
+      "bounds": [
+        3,
+        28,
+        60,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry3[6]",
+      "bounds": [
+        4,
+        29,
+        60,
+        62
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "moveCarry3[7]",
+      "bounds": [
+        2,
+        29,
+        61,
+        62
+      ],
+      "touchesEdge": false
+    }
+  ],
+  "valid": true
+}

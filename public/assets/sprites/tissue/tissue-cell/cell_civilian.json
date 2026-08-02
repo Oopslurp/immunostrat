@@ -1,0 +1,33 @@
+{
+  "entityType": "tissueCell",
+  "output": "public/assets/sprites/tissue/tissue-cell/cell_civilian.png",
+  "outputSize": [512, 320],
+  "frameSize": [64, 64],
+  "columns": 8,
+  "rows": 5,
+  "frameCount": 40,
+  "alignment": "center",
+  "sources": [
+    {
+      "size": [1448, 1086],
+      "mode": "RGB",
+      "background": "chroma-variance",
+      "commonScale": 0.3,
+      "animations": ["healthy", "infected", "destroyed", "protected"]
+    },
+    {
+      "size": [2508, 627],
+      "mode": "RGB",
+      "background": "chroma-variance",
+      "commonScale": 0.17,
+      "animations": ["infectedProtected"]
+    }
+  ],
+  "animations": [
+    { "name": "healthy", "startFrame": 0, "endFrame": 7, "frameRate": 7, "repeat": -1 },
+    { "name": "infected", "startFrame": 8, "endFrame": 15, "frameRate": 8, "repeat": -1 },
+    { "name": "destroyed", "startFrame": 16, "endFrame": 23, "frameRate": 9, "repeat": 0 },
+    { "name": "protected", "startFrame": 24, "endFrame": 31, "frameRate": 8, "repeat": -1 },
+    { "name": "infectedProtected", "startFrame": 32, "endFrame": 39, "frameRate": 8, "repeat": -1 }
+  ]
+}

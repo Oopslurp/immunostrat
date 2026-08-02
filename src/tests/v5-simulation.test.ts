@@ -17,10 +17,10 @@ describe("V5 viral infection and tissue cells", () => {
     expect(state.tissueCells.length).toBeGreaterThan(6);
     expect(
       Object.values(state.entities).filter((entity) => entity.kind === "macrophage"),
-    ).toHaveLength(3);
+    ).toHaveLength(4);
     expect(
       Object.values(state.entities).filter((entity) => entity.kind === "neutrophil"),
-    ).toHaveLength(1);
+    ).toHaveLength(2);
     expect(
       Object.values(state.entities).filter(
         (entity) => entity.kind === "dendriticCell",
@@ -31,7 +31,7 @@ describe("V5 viral infection and tissue cells", () => {
   it("spawns viruses from V5 mission waves", () => {
     const state: GameState = {
       ...createInitialState("viralInfectionV6"),
-      elapsedMs: 2500,
+      elapsedMs: 3500,
       waves: {
         currentWaveIndex: 0,
         spawnedInCurrentWave: 0,

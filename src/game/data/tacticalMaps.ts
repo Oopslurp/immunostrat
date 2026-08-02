@@ -1,3 +1,4 @@
+import { balanceValues } from "./balance";
 import { pathogenDefinitions, type PathogenTypeId } from "./pathogens";
 import type { UnitTypeId } from "./units";
 
@@ -634,7 +635,7 @@ export function getTissueCellPositionsForMissionMap(map: TacticalMapSource): Map
   const positions: MapPoint[] = [];
 
   for (const zoneDefinition of tacticalMap.civilianCellZones) {
-    const count = Math.max(4, Math.round(4 + zoneDefinition.density * 6));
+    const count = getTissueCellCountForZone(zoneDefinition.density);
 
     for (let index = 0; index < count; index += 1) {
       const angle = ((index * 137 + zoneDefinition.id.length * 19) % 360) * (Math.PI / 180);
@@ -648,6 +649,35 @@ export function getTissueCellPositionsForMissionMap(map: TacticalMapSource): Map
   }
 
   return positions;
+}
+
+export function getTissueCellCountForZone(density: number): number {
+  return Math.max(
+    balanceValues.tissueCells.minimumPerZone,
+    Math.round(
+      balanceValues.tissueCells.basePerZone +
+        Math.max(0, density) * balanceValues.tissueCells.densityBonusPerZone,
+    ),
+  );
+}
+
+export function getCombatSiteAtOrderPosition(
+  tacticalMap: TacticalMapDefinition,
+  position: MapPoint,
+): CombatSiteDefinition | null {
+  return (
+    tacticalMap.combatSites
+      .map((site) => ({
+        site,
+        distance: pointDistance(site.position, position),
+        clickRadius: Math.max(
+          balanceValues.combatSiteOrders.minimumClickRadius,
+          site.radius * balanceValues.combatSiteOrders.clickRadiusRatio,
+        ),
+      }))
+      .filter((candidate) => candidate.distance <= candidate.clickRadius)
+      .sort((a, b) => a.distance - b.distance)[0]?.site ?? null
+  );
 }
 
 export function getPathogenSpawnPositionForWave(
@@ -695,18 +725,14 @@ export function getPathogenSpawnPositionForWave(
     y: spawnZone.position.y + Math.sin(angle) * radius,
   };
 
-  return pushCampaignSpawnAwayFromTissue(position, tacticalMap, pathogenFamily);
+  return pushSpawnAwayFromBattleZones(position, tacticalMap, pathogenFamily);
 }
 
-function pushCampaignSpawnAwayFromTissue(
+function pushSpawnAwayFromBattleZones(
   position: MapPoint,
   tacticalMap: TacticalMapDefinition,
   pathogenFamily: PathogenSpawnZoneDefinition["pathogenFamilies"][number],
 ): MapPoint {
-  if (tacticalMap.generationSummary?.mode !== "campaign") {
-    return position;
-  }
-
   const focusPoints = [
     ...tacticalMap.civilianCellZones.map((zoneDefinition) => ({
       position: zoneDefinition.position,
@@ -717,37 +743,113 @@ function pushCampaignSpawnAwayFromTissue(
       radius: site.radius,
     })),
   ];
+  const mode = getSpawnSafetyMode(tacticalMap);
+  const baseClearance =
+    mode === "infinite"
+      ? balanceValues.pathogenSpawnSafety.infiniteClearance
+      : mode === "bodyBattle"
+        ? balanceValues.pathogenSpawnSafety.bodyBattleClearance
+        : balanceValues.pathogenSpawnSafety.campaignClearance;
+  const familyClearanceBonus =
+    pathogenFamily === "virus"
+      ? balanceValues.pathogenSpawnSafety.virusClearanceBonus
+      : pathogenFamily === "bacterium"
+        ? 0
+        : balanceValues.pathogenSpawnSafety.advancedThreatClearanceBonus;
+  const clearance = baseClearance + familyClearanceBonus;
+  const clampedPosition = clampPointToMap(
+    position,
+    tacticalMap,
+    balanceValues.pathogenSpawnSafety.mapPadding,
+  );
   const nearestFocus = focusPoints
     .map((focus) => ({
       ...focus,
-      distance: pointDistance(position, focus.position),
+      distance: pointDistance(clampedPosition, focus.position),
     }))
-    .sort((a, b) => a.distance - b.distance)[0];
+    .sort(
+      (a, b) =>
+        a.distance - (a.radius + clearance) -
+        (b.distance - (b.radius + clearance)),
+    )[0];
 
   if (!nearestFocus) {
-    return clampPointToMap(position, tacticalMap, 80);
+    return clampedPosition;
   }
 
-  const desiredDistance =
-    (pathogenFamily === "virus" ? 420 : pathogenFamily === "bacterium" ? 330 : 370) +
-    nearestFocus.radius * 0.35;
-
-  if (nearestFocus.distance >= desiredDistance) {
-    return clampPointToMap(position, tacticalMap, 80);
+  if (
+    getMinimumSpawnSafetyMargin(clampedPosition, focusPoints, clearance) >= 0
+  ) {
+    return clampedPosition;
   }
 
-  const fallbackX = position.x >= tacticalMap.worldWidth / 2 ? 1 : -1;
-  const dx = position.x - nearestFocus.position.x || fallbackX;
-  const dy = position.y - nearestFocus.position.y || 0.5;
-  const length = Math.sqrt(dx * dx + dy * dy) || 1;
+  const initialAngle = Math.atan2(
+    clampedPosition.y - nearestFocus.position.y,
+    clampedPosition.x - nearestFocus.position.x,
+  );
+  let safestPosition = clampedPosition;
+  let safestMargin = getMinimumSpawnSafetyMargin(
+    safestPosition,
+    focusPoints,
+    clearance,
+  );
 
-  return clampPointToMap(
-    {
-      x: nearestFocus.position.x + (dx / length) * desiredDistance,
-      y: nearestFocus.position.y + (dy / length) * desiredDistance,
-    },
-    tacticalMap,
-    80,
+  for (let ring = 0; ring < 4; ring += 1) {
+    const distanceFromFocus =
+      nearestFocus.radius + clearance + ring * clearance * 0.3;
+
+    for (let angleIndex = 0; angleIndex < 16; angleIndex += 1) {
+      const angle = initialAngle + angleIndex * (Math.PI / 8);
+      const candidate = clampPointToMap(
+        {
+          x: nearestFocus.position.x + Math.cos(angle) * distanceFromFocus,
+          y: nearestFocus.position.y + Math.sin(angle) * distanceFromFocus,
+        },
+        tacticalMap,
+        balanceValues.pathogenSpawnSafety.mapPadding,
+      );
+      const candidateMargin = getMinimumSpawnSafetyMargin(
+        candidate,
+        focusPoints,
+        clearance,
+      );
+
+      if (candidateMargin > safestMargin) {
+        safestPosition = candidate;
+        safestMargin = candidateMargin;
+      }
+    }
+  }
+
+  return safestPosition;
+}
+
+function getSpawnSafetyMode(tacticalMap: TacticalMapDefinition): TacticalMapMode {
+  if (tacticalMap.generationSummary?.mode) {
+    return tacticalMap.generationSummary.mode;
+  }
+
+  if (tacticalMap.modeCompatibility.length === 1) {
+    return tacticalMap.modeCompatibility[0];
+  }
+
+  return tacticalMap.modeCompatibility.includes("campaign")
+    ? "campaign"
+    : tacticalMap.modeCompatibility[0] ?? "bodyBattle";
+}
+
+function getMinimumSpawnSafetyMargin(
+  position: MapPoint,
+  focusPoints: Array<{ position: MapPoint; radius: number }>,
+  clearance: number,
+): number {
+  return focusPoints.reduce(
+    (minimum, focus) =>
+      Math.min(
+        minimum,
+        pointDistance(position, focus.position) - (focus.radius + clearance),
+      ),
+    Number.POSITIVE_INFINITY,
   );
 }
 

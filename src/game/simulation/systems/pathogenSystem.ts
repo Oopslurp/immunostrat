@@ -13,7 +13,12 @@ export function applyPathogenSystem(state: GameState, deltaMs: number): void {
   for (const bacterium of bacteria) {
     const definition = pathogenDefinitions[bacterium.pathogenTypeId];
 
-    if (!definition.spawn || bacterium.health <= 0) {
+    if (
+      !definition.spawn ||
+      bacterium.health <= 0 ||
+      (bacterium.attackCloneGeneration ?? 0) > 0 ||
+      (bacterium.netMovementMultiplier ?? 1) <= 0
+    ) {
       continue;
     }
 

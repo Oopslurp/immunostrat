@@ -1,0 +1,178 @@
+{
+  "input": "public\\assets\\sprites\\effects\\antibody-impact\\effect_antibody_impact.png",
+  "size": [
+    384,
+    80
+  ],
+  "mode": "RGBA",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "transparentPixelCount": 27995,
+  "errors": [],
+  "warnings": [],
+  "frames": [
+    {
+      "frame": "impact[0]",
+      "bounds": [
+        8,
+        12,
+        43,
+        28
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "impact[1]",
+      "bounds": [
+        2,
+        8,
+        46,
+        32
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "impact[2]",
+      "bounds": [
+        8,
+        5,
+        39,
+        35
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "impact[3]",
+      "bounds": [
+        6,
+        3,
+        41,
+        37
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "impact[4]",
+      "bounds": [
+        15,
+        9,
+        34,
+        31
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "impact[5]",
+      "bounds": [
+        14,
+        8,
+        33,
+        31
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "impact[6]",
+      "bounds": [
+        14,
+        9,
+        34,
+        31
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "impact[7]",
+      "bounds": [
+        15,
+        8,
+        33,
+        31
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "fixed[0]",
+      "bounds": [
+        11,
+        9,
+        37,
+        31
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "fixed[1]",
+      "bounds": [
+        13,
+        10,
+        35,
+        33
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "fixed[2]",
+      "bounds": [
+        13,
+        9,
+        32,
+        31
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "fixed[3]",
+      "bounds": [
+        13,
+        10,
+        35,
+        32
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "fixed[4]",
+      "bounds": [
+        10,
+        7,
+        37,
+        32
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "fixed[5]",
+      "bounds": [
+        10,
+        11,
+        37,
+        31
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "fixed[6]",
+      "bounds": [
+        10,
+        8,
+        37,
+        32
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "fixed[7]",
+      "bounds": [
+        10,
+        7,
+        36,
+        33
+      ],
+      "touchesEdge": false
+    }
+  ],
+  "valid": true
+}

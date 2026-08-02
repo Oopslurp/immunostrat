@@ -150,6 +150,7 @@ export function createInitialState(
     },
     inflammatoryZones: [],
     biofilmZones: [],
+    netTraps: [],
     productionCooldowns: {
       neutrophilMs: 0,
       massiveNeutralizationMs: 0,
@@ -174,6 +175,8 @@ export function createInitialState(
     nextEntityNumber,
     nextEffectNumber: 1,
     nextDebrisNumber: 1,
+    nextNetTrapNumber: 1,
+    antibodyProjectiles: [],
     effects: [],
   };
 }

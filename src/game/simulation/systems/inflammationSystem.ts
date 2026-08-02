@@ -21,7 +21,9 @@ export function applyInflammationSystem(
 
       return pressure + (bacterium.inflammationPressureMultiplier ?? definition.inflammationPressureMultiplier);
     }, 0);
-  const neutrophilCount = Object.values(state.entities).filter(isNeutrophil).length;
+  const neutrophilCount = Object.values(state.entities)
+    .filter(isNeutrophil)
+    .filter((neutrophil) => !neutrophil.deathState).length;
   const viralPressure =
     Object.values(state.entities).filter(isVirus).length * 0.35 +
     state.tissueCells.filter((cell) => cell.status === "infected").length * 0.55;

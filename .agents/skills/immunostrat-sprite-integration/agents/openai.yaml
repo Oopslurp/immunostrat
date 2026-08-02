@@ -1,0 +1,4 @@
+interface:
+  display_name: "Immunostrat Sprite Integration"
+  short_description: "Prepare and integrate Immunostrat pixel-art spritesheets"
+  default_prompt: "Use $immunostrat-sprite-integration to inspect, normalize, integrate, and validate this Immunostrat spritesheet without changing gameplay."

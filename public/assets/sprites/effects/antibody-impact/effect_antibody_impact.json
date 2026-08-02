@@ -1,0 +1,486 @@
+{
+  "entityType": "antibodyImpact",
+  "source": "D:\\Mathieu's data\\Vibe learning\\Immunos\\anticorps-impact-spritesheet.png",
+  "sourceSize": [
+    1448,
+    1086
+  ],
+  "sourceMode": "RGB",
+  "background": {
+    "mode": "key-color",
+    "color": [
+      24,
+      230,
+      42
+    ],
+    "tolerance": 165,
+    "minimumComponentSize": 3,
+    "fillEnclosedHoles": true
+  },
+  "output": "public\\assets\\sprites\\effects\\antibody-impact\\effect_antibody_impact.png",
+  "outputSize": [
+    384,
+    80
+  ],
+  "frameSize": [
+    48,
+    40
+  ],
+  "columns": 8,
+  "rows": 2,
+  "frameCount": 16,
+  "contentFrameCount": 16,
+  "padding": 2,
+  "alignment": "center",
+  "commonScale": 0.41904761904761906,
+  "animations": [
+    {
+      "name": "impact",
+      "startFrame": 0,
+      "endFrame": 7,
+      "frameRate": 18,
+      "repeat": 0
+    },
+    {
+      "name": "fixed",
+      "startFrame": 8,
+      "endFrame": 15,
+      "frameRate": 10,
+      "repeat": -1
+    }
+  ],
+  "frames": [
+    {
+      "animation": "impact",
+      "index": 0,
+      "sourceRect": [
+        0,
+        300,
+        181,
+        140
+      ],
+      "contentBounds": [
+        51,
+        39,
+        144,
+        80
+      ],
+      "contentSize": [
+        93,
+        41
+      ],
+      "outputBounds": [
+        4,
+        11,
+        39,
+        17
+      ],
+      "sheetFrame": 0
+    },
+    {
+      "animation": "impact",
+      "index": 1,
+      "sourceRect": [
+        181,
+        300,
+        181,
+        140
+      ],
+      "contentBounds": [
+        50,
+        30,
+        155,
+        87
+      ],
+      "contentSize": [
+        105,
+        57
+      ],
+      "outputBounds": [
+        2,
+        8,
+        44,
+        24
+      ],
+      "sheetFrame": 1
+    },
+    {
+      "animation": "impact",
+      "index": 2,
+      "sourceRect": [
+        362,
+        300,
+        181,
+        140
+      ],
+      "contentBounds": [
+        83,
+        15,
+        158,
+        87
+      ],
+      "contentSize": [
+        75,
+        72
+      ],
+      "outputBounds": [
+        8,
+        5,
+        31,
+        30
+      ],
+      "sheetFrame": 2
+    },
+    {
+      "animation": "impact",
+      "index": 3,
+      "sourceRect": [
+        543,
+        300,
+        181,
+        140
+      ],
+      "contentBounds": [
+        75,
+        7,
+        159,
+        87
+      ],
+      "contentSize": [
+        84,
+        80
+      ],
+      "outputBounds": [
+        6,
+        3,
+        35,
+        34
+      ],
+      "sheetFrame": 3
+    },
+    {
+      "animation": "impact",
+      "index": 4,
+      "sourceRect": [
+        724,
+        300,
+        181,
+        140
+      ],
+      "contentBounds": [
+        83,
+        36,
+        134,
+        89
+      ],
+      "contentSize": [
+        51,
+        53
+      ],
+      "outputBounds": [
+        13,
+        9,
+        21,
+        22
+      ],
+      "sheetFrame": 4
+    },
+    {
+      "animation": "impact",
+      "index": 5,
+      "sourceRect": [
+        905,
+        300,
+        181,
+        140
+      ],
+      "contentBounds": [
+        78,
+        35,
+        124,
+        89
+      ],
+      "contentSize": [
+        46,
+        54
+      ],
+      "outputBounds": [
+        14,
+        8,
+        19,
+        23
+      ],
+      "sheetFrame": 5
+    },
+    {
+      "animation": "impact",
+      "index": 6,
+      "sourceRect": [
+        1086,
+        300,
+        181,
+        140
+      ],
+      "contentBounds": [
+        64,
+        36,
+        111,
+        89
+      ],
+      "contentSize": [
+        47,
+        53
+      ],
+      "outputBounds": [
+        14,
+        9,
+        20,
+        22
+      ],
+      "sheetFrame": 6
+    },
+    {
+      "animation": "impact",
+      "index": 7,
+      "sourceRect": [
+        1267,
+        300,
+        181,
+        140
+      ],
+      "contentBounds": [
+        53,
+        35,
+        97,
+        89
+      ],
+      "contentSize": [
+        44,
+        54
+      ],
+      "outputBounds": [
+        15,
+        8,
+        18,
+        23
+      ],
+      "sheetFrame": 7
+    },
+    {
+      "animation": "fixed",
+      "index": 0,
+      "sourceRect": [
+        0,
+        620,
+        181,
+        120
+      ],
+      "contentBounds": [
+        78,
+        27,
+        141,
+        82
+      ],
+      "contentSize": [
+        63,
+        55
+      ],
+      "outputBounds": [
+        11,
+        8,
+        26,
+        23
+      ],
+      "sheetFrame": 8
+    },
+    {
+      "animation": "fixed",
+      "index": 1,
+      "sourceRect": [
+        181,
+        620,
+        181,
+        120
+      ],
+      "contentBounds": [
+        84,
+        21,
+        137,
+        82
+      ],
+      "contentSize": [
+        53,
+        61
+      ],
+      "outputBounds": [
+        13,
+        7,
+        22,
+        26
+      ],
+      "sheetFrame": 9
+    },
+    {
+      "animation": "fixed",
+      "index": 2,
+      "sourceRect": [
+        362,
+        620,
+        181,
+        120
+      ],
+      "contentBounds": [
+        95,
+        26,
+        145,
+        82
+      ],
+      "contentSize": [
+        50,
+        56
+      ],
+      "outputBounds": [
+        13,
+        8,
+        21,
+        23
+      ],
+      "sheetFrame": 10
+    },
+    {
+      "animation": "fixed",
+      "index": 3,
+      "sourceRect": [
+        543,
+        620,
+        181,
+        120
+      ],
+      "contentBounds": [
+        89,
+        24,
+        141,
+        82
+      ],
+      "contentSize": [
+        52,
+        58
+      ],
+      "outputBounds": [
+        13,
+        8,
+        22,
+        24
+      ],
+      "sheetFrame": 11
+    },
+    {
+      "animation": "fixed",
+      "index": 4,
+      "sourceRect": [
+        724,
+        620,
+        181,
+        120
+      ],
+      "contentBounds": [
+        77,
+        22,
+        141,
+        82
+      ],
+      "contentSize": [
+        64,
+        60
+      ],
+      "outputBounds": [
+        10,
+        7,
+        27,
+        25
+      ],
+      "sheetFrame": 12
+    },
+    {
+      "animation": "fixed",
+      "index": 5,
+      "sourceRect": [
+        905,
+        620,
+        181,
+        120
+      ],
+      "contentBounds": [
+        66,
+        26,
+        130,
+        82
+      ],
+      "contentSize": [
+        64,
+        56
+      ],
+      "outputBounds": [
+        10,
+        8,
+        27,
+        23
+      ],
+      "sheetFrame": 13
+    },
+    {
+      "animation": "fixed",
+      "index": 6,
+      "sourceRect": [
+        1086,
+        620,
+        181,
+        120
+      ],
+      "contentBounds": [
+        55,
+        24,
+        119,
+        82
+      ],
+      "contentSize": [
+        64,
+        58
+      ],
+      "outputBounds": [
+        10,
+        8,
+        27,
+        24
+      ],
+      "sheetFrame": 14
+    },
+    {
+      "animation": "fixed",
+      "index": 7,
+      "sourceRect": [
+        1267,
+        620,
+        181,
+        120
+      ],
+      "contentBounds": [
+        43,
+        21,
+        107,
+        82
+      ],
+      "contentSize": [
+        64,
+        61
+      ],
+      "outputBounds": [
+        10,
+        7,
+        27,
+        26
+      ],
+      "sheetFrame": 15
+    }
+  ]
+}

@@ -41,7 +41,7 @@ describe("V1 simulation", () => {
     const regenerated = stepSimulation(refused, 1000);
 
     expect(refused.resources.atp).toBe(0);
-    expect(regenerated.resources.atp).toBe(1);
+    expect(regenerated.resources.atp).toBe(1.18);
   });
 
   it("selects multiple macrophages and sends them in formation near the same target", () => {
@@ -115,7 +115,7 @@ describe("V1 simulation", () => {
 
   it("spawns bacteria from mission waves", () => {
     const state = createInitialState();
-    const afterFirstWaveStart = stepSimulation(state, 1300);
+    const afterFirstWaveStart = stepSimulation(state, 2300);
 
     expect(
       Object.values(afterFirstWaveStart.entities).filter(

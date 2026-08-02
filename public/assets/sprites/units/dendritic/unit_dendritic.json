@@ -1,0 +1,94 @@
+{
+  "entityType": "dendriticCell",
+  "sourceImages": [
+    "D:\\Mathieu's data\\Vibe learning\\Immunos\\dentritique-ss.png",
+    "D:\\Mathieu's data\\Vibe learning\\Immunos\\dentritique-ss-2.png"
+  ],
+  "outputImage": "public\\assets\\sprites\\units\\dendritic\\unit_dendritic.png",
+  "frameSize": [
+    64,
+    64
+  ],
+  "columns": 8,
+  "rows": 10,
+  "frameCount": 80,
+  "animations": [
+    {
+      "name": "idle",
+      "startFrame": 0,
+      "endFrame": 7,
+      "frameRate": 7,
+      "repeat": -1
+    },
+    {
+      "name": "move",
+      "startFrame": 8,
+      "endFrame": 15,
+      "frameRate": 10,
+      "repeat": -1
+    },
+    {
+      "name": "collect",
+      "startFrame": 16,
+      "endFrame": 23,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    {
+      "name": "carry",
+      "startFrame": 24,
+      "endFrame": 31,
+      "frameRate": 7,
+      "repeat": -1
+    },
+    {
+      "name": "signal",
+      "startFrame": 32,
+      "endFrame": 39,
+      "frameRate": 10,
+      "repeat": 0
+    },
+    {
+      "name": "hurt",
+      "startFrame": 40,
+      "endFrame": 47,
+      "frameRate": 14,
+      "repeat": 0
+    },
+    {
+      "name": "dead",
+      "startFrame": 48,
+      "endFrame": 55,
+      "frameRate": 9,
+      "repeat": 0
+    },
+    {
+      "name": "moveCarry1",
+      "startFrame": 56,
+      "endFrame": 63,
+      "frameRate": 10,
+      "repeat": -1
+    },
+    {
+      "name": "moveCarry2",
+      "startFrame": 64,
+      "endFrame": 71,
+      "frameRate": 10,
+      "repeat": -1
+    },
+    {
+      "name": "moveCarry3",
+      "startFrame": 72,
+      "endFrame": 79,
+      "frameRate": 10,
+      "repeat": -1
+    }
+  ],
+  "transparentPixelCount": 259189,
+  "alphaBounds": [
+    7,
+    24,
+    509,
+    638
+  ]
+}

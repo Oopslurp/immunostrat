@@ -1,0 +1,43 @@
+{
+  "entityType": "antibodyProjectile",
+  "frameSize": [48, 40],
+  "padding": 2,
+  "alignment": "center",
+  "background": {
+    "mode": "key-color",
+    "color": [19, 236, 26],
+    "tolerance": 165,
+    "minimumComponentSize": 3,
+    "fillEnclosedHoles": true
+  },
+  "animations": [
+    {
+      "name": "right",
+      "rowBox": [0, 80, 1448, 130],
+      "columns": 4,
+      "frameRate": 14,
+      "repeat": -1
+    },
+    {
+      "name": "upRight",
+      "rowBox": [0, 330, 1448, 130],
+      "columns": 4,
+      "frameRate": 14,
+      "repeat": -1
+    },
+    {
+      "name": "downRight",
+      "rowBox": [0, 580, 1448, 140],
+      "columns": 4,
+      "frameRate": 14,
+      "repeat": -1
+    },
+    {
+      "name": "left",
+      "rowBox": [0, 835, 1448, 135],
+      "columns": 4,
+      "frameRate": 14,
+      "repeat": -1
+    }
+  ]
+}

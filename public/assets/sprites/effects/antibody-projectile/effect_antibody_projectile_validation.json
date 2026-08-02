@@ -1,0 +1,178 @@
+{
+  "input": "public\\assets\\sprites\\effects\\antibody-projectile\\effect_antibody_projectile.png",
+  "size": [
+    192,
+    160
+  ],
+  "mode": "RGBA",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "transparentPixelCount": 24154,
+  "errors": [],
+  "warnings": [],
+  "frames": [
+    {
+      "frame": "right[0]",
+      "bounds": [
+        8,
+        5,
+        40,
+        35
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "right[1]",
+      "bounds": [
+        5,
+        5,
+        42,
+        35
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "right[2]",
+      "bounds": [
+        2,
+        5,
+        45,
+        35
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "right[3]",
+      "bounds": [
+        5,
+        5,
+        43,
+        34
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "upRight[0]",
+      "bounds": [
+        8,
+        4,
+        40,
+        36
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "upRight[1]",
+      "bounds": [
+        8,
+        4,
+        40,
+        36
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "upRight[2]",
+      "bounds": [
+        5,
+        3,
+        42,
+        37
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "upRight[3]",
+      "bounds": [
+        8,
+        2,
+        39,
+        38
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "downRight[0]",
+      "bounds": [
+        8,
+        4,
+        39,
+        36
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "downRight[1]",
+      "bounds": [
+        8,
+        4,
+        39,
+        36
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "downRight[2]",
+      "bounds": [
+        7,
+        3,
+        41,
+        36
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "downRight[3]",
+      "bounds": [
+        8,
+        3,
+        39,
+        37
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "left[0]",
+      "bounds": [
+        8,
+        5,
+        39,
+        35
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "left[1]",
+      "bounds": [
+        6,
+        5,
+        42,
+        35
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "left[2]",
+      "bounds": [
+        6,
+        5,
+        42,
+        35
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "left[3]",
+      "bounds": [
+        7,
+        4,
+        40,
+        36
+      ],
+      "touchesEdge": false
+    }
+  ],
+  "valid": true
+}

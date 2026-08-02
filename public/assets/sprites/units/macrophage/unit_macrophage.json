@@ -1,0 +1,1005 @@
+{
+  "source": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-666e93ac-9388-49fc-8378-2258f166d2b6.png",
+  "sourceSize": [
+    1448,
+    1086
+  ],
+  "output": "public\\assets\\sprites\\units\\macrophage\\unit_macrophage.png",
+  "outputSize": [
+    512,
+    384
+  ],
+  "frameSize": [
+    64,
+    64
+  ],
+  "columns": 8,
+  "rows": 6,
+  "frameCount": 48,
+  "margin": 0,
+  "spacing": 0,
+  "anchor": "bottom-center",
+  "padding": 4,
+  "chromaThreshold": 12,
+  "normalizationScale": 0.36129032258064514,
+  "frames": [
+    {
+      "row": "idle",
+      "column": 0,
+      "sourceSlot": [
+        0,
+        45,
+        181,
+        180
+      ],
+      "contentBoundsInSlot": [
+        35,
+        12,
+        166,
+        122
+      ],
+      "contentSize": [
+        131,
+        110
+      ]
+    },
+    {
+      "row": "idle",
+      "column": 1,
+      "sourceSlot": [
+        181,
+        45,
+        362,
+        180
+      ],
+      "contentBoundsInSlot": [
+        34,
+        10,
+        166,
+        122
+      ],
+      "contentSize": [
+        132,
+        112
+      ]
+    },
+    {
+      "row": "idle",
+      "column": 2,
+      "sourceSlot": [
+        362,
+        45,
+        543,
+        180
+      ],
+      "contentBoundsInSlot": [
+        30,
+        10,
+        157,
+        122
+      ],
+      "contentSize": [
+        127,
+        112
+      ]
+    },
+    {
+      "row": "idle",
+      "column": 3,
+      "sourceSlot": [
+        543,
+        45,
+        724,
+        180
+      ],
+      "contentBoundsInSlot": [
+        34,
+        10,
+        163,
+        122
+      ],
+      "contentSize": [
+        129,
+        112
+      ]
+    },
+    {
+      "row": "idle",
+      "column": 4,
+      "sourceSlot": [
+        724,
+        45,
+        905,
+        180
+      ],
+      "contentBoundsInSlot": [
+        26,
+        11,
+        158,
+        122
+      ],
+      "contentSize": [
+        132,
+        111
+      ]
+    },
+    {
+      "row": "idle",
+      "column": 5,
+      "sourceSlot": [
+        905,
+        45,
+        1086,
+        180
+      ],
+      "contentBoundsInSlot": [
+        28,
+        8,
+        158,
+        122
+      ],
+      "contentSize": [
+        130,
+        114
+      ]
+    },
+    {
+      "row": "idle",
+      "column": 6,
+      "sourceSlot": [
+        1086,
+        45,
+        1267,
+        180
+      ],
+      "contentBoundsInSlot": [
+        24,
+        12,
+        151,
+        122
+      ],
+      "contentSize": [
+        127,
+        110
+      ]
+    },
+    {
+      "row": "idle",
+      "column": 7,
+      "sourceSlot": [
+        1267,
+        45,
+        1448,
+        180
+      ],
+      "contentBoundsInSlot": [
+        20,
+        8,
+        150,
+        122
+      ],
+      "contentSize": [
+        130,
+        114
+      ]
+    },
+    {
+      "row": "move",
+      "column": 0,
+      "sourceSlot": [
+        0,
+        222,
+        181,
+        350
+      ],
+      "contentBoundsInSlot": [
+        31,
+        4,
+        166,
+        115
+      ],
+      "contentSize": [
+        135,
+        111
+      ]
+    },
+    {
+      "row": "move",
+      "column": 1,
+      "sourceSlot": [
+        181,
+        222,
+        362,
+        350
+      ],
+      "contentBoundsInSlot": [
+        29,
+        5,
+        166,
+        116
+      ],
+      "contentSize": [
+        137,
+        111
+      ]
+    },
+    {
+      "row": "move",
+      "column": 2,
+      "sourceSlot": [
+        362,
+        222,
+        543,
+        350
+      ],
+      "contentBoundsInSlot": [
+        15,
+        9,
+        157,
+        116
+      ],
+      "contentSize": [
+        142,
+        107
+      ]
+    },
+    {
+      "row": "move",
+      "column": 3,
+      "sourceSlot": [
+        543,
+        222,
+        724,
+        350
+      ],
+      "contentBoundsInSlot": [
+        9,
+        6,
+        160,
+        116
+      ],
+      "contentSize": [
+        151,
+        110
+      ]
+    },
+    {
+      "row": "move",
+      "column": 4,
+      "sourceSlot": [
+        724,
+        222,
+        905,
+        350
+      ],
+      "contentBoundsInSlot": [
+        8,
+        0,
+        162,
+        114
+      ],
+      "contentSize": [
+        154,
+        114
+      ]
+    },
+    {
+      "row": "move",
+      "column": 5,
+      "sourceSlot": [
+        905,
+        222,
+        1086,
+        350
+      ],
+      "contentBoundsInSlot": [
+        6,
+        10,
+        161,
+        114
+      ],
+      "contentSize": [
+        155,
+        104
+      ]
+    },
+    {
+      "row": "move",
+      "column": 6,
+      "sourceSlot": [
+        1086,
+        222,
+        1267,
+        350
+      ],
+      "contentBoundsInSlot": [
+        5,
+        5,
+        158,
+        113
+      ],
+      "contentSize": [
+        153,
+        108
+      ]
+    },
+    {
+      "row": "move",
+      "column": 7,
+      "sourceSlot": [
+        1267,
+        222,
+        1448,
+        350
+      ],
+      "contentBoundsInSlot": [
+        5,
+        9,
+        153,
+        114
+      ],
+      "contentSize": [
+        148,
+        105
+      ]
+    },
+    {
+      "row": "attack",
+      "column": 0,
+      "sourceSlot": [
+        0,
+        396,
+        181,
+        522
+      ],
+      "contentBoundsInSlot": [
+        31,
+        4,
+        166,
+        111
+      ],
+      "contentSize": [
+        135,
+        107
+      ]
+    },
+    {
+      "row": "attack",
+      "column": 1,
+      "sourceSlot": [
+        181,
+        396,
+        362,
+        522
+      ],
+      "contentBoundsInSlot": [
+        24,
+        0,
+        164,
+        113
+      ],
+      "contentSize": [
+        140,
+        113
+      ]
+    },
+    {
+      "row": "attack",
+      "column": 2,
+      "sourceSlot": [
+        362,
+        396,
+        543,
+        522
+      ],
+      "contentBoundsInSlot": [
+        20,
+        3,
+        155,
+        111
+      ],
+      "contentSize": [
+        135,
+        108
+      ]
+    },
+    {
+      "row": "attack",
+      "column": 3,
+      "sourceSlot": [
+        543,
+        396,
+        724,
+        522
+      ],
+      "contentBoundsInSlot": [
+        17,
+        6,
+        160,
+        111
+      ],
+      "contentSize": [
+        143,
+        105
+      ]
+    },
+    {
+      "row": "attack",
+      "column": 4,
+      "sourceSlot": [
+        724,
+        396,
+        905,
+        522
+      ],
+      "contentBoundsInSlot": [
+        14,
+        3,
+        162,
+        111
+      ],
+      "contentSize": [
+        148,
+        108
+      ]
+    },
+    {
+      "row": "attack",
+      "column": 5,
+      "sourceSlot": [
+        905,
+        396,
+        1086,
+        522
+      ],
+      "contentBoundsInSlot": [
+        14,
+        4,
+        162,
+        111
+      ],
+      "contentSize": [
+        148,
+        107
+      ]
+    },
+    {
+      "row": "attack",
+      "column": 6,
+      "sourceSlot": [
+        1086,
+        396,
+        1267,
+        522
+      ],
+      "contentBoundsInSlot": [
+        12,
+        0,
+        161,
+        111
+      ],
+      "contentSize": [
+        149,
+        111
+      ]
+    },
+    {
+      "row": "attack",
+      "column": 7,
+      "sourceSlot": [
+        1267,
+        396,
+        1448,
+        522
+      ],
+      "contentBoundsInSlot": [
+        9,
+        3,
+        162,
+        111
+      ],
+      "contentSize": [
+        153,
+        108
+      ]
+    },
+    {
+      "row": "phagocytosis",
+      "column": 0,
+      "sourceSlot": [
+        0,
+        564,
+        181,
+        695
+      ],
+      "contentBoundsInSlot": [
+        31,
+        9,
+        166,
+        120
+      ],
+      "contentSize": [
+        135,
+        111
+      ]
+    },
+    {
+      "row": "phagocytosis",
+      "column": 1,
+      "sourceSlot": [
+        181,
+        564,
+        362,
+        695
+      ],
+      "contentBoundsInSlot": [
+        23,
+        9,
+        161,
+        121
+      ],
+      "contentSize": [
+        138,
+        112
+      ]
+    },
+    {
+      "row": "phagocytosis",
+      "column": 2,
+      "sourceSlot": [
+        362,
+        564,
+        543,
+        695
+      ],
+      "contentBoundsInSlot": [
+        11,
+        11,
+        176,
+        119
+      ],
+      "contentSize": [
+        165,
+        108
+      ]
+    },
+    {
+      "row": "phagocytosis",
+      "column": 3,
+      "sourceSlot": [
+        543,
+        564,
+        724,
+        695
+      ],
+      "contentBoundsInSlot": [
+        18,
+        11,
+        158,
+        120
+      ],
+      "contentSize": [
+        140,
+        109
+      ]
+    },
+    {
+      "row": "phagocytosis",
+      "column": 4,
+      "sourceSlot": [
+        724,
+        564,
+        905,
+        695
+      ],
+      "contentBoundsInSlot": [
+        32,
+        14,
+        149,
+        118
+      ],
+      "contentSize": [
+        117,
+        104
+      ]
+    },
+    {
+      "row": "phagocytosis",
+      "column": 5,
+      "sourceSlot": [
+        905,
+        564,
+        1086,
+        695
+      ],
+      "contentBoundsInSlot": [
+        30,
+        11,
+        142,
+        116
+      ],
+      "contentSize": [
+        112,
+        105
+      ]
+    },
+    {
+      "row": "phagocytosis",
+      "column": 6,
+      "sourceSlot": [
+        1086,
+        564,
+        1267,
+        695
+      ],
+      "contentBoundsInSlot": [
+        22,
+        17,
+        148,
+        117
+      ],
+      "contentSize": [
+        126,
+        100
+      ]
+    },
+    {
+      "row": "phagocytosis",
+      "column": 7,
+      "sourceSlot": [
+        1267,
+        564,
+        1448,
+        695
+      ],
+      "contentBoundsInSlot": [
+        12,
+        14,
+        143,
+        119
+      ],
+      "contentSize": [
+        131,
+        105
+      ]
+    },
+    {
+      "row": "hurt",
+      "column": 0,
+      "sourceSlot": [
+        0,
+        738,
+        181,
+        865
+      ],
+      "contentBoundsInSlot": [
+        31,
+        2,
+        169,
+        122
+      ],
+      "contentSize": [
+        138,
+        120
+      ]
+    },
+    {
+      "row": "hurt",
+      "column": 1,
+      "sourceSlot": [
+        181,
+        738,
+        362,
+        865
+      ],
+      "contentBoundsInSlot": [
+        29,
+        0,
+        171,
+        122
+      ],
+      "contentSize": [
+        142,
+        122
+      ]
+    },
+    {
+      "row": "hurt",
+      "column": 2,
+      "sourceSlot": [
+        362,
+        738,
+        543,
+        865
+      ],
+      "contentBoundsInSlot": [
+        30,
+        3,
+        160,
+        122
+      ],
+      "contentSize": [
+        130,
+        119
+      ]
+    },
+    {
+      "row": "hurt",
+      "column": 3,
+      "sourceSlot": [
+        543,
+        738,
+        724,
+        865
+      ],
+      "contentBoundsInSlot": [
+        31,
+        13,
+        158,
+        122
+      ],
+      "contentSize": [
+        127,
+        109
+      ]
+    },
+    {
+      "row": "hurt",
+      "column": 4,
+      "sourceSlot": [
+        724,
+        738,
+        905,
+        865
+      ],
+      "contentBoundsInSlot": [
+        23,
+        15,
+        153,
+        121
+      ],
+      "contentSize": [
+        130,
+        106
+      ]
+    },
+    {
+      "row": "hurt",
+      "column": 5,
+      "sourceSlot": [
+        905,
+        738,
+        1086,
+        865
+      ],
+      "contentBoundsInSlot": [
+        23,
+        7,
+        154,
+        122
+      ],
+      "contentSize": [
+        131,
+        115
+      ]
+    },
+    {
+      "row": "hurt",
+      "column": 6,
+      "sourceSlot": [
+        1086,
+        738,
+        1267,
+        865
+      ],
+      "contentBoundsInSlot": [
+        20,
+        8,
+        152,
+        122
+      ],
+      "contentSize": [
+        132,
+        114
+      ]
+    },
+    {
+      "row": "hurt",
+      "column": 7,
+      "sourceSlot": [
+        1267,
+        738,
+        1448,
+        865
+      ],
+      "contentBoundsInSlot": [
+        14,
+        11,
+        147,
+        122
+      ],
+      "contentSize": [
+        133,
+        111
+      ]
+    },
+    {
+      "row": "death",
+      "column": 0,
+      "sourceSlot": [
+        0,
+        920,
+        181,
+        1065
+      ],
+      "contentBoundsInSlot": [
+        35,
+        8,
+        166,
+        116
+      ],
+      "contentSize": [
+        131,
+        108
+      ]
+    },
+    {
+      "row": "death",
+      "column": 1,
+      "sourceSlot": [
+        181,
+        920,
+        362,
+        1065
+      ],
+      "contentBoundsInSlot": [
+        28,
+        8,
+        173,
+        116
+      ],
+      "contentSize": [
+        145,
+        108
+      ]
+    },
+    {
+      "row": "death",
+      "column": 2,
+      "sourceSlot": [
+        362,
+        920,
+        543,
+        1065
+      ],
+      "contentBoundsInSlot": [
+        24,
+        33,
+        175,
+        117
+      ],
+      "contentSize": [
+        151,
+        84
+      ]
+    },
+    {
+      "row": "death",
+      "column": 3,
+      "sourceSlot": [
+        543,
+        920,
+        724,
+        1065
+      ],
+      "contentBoundsInSlot": [
+        27,
+        54,
+        176,
+        116
+      ],
+      "contentSize": [
+        149,
+        62
+      ]
+    },
+    {
+      "row": "death",
+      "column": 4,
+      "sourceSlot": [
+        724,
+        920,
+        905,
+        1065
+      ],
+      "contentBoundsInSlot": [
+        27,
+        62,
+        174,
+        116
+      ],
+      "contentSize": [
+        147,
+        54
+      ]
+    },
+    {
+      "row": "death",
+      "column": 5,
+      "sourceSlot": [
+        905,
+        920,
+        1086,
+        1065
+      ],
+      "contentBoundsInSlot": [
+        27,
+        62,
+        171,
+        115
+      ],
+      "contentSize": [
+        144,
+        53
+      ]
+    },
+    {
+      "row": "death",
+      "column": 6,
+      "sourceSlot": [
+        1086,
+        920,
+        1267,
+        1065
+      ],
+      "contentBoundsInSlot": [
+        24,
+        72,
+        168,
+        115
+      ],
+      "contentSize": [
+        144,
+        43
+      ]
+    },
+    {
+      "row": "death",
+      "column": 7,
+      "sourceSlot": [
+        1267,
+        920,
+        1448,
+        1065
+      ],
+      "contentBoundsInSlot": [
+        21,
+        77,
+        165,
+        114
+      ],
+      "contentSize": [
+        144,
+        37
+      ]
+    }
+  ],
+  "rowSources": {
+    "idle": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-666e93ac-9388-49fc-8378-2258f166d2b6.png",
+    "move": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-666e93ac-9388-49fc-8378-2258f166d2b6.png",
+    "attack": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-666e93ac-9388-49fc-8378-2258f166d2b6.png",
+    "phagocytosis": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-0414efb6-3947-479a-8687-b2239e589b4a.png",
+    "hurt": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-666e93ac-9388-49fc-8378-2258f166d2b6.png",
+    "death": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-666e93ac-9388-49fc-8378-2258f166d2b6.png"
+  },
+  "rowReplacements": {
+    "phagocytosis": {
+      "source": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-0414efb6-3947-479a-8687-b2239e589b4a.png",
+      "sourceSize": [
+        1448,
+        1086
+      ],
+      "normalizationScale": 0.36129032258064514
+    }
+  }
+}

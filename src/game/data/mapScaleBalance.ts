@@ -28,7 +28,9 @@ export type RuntimeMapBalance = {
 type PartialRuntimeMapBalance = Partial<RuntimeMapBalance>;
 
 const baseMapScaleBalance: RuntimeMapBalance = {
-  pathogenDamageMultiplier: 1,
+  // Softer burst pressure gives one bad order room to recover while enemy
+  // durability and wave density preserve the tactical challenge.
+  pathogenDamageMultiplier: 0.82,
   pathogenSpeedMultiplier: 1,
   infectionRateMultiplier: 1,
   spreadRateMultiplier: 1,
@@ -49,16 +51,18 @@ const baseMapScaleBalance: RuntimeMapBalance = {
 
 const modeBalance: Record<TacticalMapMode, PartialRuntimeMapBalance> = {
   campaign: {
-    pathogenDamageMultiplier: 0.84,
-    pathogenSpeedMultiplier: 0.88,
-    infectionRateMultiplier: 0.82,
-    spreadRateMultiplier: 1,
-    waveIntervalMultiplier: 1,
-    tissueRegenRate: 0.46,
+    pathogenDamageMultiplier: 0.72,
+    pathogenSpeedMultiplier: 0.82,
+    infectionRateMultiplier: 0.68,
+    spreadRateMultiplier: 0.82,
+    waveIntervalMultiplier: 1.15,
+    tissueRegenRate: 0.62,
     maxActiveCombatSites: 2,
-    resourceIncomeModifier: 1,
-    inflammationDecayMultiplier: 1.08,
-    advancedPassiveDamageMultiplier: 0.9,
+    resourceIncomeModifier: 1.18,
+    inflammationGainMultiplier: 0.82,
+    inflammationDecayMultiplier: 1.22,
+    inflammationDamageMultiplier: 0.72,
+    advancedPassiveDamageMultiplier: 0.72,
   },
   bodyBattle: {
     pathogenDamageMultiplier: 0.78,

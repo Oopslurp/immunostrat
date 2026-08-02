@@ -1,0 +1,15 @@
+{
+  "entityType": "plasmocyte",
+  "frameSize": [80, 64],
+  "padding": 2,
+  "alignment": "bottom-center",
+  "background": { "mode": "alpha" },
+  "animations": [
+    { "name": "idle", "rowBox": [0, 0, 640, 64], "columns": 8, "frameRate": 7, "repeat": -1 },
+    { "name": "move", "rowBox": [0, 64, 640, 64], "columns": 8, "frameRate": 10, "repeat": -1 },
+    { "name": "produce", "rowBox": [0, 128, 640, 64], "columns": 8, "frameRate": 18, "repeat": 0 },
+    { "name": "secrete", "rowBox": [0, 192, 640, 64], "columns": 8, "frameRate": 18, "repeat": 0 },
+    { "name": "hurt", "rowBox": [0, 256, 640, 64], "columns": 8, "frameRate": 14, "repeat": 0 },
+    { "name": "dead", "rowBox": [0, 320, 640, 64], "columns": 8, "frameRate": 9, "repeat": 0 }
+  ]
+}

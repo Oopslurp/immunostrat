@@ -6,6 +6,7 @@ import {
   isBacterium,
   isDendriticCell,
   isImmuneUnit,
+  isNeutrophil,
   type ImmuneUnitEntity,
 } from "../entities";
 import { getRuntimeMapBalance } from "./runtimeMapBalance";
@@ -17,6 +18,14 @@ export function applyMovementSystem(state: GameState, deltaMs: number): void {
 
   for (const entity of Object.values(state.entities)) {
     if (isImmuneUnit(entity)) {
+      if (entity.health <= 0) {
+        continue;
+      }
+
+      if (isNeutrophil(entity) && entity.deathState) {
+        continue;
+      }
+
       if (
         isDendriticCell(entity) &&
         entity.lymphTransit?.phase === "away"
@@ -92,7 +101,10 @@ export function applyMovementSystem(state: GameState, deltaMs: number): void {
         entity.position = moveToward(
           entity.position,
           target,
-          entity.movementSpeed * slowMultiplier * maxMoveScale,
+          entity.movementSpeed *
+            slowMultiplier *
+            (entity.netMovementMultiplier ?? 1) *
+            maxMoveScale,
         );
       }
     }

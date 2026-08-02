@@ -1,0 +1,418 @@
+{
+  "input": "public\\assets\\sprites\\tissue\\tissue-cell\\cell_civilian.png",
+  "size": [
+    512,
+    320
+  ],
+  "mode": "RGBA",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "transparentPixelCount": 112582,
+  "errors": [],
+  "warnings": [],
+  "frames": [
+    {
+      "frame": "healthy[0]",
+      "bounds": [
+        10,
+        11,
+        53,
+        53
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "healthy[1]",
+      "bounds": [
+        10,
+        11,
+        53,
+        53
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "healthy[2]",
+      "bounds": [
+        10,
+        11,
+        53,
+        52
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "healthy[3]",
+      "bounds": [
+        11,
+        12,
+        53,
+        52
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "healthy[4]",
+      "bounds": [
+        10,
+        11,
+        53,
+        52
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "healthy[5]",
+      "bounds": [
+        10,
+        11,
+        53,
+        52
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "healthy[6]",
+      "bounds": [
+        11,
+        11,
+        53,
+        52
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "healthy[7]",
+      "bounds": [
+        10,
+        11,
+        53,
+        52
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infected[0]",
+      "bounds": [
+        9,
+        10,
+        54,
+        54
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infected[1]",
+      "bounds": [
+        9,
+        9,
+        54,
+        54
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infected[2]",
+      "bounds": [
+        9,
+        9,
+        54,
+        55
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infected[3]",
+      "bounds": [
+        10,
+        9,
+        54,
+        55
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infected[4]",
+      "bounds": [
+        9,
+        10,
+        55,
+        54
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infected[5]",
+      "bounds": [
+        9,
+        10,
+        55,
+        54
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infected[6]",
+      "bounds": [
+        9,
+        10,
+        55,
+        53
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infected[7]",
+      "bounds": [
+        10,
+        10,
+        54,
+        53
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "destroyed[0]",
+      "bounds": [
+        10,
+        15,
+        54,
+        49
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "destroyed[1]",
+      "bounds": [
+        9,
+        13,
+        55,
+        51
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "destroyed[2]",
+      "bounds": [
+        8,
+        15,
+        56,
+        49
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "destroyed[3]",
+      "bounds": [
+        9,
+        15,
+        55,
+        48
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "destroyed[4]",
+      "bounds": [
+        9,
+        18,
+        55,
+        45
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "destroyed[5]",
+      "bounds": [
+        9,
+        20,
+        55,
+        43
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "destroyed[6]",
+      "bounds": [
+        9,
+        22,
+        55,
+        42
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "destroyed[7]",
+      "bounds": [
+        10,
+        23,
+        54,
+        41
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "protected[0]",
+      "bounds": [
+        8,
+        8,
+        55,
+        56
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "protected[1]",
+      "bounds": [
+        7,
+        7,
+        57,
+        57
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "protected[2]",
+      "bounds": [
+        7,
+        7,
+        56,
+        56
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "protected[3]",
+      "bounds": [
+        6,
+        7,
+        57,
+        57
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "protected[4]",
+      "bounds": [
+        6,
+        7,
+        57,
+        57
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "protected[5]",
+      "bounds": [
+        8,
+        7,
+        56,
+        56
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "protected[6]",
+      "bounds": [
+        5,
+        7,
+        59,
+        56
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "protected[7]",
+      "bounds": [
+        8,
+        7,
+        55,
+        56
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infectedProtected[0]",
+      "bounds": [
+        8,
+        5,
+        56,
+        58
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infectedProtected[1]",
+      "bounds": [
+        9,
+        5,
+        58,
+        58
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infectedProtected[2]",
+      "bounds": [
+        7,
+        5,
+        56,
+        58
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infectedProtected[3]",
+      "bounds": [
+        7,
+        5,
+        56,
+        58
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infectedProtected[4]",
+      "bounds": [
+        8,
+        5,
+        56,
+        58
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infectedProtected[5]",
+      "bounds": [
+        7,
+        5,
+        56,
+        58
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infectedProtected[6]",
+      "bounds": [
+        5,
+        5,
+        58,
+        58
+      ],
+      "touchesEdge": false
+    },
+    {
+      "frame": "infectedProtected[7]",
+      "bounds": [
+        8,
+        5,
+        55,
+        58
+      ],
+      "touchesEdge": false
+    }
+  ],
+  "valid": true
+}

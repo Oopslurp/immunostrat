@@ -22,6 +22,7 @@ import {
 } from "../../data/missions";
 import { pathogenDefinitions, type PathogenTypeId } from "../../data/pathogens";
 import {
+  getCombatSiteAtOrderPosition,
   getLymphExitForMissionMap,
   type TacticalMapDefinition,
 } from "../../data/tacticalMaps";
@@ -44,14 +45,30 @@ import {
   isBacterium,
   isAdvancedThreat,
   isCytotoxicT,
+  isControllableImmuneUnit,
   isDendriticCell,
   isHostilePathogen,
   isImmuneUnit,
+  isMacrophage,
   isNkCell,
   isNeutrophil,
   isPlasmocyte,
   isVirus,
 } from "../../simulation/entities";
+import { MacrophageVisualController } from "../rendering/MacrophageVisualController";
+import { MacrophageDebugViewer } from "../rendering/MacrophageDebugViewer";
+import { TissueCellVisualController } from "../rendering/TissueCellVisualController";
+import { TissueCellDebugViewer } from "../rendering/TissueCellDebugViewer";
+import { NeutrophilVisualController } from "../rendering/NeutrophilVisualController";
+import { NetTrapVisualController } from "../rendering/NetTrapVisualController";
+import { DendriticVisualController } from "../rendering/DendriticVisualController";
+import { DendriticDebugViewer } from "../rendering/DendriticDebugViewer";
+import { PlasmocyteVisualController } from "../rendering/PlasmocyteVisualController";
+import { PlasmocyteDebugViewer } from "../rendering/PlasmocyteDebugViewer";
+import { AntibodyProjectileVisualController } from "../rendering/AntibodyProjectileVisualController";
+import { AntibodyDebugViewer } from "../rendering/AntibodyDebugViewer";
+import { NkVisualController } from "../rendering/NkVisualController";
+import { NkDebugViewer } from "../rendering/NkDebugViewer";
 
 type CameraKeys = {
   upW: Phaser.Input.Keyboard.Key;
@@ -69,6 +86,21 @@ export class MissionScene extends Phaser.Scene {
   private layerCLymph?: Phaser.GameObjects.RenderTexture;
   private mapLayer?: Phaser.GameObjects.Graphics;
   private dynamicLayer?: Phaser.GameObjects.Graphics;
+  private macrophageOverlayLayer?: Phaser.GameObjects.Graphics;
+  private macrophageVisualController?: MacrophageVisualController;
+  private macrophageDebugViewer?: MacrophageDebugViewer;
+  private tissueCellVisualController?: TissueCellVisualController;
+  private tissueCellDebugViewer?: TissueCellDebugViewer;
+  private neutrophilVisualController?: NeutrophilVisualController;
+  private netTrapVisualController?: NetTrapVisualController;
+  private dendriticVisualController?: DendriticVisualController;
+  private dendriticDebugViewer?: DendriticDebugViewer;
+  private plasmocyteVisualController?: PlasmocyteVisualController;
+  private plasmocyteDebugViewer?: PlasmocyteDebugViewer;
+  private nkVisualController?: NkVisualController;
+  private nkDebugViewer?: NkDebugViewer;
+  private antibodyProjectileVisualController?: AntibodyProjectileVisualController;
+  private antibodyDebugViewer?: AntibodyDebugViewer;
   private combatSiteRenderer?: CombatSiteLayerRenderer;
   private inflammationFieldRenderer?: InflammationFieldRenderer;
   private diapedesisMarkers = new Map<string, Phaser.GameObjects.Image>();
@@ -111,6 +143,22 @@ export class MissionScene extends Phaser.Scene {
     this.inflammationFieldRenderer = new InflammationFieldRenderer(this, map);
     this.combatSiteRenderer = new CombatSiteLayerRenderer(this, map);
     this.dynamicLayer = this.add.graphics().setDepth(0);
+    this.macrophageOverlayLayer = this.add.graphics().setDepth(2);
+    this.macrophageVisualController = new MacrophageVisualController(this);
+    this.macrophageDebugViewer = new MacrophageDebugViewer(this);
+    this.tissueCellVisualController = new TissueCellVisualController(this);
+    this.tissueCellDebugViewer = new TissueCellDebugViewer(this);
+    this.neutrophilVisualController = new NeutrophilVisualController(this);
+    this.netTrapVisualController = new NetTrapVisualController(this);
+    this.dendriticVisualController = new DendriticVisualController(this);
+    this.dendriticDebugViewer = new DendriticDebugViewer(this);
+    this.plasmocyteVisualController = new PlasmocyteVisualController(this);
+    this.plasmocyteDebugViewer = new PlasmocyteDebugViewer(this);
+    this.nkVisualController = new NkVisualController(this);
+    this.nkDebugViewer = new NkDebugViewer(this);
+    this.antibodyProjectileVisualController =
+      new AntibodyProjectileVisualController(this);
+    this.antibodyDebugViewer = new AntibodyDebugViewer(this);
     this.setupDiapedesisMarkers(map);
     this.setupLymphaticExitMarkers(map);
 
@@ -149,6 +197,7 @@ export class MissionScene extends Phaser.Scene {
       this.handlePointerUp(pointer),
     );
     this.cameraKeys = this.createCameraKeys();
+    this.setupNeutrophilDebugControls();
 
     this.bridgeUnsubscribe = this.bridge.subscribeCommand((command) => {
       this.handleCommand(command);
@@ -189,6 +238,36 @@ export class MissionScene extends Phaser.Scene {
     this.combatSiteRenderer = undefined;
     this.inflammationFieldRenderer?.destroy();
     this.inflammationFieldRenderer = undefined;
+    this.macrophageVisualController?.destroy();
+    this.macrophageVisualController = undefined;
+    this.macrophageDebugViewer?.destroy();
+    this.macrophageDebugViewer = undefined;
+    this.tissueCellVisualController?.destroy();
+    this.tissueCellVisualController = undefined;
+    this.tissueCellDebugViewer?.destroy();
+    this.tissueCellDebugViewer = undefined;
+    this.neutrophilVisualController?.destroy();
+    this.neutrophilVisualController = undefined;
+    this.netTrapVisualController?.destroy();
+    this.netTrapVisualController = undefined;
+    this.dendriticVisualController?.destroy();
+    this.dendriticVisualController = undefined;
+    this.dendriticDebugViewer?.destroy();
+    this.dendriticDebugViewer = undefined;
+    this.plasmocyteVisualController?.destroy();
+    this.plasmocyteVisualController = undefined;
+    this.plasmocyteDebugViewer?.destroy();
+    this.plasmocyteDebugViewer = undefined;
+    this.nkVisualController?.destroy();
+    this.nkVisualController = undefined;
+    this.nkDebugViewer?.destroy();
+    this.nkDebugViewer = undefined;
+    this.antibodyProjectileVisualController?.destroy();
+    this.antibodyProjectileVisualController = undefined;
+    this.antibodyDebugViewer?.destroy();
+    this.antibodyDebugViewer = undefined;
+    this.macrophageOverlayLayer?.destroy();
+    this.macrophageOverlayLayer = undefined;
     this.diapedesisMarkers.clear();
     this.lymphaticExitMarkers.clear();
   }
@@ -436,10 +515,14 @@ export class MissionScene extends Phaser.Scene {
       return;
     }
 
-    const combatSitePosition = this.findCombatSiteAnchorAtPosition(state, position);
+    const combatSite = getCombatSiteAtOrderPosition(state.tacticalMap, position);
 
-    if (combatSitePosition) {
-      this.handleCommand({ type: "orderMove", position: combatSitePosition });
+    if (combatSite) {
+      this.handleCommand({
+        type: "orderGuardArea",
+        position: combatSite.position,
+        radius: combatSite.radius,
+      });
       return;
     }
 
@@ -476,7 +559,7 @@ export class MissionScene extends Phaser.Scene {
   ): string | null {
     for (const entity of Object.values(state.entities)) {
       if (
-        isImmuneUnit(entity) &&
+        isControllableImmuneUnit(entity) &&
         distanceSquared(entity.position, position) <= entity.radius * entity.radius
       ) {
         return entity.id;
@@ -499,7 +582,7 @@ export class MissionScene extends Phaser.Scene {
     return Object.values(state.entities)
       .filter(
         (entity) =>
-          isImmuneUnit(entity) &&
+          isControllableImmuneUnit(entity) &&
           entity.position.x >= minX &&
           entity.position.x <= maxX &&
           entity.position.y >= minY &&
@@ -568,21 +651,6 @@ export class MissionScene extends Phaser.Scene {
     return distanceSquared(lymphNode, position) <= lymphNode.radius * lymphNode.radius;
   }
 
-  private findCombatSiteAnchorAtPosition(
-    state: GameState,
-    position: { x: number; y: number },
-  ): { x: number; y: number } | null {
-    const tacticalMap = state.tacticalMap;
-
-    for (const site of tacticalMap.combatSites) {
-      if (distanceSquared(site.position, position) <= site.radius * site.radius) {
-        return { ...site.position };
-      }
-    }
-
-    return null;
-  }
-
   private createCameraKeys(): CameraKeys | undefined {
     const keyboard = this.input.keyboard;
 
@@ -598,6 +666,50 @@ export class MissionScene extends Phaser.Scene {
       downS: keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
       rightD: keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
     };
+  }
+
+  private setupNeutrophilDebugControls(): void {
+    if (
+      !import.meta.env.DEV ||
+      !isNeutrophilDebugEnabled() ||
+      !this.input.keyboard
+    ) {
+      return;
+    }
+
+    this.add
+      .text(
+        300,
+        112,
+        [
+          "NET DEBUG",
+          "N: spawn  L: expire  K: lethal damage",
+          "P: nearby pathogen  C: nearby civilian",
+        ],
+        {
+          color: "#d8d0ff",
+          fontFamily: "monospace",
+          fontSize: "13px",
+          backgroundColor: "#071217dd",
+          padding: { x: 10, y: 8 },
+        },
+      )
+      .setScrollFactor(0)
+      .setDepth(100);
+
+    const bind = (key: string, command: GameCommand) => {
+      this.input.keyboard?.on(`keydown-${key}`, () => {
+        if (!isTextInputActive()) {
+          this.handleCommand(command);
+        }
+      });
+    };
+
+    bind("N", { type: "debugSpawnNeutrophil" });
+    bind("L", { type: "debugExpireNeutrophil" });
+    bind("K", { type: "debugKillNeutrophil" });
+    bind("P", { type: "debugToggleNearbyPathogen" });
+    bind("C", { type: "debugToggleNearbyCivilian" });
   }
 
   private updateCameraFromKeyboard(deltaMs: number): void {
@@ -655,14 +767,25 @@ export class MissionScene extends Phaser.Scene {
 
     mapGraphics.clear();
     graphics.clear();
+    this.macrophageOverlayLayer?.clear();
+    this.macrophageVisualController?.update(state, deltaMs);
+    this.tissueCellVisualController?.update(state);
+    this.neutrophilVisualController?.update(state);
+    this.netTrapVisualController?.update(state);
+    this.dendriticVisualController?.update(state);
+    this.plasmocyteVisualController?.update(state);
+    this.nkVisualController?.update(state);
+    this.antibodyProjectileVisualController?.update(state);
     this.drawMap(mapGraphics, state);
     this.inflammationFieldRenderer?.update(state, deltaMs);
     this.combatSiteRenderer?.update(state, deltaMs);
     this.drawTissueCells(graphics, state);
     this.drawAntiviralZone(graphics, state);
     this.drawBiofilms(graphics, state);
+    this.drawNetTraps(graphics, state);
     this.drawDebris(graphics, state);
     this.drawEntities(graphics, state);
+    this.drawAntibodyProjectiles(graphics, state);
     this.drawEffects(graphics, state);
     this.drawSelectionRectangle(graphics);
   }
@@ -871,33 +994,43 @@ export class MissionScene extends Phaser.Scene {
 
   private drawTissueCells(graphics: Phaser.GameObjects.Graphics, state: GameState) {
     for (const cell of state.tissueCells) {
+      const usesSprite = Boolean(
+        this.tissueCellVisualController?.hasVisual(cell.id),
+      );
+
       if (cell.status === "destroyed") {
-        graphics.fillStyle(0x2d3940, 0.52);
-        graphics.fillCircle(cell.position.x, cell.position.y, cell.radius * 0.72);
-        graphics.lineStyle(2, 0x51606a, 0.42);
-        graphics.strokeCircle(cell.position.x, cell.position.y, cell.radius);
+        if (!usesSprite) {
+          graphics.fillStyle(0x2d3940, 0.52);
+          graphics.fillCircle(cell.position.x, cell.position.y, cell.radius * 0.72);
+          graphics.lineStyle(2, 0x51606a, 0.42);
+          graphics.strokeCircle(cell.position.x, cell.position.y, cell.radius);
+        }
         continue;
       }
 
       if (cell.status === "infected") {
         graphics.fillStyle(0x8bbcff, 0.34);
         graphics.fillCircle(cell.position.x, cell.position.y, cell.radius + 10);
-        graphics.fillStyle(0xb69cff, 0.94);
-      } else {
+        if (!usesSprite) graphics.fillStyle(0xb69cff, 0.94);
+      } else if (!usesSprite) {
         graphics.fillStyle(0x7ee28a, 0.84);
       }
 
-      graphics.fillCircle(cell.position.x, cell.position.y, cell.radius);
-      if (cell.antiviralProtectedMs > 0) {
+      if (!usesSprite) {
+        graphics.fillCircle(cell.position.x, cell.position.y, cell.radius);
+      }
+      if (!usesSprite && cell.antiviralProtectedMs > 0) {
         graphics.lineStyle(2, 0x8bbcff, 0.7);
         graphics.strokeCircle(cell.position.x, cell.position.y, cell.radius + 8);
       }
-      graphics.lineStyle(
-        cell.status === "infected" ? 4 : 2,
-        cell.status === "infected" ? 0x8bbcff : 0xd9ffe0,
-        cell.status === "infected" ? 0.82 : 0.44,
-      );
-      graphics.strokeCircle(cell.position.x, cell.position.y, cell.radius + 3);
+      if (!usesSprite) {
+        graphics.lineStyle(
+          cell.status === "infected" ? 4 : 2,
+          cell.status === "infected" ? 0x8bbcff : 0xd9ffe0,
+          cell.status === "infected" ? 0.82 : 0.44,
+        );
+        graphics.strokeCircle(cell.position.x, cell.position.y, cell.radius + 3);
+      }
       this.drawHealthBar(
         graphics,
         cell.position.x,
@@ -911,6 +1044,30 @@ export class MissionScene extends Phaser.Scene {
   private drawEntities(graphics: Phaser.GameObjects.Graphics, state: GameState) {
     for (const entity of Object.values(state.entities)) {
       if (isImmuneUnit(entity)) {
+        const usesMacrophageSprite =
+          isMacrophage(entity) &&
+          Boolean(this.macrophageVisualController?.hasVisual(entity.id));
+        const usesNeutrophilSprite =
+          isNeutrophil(entity) &&
+          Boolean(this.neutrophilVisualController?.hasVisual(entity.id));
+        const usesDendriticSprite =
+          isDendriticCell(entity) &&
+          Boolean(this.dendriticVisualController?.hasVisual(entity.id));
+        const usesPlasmocyteSprite =
+          isPlasmocyte(entity) &&
+          Boolean(this.plasmocyteVisualController?.hasVisual(entity.id));
+        const usesNkSprite =
+          isNkCell(entity) &&
+          Boolean(this.nkVisualController?.hasVisual(entity.id));
+        const usesUnitSprite =
+          usesMacrophageSprite ||
+          usesNeutrophilSprite ||
+          usesDendriticSprite ||
+          usesPlasmocyteSprite ||
+          usesNkSprite;
+        const overlayGraphics = usesUnitSprite
+          ? this.macrophageOverlayLayer ?? graphics
+          : graphics;
         const transitAlpha = isDendriticCell(entity)
           ? entity.lymphTransit?.visualAlpha ?? 1
           : 1;
@@ -921,76 +1078,78 @@ export class MissionScene extends Phaser.Scene {
 
         const renderedRadius = entity.radius * (0.72 + transitAlpha * 0.28);
 
-        graphics.fillStyle(
-          getImmuneUnitColor(entity.kind),
-          0.95 * transitAlpha,
-        );
-        if (isDendriticCell(entity)) {
-          graphics.fillTriangle(
-            entity.position.x,
-            entity.position.y - renderedRadius,
-            entity.position.x - renderedRadius,
-            entity.position.y + renderedRadius,
-            entity.position.x + renderedRadius,
-            entity.position.y + renderedRadius,
+        if (!usesUnitSprite) {
+          graphics.fillStyle(
+            getImmuneUnitColor(entity.kind),
+            0.95 * transitAlpha,
           );
-        } else if (isPlasmocyte(entity)) {
-          graphics.fillRoundedRect(
-            entity.position.x - entity.radius,
-            entity.position.y - entity.radius,
-            entity.radius * 2,
-            entity.radius * 2,
-            8,
-          );
-        } else if (isNkCell(entity)) {
-          graphics.fillTriangle(
+          if (isDendriticCell(entity)) {
+            graphics.fillTriangle(
+              entity.position.x,
+              entity.position.y - renderedRadius,
+              entity.position.x - renderedRadius,
+              entity.position.y + renderedRadius,
+              entity.position.x + renderedRadius,
+              entity.position.y + renderedRadius,
+            );
+          } else if (isPlasmocyte(entity)) {
+            graphics.fillRoundedRect(
+              entity.position.x - entity.radius,
+              entity.position.y - entity.radius,
+              entity.radius * 2,
+              entity.radius * 2,
+              8,
+            );
+          } else if (isNkCell(entity)) {
+            graphics.fillTriangle(
+              entity.position.x,
+              entity.position.y - entity.radius,
+              entity.position.x - entity.radius,
+              entity.position.y,
+              entity.position.x,
+              entity.position.y + entity.radius,
+            );
+            graphics.fillTriangle(
+              entity.position.x,
+              entity.position.y - entity.radius,
+              entity.position.x + entity.radius,
+              entity.position.y,
+              entity.position.x,
+              entity.position.y + entity.radius,
+            );
+          } else if (isCytotoxicT(entity)) {
+            graphics.fillCircle(entity.position.x, entity.position.y, entity.radius);
+            graphics.fillStyle(0x071217, 0.8);
+            graphics.fillRect(
+              entity.position.x - entity.radius * 0.7,
+              entity.position.y - 2,
+              entity.radius * 1.4,
+              4,
+            );
+            graphics.fillRect(
+              entity.position.x - 2,
+              entity.position.y - entity.radius * 0.7,
+              4,
+              entity.radius * 1.4,
+            );
+          } else {
+            graphics.fillCircle(entity.position.x, entity.position.y, entity.radius);
+          }
+          graphics.lineStyle(3, 0xf5fbff, 0.22 * transitAlpha);
+          graphics.strokeCircle(
             entity.position.x,
-            entity.position.y - entity.radius,
-            entity.position.x - entity.radius,
             entity.position.y,
-            entity.position.x,
-            entity.position.y + entity.radius,
+            renderedRadius + 4,
           );
-          graphics.fillTriangle(
-            entity.position.x,
-            entity.position.y - entity.radius,
-            entity.position.x + entity.radius,
-            entity.position.y,
-            entity.position.x,
-            entity.position.y + entity.radius,
-          );
-        } else if (isCytotoxicT(entity)) {
-          graphics.fillCircle(entity.position.x, entity.position.y, entity.radius);
-          graphics.fillStyle(0x071217, 0.8);
-          graphics.fillRect(
-            entity.position.x - entity.radius * 0.7,
-            entity.position.y - 2,
-            entity.radius * 1.4,
-            4,
-          );
-          graphics.fillRect(
-            entity.position.x - 2,
-            entity.position.y - entity.radius * 0.7,
-            4,
-            entity.radius * 1.4,
-          );
-        } else {
-          graphics.fillCircle(entity.position.x, entity.position.y, entity.radius);
         }
-        graphics.lineStyle(3, 0xf5fbff, 0.22 * transitAlpha);
-        graphics.strokeCircle(
-          entity.position.x,
-          entity.position.y,
-          renderedRadius + 4,
-        );
 
         if (transitAlpha >= 0.85 && state.selectedEntityIds.includes(entity.id)) {
-          graphics.lineStyle(4, 0xffc76b, 0.95);
-          graphics.strokeCircle(entity.position.x, entity.position.y, entity.radius + 10);
+          overlayGraphics.lineStyle(4, 0xffc76b, 0.95);
+          overlayGraphics.strokeCircle(entity.position.x, entity.position.y, entity.radius + 10);
 
           if (entity.orderAnchor) {
-            graphics.lineStyle(2, 0xffc76b, 0.32);
-            graphics.strokeCircle(
+            overlayGraphics.lineStyle(2, 0xffc76b, 0.32);
+            overlayGraphics.strokeCircle(
               entity.orderAnchor.x,
               entity.orderAnchor.y,
               entity.engagementRadius ?? entity.attackRange,
@@ -999,19 +1158,22 @@ export class MissionScene extends Phaser.Scene {
         }
 
         if (transitAlpha >= 0.85 && entity.targetPosition) {
-          graphics.lineStyle(2, 0xffc76b, 0.45);
-          graphics.lineBetween(
+          overlayGraphics.lineStyle(2, 0xffc76b, 0.45);
+          overlayGraphics.lineBetween(
             entity.position.x,
             entity.position.y,
             entity.targetPosition.x,
             entity.targetPosition.y,
           );
-          graphics.strokeCircle(entity.targetPosition.x, entity.targetPosition.y, 8);
+          overlayGraphics.strokeCircle(entity.targetPosition.x, entity.targetPosition.y, 8);
         }
 
-        if (transitAlpha >= 0.85) {
+        if (
+          transitAlpha >= 0.85 &&
+          !(isNeutrophil(entity) && entity.deathState)
+        ) {
           this.drawHealthBar(
-            graphics,
+            overlayGraphics,
             entity.position.x,
             entity.position.y - 34,
             entity.health,
@@ -1019,7 +1181,11 @@ export class MissionScene extends Phaser.Scene {
           );
         }
 
-        if (isNeutrophil(entity) && entity.lifeRemainingMs !== undefined) {
+        if (
+          isNeutrophil(entity) &&
+          !entity.deathState &&
+          entity.lifeRemainingMs !== undefined
+        ) {
           const lifeRatio = Phaser.Math.Clamp(
             entity.lifeRemainingMs / balanceValues.neutrophilLifetimeMs,
             0,
@@ -1037,13 +1203,18 @@ export class MissionScene extends Phaser.Scene {
           graphics.strokePath();
         }
 
-        if (isDendriticCell(entity) && entity.carriedDebrisCount > 0) {
-          graphics.fillStyle(0xb69cff, 0.95 * transitAlpha);
+        if (
+          isDendriticCell(entity) &&
+          entity.carriedDebrisCount > 0 &&
+          !usesDendriticSprite
+        ) {
           for (let index = 0; index < entity.carriedDebrisCount; index += 1) {
-            graphics.fillCircle(
+            this.drawAntigenDot(
+              graphics,
               entity.position.x + entity.radius + index * 7,
               entity.position.y - entity.radius,
               4,
+              transitAlpha,
             );
           }
         }
@@ -1051,19 +1222,29 @@ export class MissionScene extends Phaser.Scene {
 
       if (isBacterium(entity)) {
         const definition = pathogenDefinitions[entity.pathogenTypeId];
+        const capturedVisual = this.macrophageVisualController?.getCapturedTargetVisual(
+          entity,
+          state,
+        );
+        const entityX = capturedVisual?.x ?? entity.position.x;
+        const entityY = capturedVisual?.y ?? entity.position.y;
+        const entityRadius = entity.radius * (capturedVisual?.scale ?? 1);
 
         graphics.fillStyle(definition.color, 0.95);
-        drawPathogenShape(graphics, entity.position.x, entity.position.y, entity.radius, definition.shape);
+        drawPathogenShape(graphics, entityX, entityY, entityRadius, definition.shape);
         graphics.lineStyle(2, definition.outlineColor, 0.58);
-        strokePathogenShape(graphics, entity.position.x, entity.position.y, entity.radius, definition.shape);
+        strokePathogenShape(graphics, entityX, entityY, entityRadius, definition.shape);
         graphics.fillStyle(0xf5fbff, 0.86);
-        graphics.fillCircle(entity.position.x + entity.radius * 0.62, entity.position.y - entity.radius * 0.28, 2.2);
-        this.drawHealthBar(graphics, entity.position.x, entity.position.y - 24, entity.health, entity.maxHealth);
+        graphics.fillCircle(entityX + entityRadius * 0.62, entityY - entityRadius * 0.28, Math.max(0.8, 2.2 * (capturedVisual?.scale ?? 1)));
+        if (!capturedVisual) {
+          this.drawHealthBar(graphics, entityX, entityY - 24, entity.health, entity.maxHealth);
+        }
 
         if (entity.phagocytosedByEntityId) {
           graphics.lineStyle(4, 0x62d3c8, 0.78);
-          graphics.strokeCircle(entity.position.x, entity.position.y, entity.radius + 9);
+          graphics.strokeCircle(entityX, entityY, entityRadius + 9 * (capturedVisual?.scale ?? 1));
         }
+        this.drawNetCaptureOverlay(graphics, entity);
       }
 
       if (isVirus(entity)) {
@@ -1092,6 +1273,7 @@ export class MissionScene extends Phaser.Scene {
           entity.health,
           entity.maxHealth,
         );
+        this.drawNetCaptureOverlay(graphics, entity);
       }
 
       if (isAdvancedThreat(entity)) {
@@ -1136,24 +1318,151 @@ export class MissionScene extends Phaser.Scene {
           entity.health,
           entity.maxHealth,
         );
+        this.drawNetCaptureOverlay(graphics, entity);
       }
     }
   }
 
+  private drawNetTraps(
+    graphics: Phaser.GameObjects.Graphics,
+    state: GameState,
+  ): void {
+    const activeDebugLabels = new Set<string>();
+
+    for (const trap of state.netTraps) {
+      const lifeRatio = Phaser.Math.Clamp(
+        trap.remainingMs / balanceValues.netosis.durationMs,
+        0,
+        1,
+      );
+      const hasSprite = Boolean(this.netTrapVisualController?.hasVisual(trap.id));
+
+      graphics.fillStyle(0x8f7cff, 0.025 + lifeRatio * 0.035);
+      graphics.fillCircle(
+        trap.position.x,
+        trap.position.y,
+        balanceValues.netosis.triggerRadius,
+      );
+      graphics.lineStyle(2, 0xbda7ff, 0.18 + lifeRatio * 0.22);
+      graphics.strokeCircle(
+        trap.position.x,
+        trap.position.y,
+        balanceValues.netosis.captureRadius,
+      );
+
+      if (!hasSprite) {
+        graphics.lineStyle(3, 0x8b83ff, 0.7);
+        for (let index = 0; index < 6; index += 1) {
+          const angle = (index / 6) * Math.PI * 2;
+          graphics.lineBetween(
+            trap.position.x - Math.cos(angle) * 30,
+            trap.position.y - Math.sin(angle) * 18,
+            trap.position.x + Math.cos(angle) * 30,
+            trap.position.y + Math.sin(angle) * 18,
+          );
+        }
+      }
+
+      if (import.meta.env.DEV && isNeutrophilDebugEnabled()) {
+        graphics.lineStyle(2, 0x8de9ff, 0.6);
+        graphics.strokeCircle(
+          trap.position.x,
+          trap.position.y,
+          balanceValues.netosis.triggerRadius,
+        );
+        activeDebugLabels.add(`net-debug-${trap.id}`);
+        this.addDebugNetLabel(trap);
+      }
+    }
+
+    for (const child of [...this.children.list]) {
+      if (
+        child.name.startsWith("net-debug-") &&
+        !activeDebugLabels.has(child.name)
+      ) {
+        child.destroy();
+      }
+    }
+  }
+
+  private drawNetCaptureOverlay(
+    graphics: Phaser.GameObjects.Graphics,
+    entity: { position: { x: number; y: number }; radius: number; netTrapId?: string },
+  ): void {
+    if (!entity.netTrapId) {
+      return;
+    }
+
+    graphics.lineStyle(2, 0xb7a4ff, 0.78);
+    graphics.strokeCircle(
+      entity.position.x,
+      entity.position.y,
+      entity.radius + 6,
+    );
+    graphics.lineStyle(1, 0xf5fbff, 0.48);
+    graphics.lineBetween(
+      entity.position.x - entity.radius - 4,
+      entity.position.y - 4,
+      entity.position.x + entity.radius + 4,
+      entity.position.y + 5,
+    );
+  }
+
+  private addDebugNetLabel(trap: GameState["netTraps"][number]): void {
+    const key = `net-debug-${trap.id}`;
+    let label = this.children.getByName(key) as Phaser.GameObjects.Text | null;
+
+    if (!label) {
+      label = this.add
+        .text(trap.position.x, trap.position.y - 74, "", {
+          color: "#c9bdff",
+          fontFamily: "monospace",
+          fontSize: "12px",
+          backgroundColor: "#071217cc",
+        })
+        .setOrigin(0.5)
+        .setDepth(4)
+        .setName(key);
+    }
+
+    label
+      .setPosition(trap.position.x, trap.position.y - 74)
+      .setText(
+        `${(trap.remainingMs / 1000).toFixed(1)}s · ${trap.capturedEntityIds.length} capture(s)`,
+      );
+  }
+
   private drawDebris(graphics: Phaser.GameObjects.Graphics, state: GameState) {
     for (const debris of state.debris) {
-      graphics.fillStyle(0xb69cff, 0.9);
-      graphics.fillTriangle(
+      this.drawAntigenDot(
+        graphics,
         debris.position.x,
-        debris.position.y - 8,
-        debris.position.x - 8,
-        debris.position.y + 7,
-        debris.position.x + 8,
-        debris.position.y + 7,
+        debris.position.y,
+        6,
+        1,
       );
-      graphics.lineStyle(1, 0xf5fbff, 0.3);
-      graphics.strokeCircle(debris.position.x, debris.position.y, 10);
     }
+  }
+
+  private drawAntigenDot(
+    graphics: Phaser.GameObjects.Graphics,
+    x: number,
+    y: number,
+    radius: number,
+    alpha: number,
+  ): void {
+    graphics.fillStyle(0xb64a12, 0.98 * alpha);
+    graphics.fillCircle(x, y, radius + 1.5);
+    graphics.fillStyle(0xffa31a, 1 * alpha);
+    graphics.fillCircle(x, y, radius);
+    graphics.fillStyle(0xffdb3d, 1 * alpha);
+    graphics.fillCircle(x - radius * 0.18, y - radius * 0.18, radius * 0.68);
+    graphics.fillStyle(0xfff4a8, 0.92 * alpha);
+    graphics.fillCircle(
+      x - radius * 0.42,
+      y - radius * 0.46,
+      Math.max(1, radius * 0.22),
+    );
   }
 
   private drawAntiviralZone(
@@ -1213,9 +1522,18 @@ export class MissionScene extends Phaser.Scene {
 
   private drawEffects(graphics: Phaser.GameObjects.Graphics, state: GameState) {
     for (const effect of state.effects) {
+      if (
+        effect.kind === "antibodyImpact" &&
+        this.antibodyProjectileVisualController?.hasImpactVisual(effect.id)
+      ) {
+        continue;
+      }
+
       const maxTtl =
         effect.kind === "attack" || effect.kind === "antibody"
           ? balanceValues.attackEffectTtlMs
+          : effect.kind === "antibodyImpact"
+            ? balanceValues.adaptive.antibodyImpactTtlMs
           : effect.kind === "treatment"
             ? balanceValues.attackEffectTtlMs * 3
           : effect.kind === "phagocytosis"
@@ -1231,7 +1549,84 @@ export class MissionScene extends Phaser.Scene {
         alpha,
       );
       graphics.strokeCircle(effect.position.x, effect.position.y, effect.radius);
+
+      if (effect.kind === "antibody" || effect.kind === "antibodyImpact") {
+        const progress = 1 - Phaser.Math.Clamp(
+          effect.ttlMs / balanceValues.attackEffectTtlMs,
+          0,
+          1,
+        );
+        const orbitRadius = Math.max(7, effect.radius * 0.52);
+
+        for (let index = 0; index < 3; index += 1) {
+          const angle =
+            progress * Math.PI * 0.7 + (index / 3) * Math.PI * 2;
+          this.drawAntibodyY(
+            graphics,
+            effect.position.x + Math.cos(angle) * orbitRadius,
+            effect.position.y + Math.sin(angle) * orbitRadius,
+            5,
+            angle + Math.PI / 2,
+            alpha,
+          );
+        }
+      }
     }
+  }
+
+  private drawAntibodyProjectiles(
+    graphics: Phaser.GameObjects.Graphics,
+    state: GameState,
+  ): void {
+    for (const projectile of state.antibodyProjectiles) {
+      if (
+        projectile.launchDelayMs > 0 ||
+        this.antibodyProjectileVisualController?.hasProjectileVisual(
+          projectile.id,
+        )
+      ) {
+        continue;
+      }
+
+      const target = state.entities[projectile.targetEntityId];
+      const deltaX =
+        (target?.position.x ?? projectile.position.x + 1) -
+        projectile.position.x;
+      const deltaY =
+        (target?.position.y ?? projectile.position.y) -
+        projectile.position.y;
+      this.drawAntibodyY(
+        graphics,
+        projectile.position.x,
+        projectile.position.y,
+        6,
+        Math.atan2(deltaY, deltaX) + Math.PI / 2,
+        0.95,
+      );
+    }
+  }
+
+  private drawAntibodyY(
+    graphics: Phaser.GameObjects.Graphics,
+    x: number,
+    y: number,
+    size: number,
+    rotation: number,
+    alpha: number,
+  ): void {
+    const transform = (localX: number, localY: number) => ({
+      x: x + localX * Math.cos(rotation) - localY * Math.sin(rotation),
+      y: y + localX * Math.sin(rotation) + localY * Math.cos(rotation),
+    });
+    const center = transform(0, 0);
+    const stem = transform(0, size);
+    const leftArm = transform(-size * 0.7, -size * 0.72);
+    const rightArm = transform(size * 0.7, -size * 0.72);
+
+    graphics.lineStyle(2, 0xb69cff, Math.min(1, alpha + 0.18));
+    graphics.lineBetween(stem.x, stem.y, center.x, center.y);
+    graphics.lineBetween(center.x, center.y, leftArm.x, leftArm.y);
+    graphics.lineBetween(center.x, center.y, rightArm.x, rightArm.y);
   }
 
   private drawSelectionRectangle(graphics: Phaser.GameObjects.Graphics) {
@@ -1514,7 +1909,11 @@ function getImmuneUnitColor(kind: string): number {
 }
 
 function getEffectColor(kind: string): number {
-  if (kind === "antibody" || kind === "adaptive") {
+  if (
+    kind === "antibody" ||
+    kind === "antibodyImpact" ||
+    kind === "adaptive"
+  ) {
     return 0xb69cff;
   }
 
@@ -1550,4 +1949,8 @@ function isTextInputActive(): boolean {
     activeElement instanceof HTMLSelectElement ||
     activeElement?.getAttribute("contenteditable") === "true"
   );
+}
+
+function isNeutrophilDebugEnabled(): boolean {
+  return new URLSearchParams(window.location.search).get("neutrophilDebug") === "1";
 }

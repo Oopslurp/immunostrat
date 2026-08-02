@@ -1,0 +1,19 @@
+{
+  "entityType": "macrophage",
+  "frameSize": [64, 64],
+  "padding": 4,
+  "alignment": "bottom-center",
+  "background": {
+    "mode": "chroma-variance",
+    "threshold": 12,
+    "minimumComponentSize": 8
+  },
+  "animations": [
+    { "name": "idle", "rowBox": [0, 45, 1448, 135], "columns": 8, "frameRate": 7, "repeat": -1 },
+    { "name": "move", "rowBox": [0, 222, 1448, 128], "columns": 8, "frameRate": 10, "repeat": -1 },
+    { "name": "attack", "rowBox": [0, 396, 1448, 126], "columns": 8, "frameRate": 12, "repeat": 0 },
+    { "name": "phagocytosis", "rowBox": [0, 564, 1448, 131], "columns": 8, "frameRate": 10, "repeat": 0 },
+    { "name": "hurt", "rowBox": [0, 738, 1448, 127], "columns": 8, "frameRate": 14, "repeat": 0 },
+    { "name": "dead", "rowBox": [0, 920, 1448, 145], "columns": 8, "frameRate": 9, "repeat": 0 }
+  ]
+}

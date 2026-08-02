@@ -9,6 +9,8 @@ import {
   preloadCombatCoreSource,
   prepareCombatCoreTextures,
 } from "../../mapVisuals/combatSiteCoreAssets";
+import { preloadEntitySprites } from "../assets/preloadEntitySprites";
+import { registerEntityAnimations } from "../animations/registerEntityAnimations";
 
 export class PreloadScene extends Phaser.Scene {
   constructor(private readonly tacticalMap: TacticalMapDefinition) {
@@ -19,6 +21,7 @@ export class PreloadScene extends Phaser.Scene {
     const background = getLayerABackgroundForMap(this.tacticalMap);
 
     preloadCombatCoreSource(this);
+    preloadEntitySprites(this);
 
     if (!this.textures.exists(background.key)) {
       this.load.image(background.key, background.url);
@@ -41,6 +44,7 @@ export class PreloadScene extends Phaser.Scene {
 
   create() {
     prepareCombatCoreTextures(this);
+    registerEntityAnimations(this);
     this.scene.start("MissionScene");
     this.scene.launch("UIScene");
   }

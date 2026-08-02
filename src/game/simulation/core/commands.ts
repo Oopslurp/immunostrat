@@ -11,10 +11,12 @@ import { distance, type EntityId, type Vector2 } from "../../types/shared";
 import {
   isAdvancedThreat,
   isBacterium,
+  isControllableImmuneUnit,
   isDendriticCell,
   isHostilePathogen,
-  isImmuneUnit,
+  isNeutrophil,
 } from "../entities";
+import { spawnBacterium } from "../pathogens/createBacterium";
 import { createInitialState } from "./createInitialState";
 import type { GameState } from "./GameState";
 import { cloneState } from "./cloneState";
@@ -34,12 +36,18 @@ export type GameCommand =
   | { type: "selectEntity"; entityId: EntityId | null }
   | { type: "selectEntities"; entityIds: EntityId[] }
   | { type: "orderMove"; position: Vector2 }
+  | { type: "orderGuardArea"; position: Vector2; radius: number }
   | { type: "orderAttack"; targetEntityId: EntityId }
   | { type: "orderAttackTissueCell"; tissueCellId: string }
   | { type: "orderCollectDebris"; debrisId: string }
   | { type: "orderReturnToLymphNode" }
   | { type: "orderHoldPosition" }
   | { type: "orderRetreat" }
+  | { type: "debugSpawnNeutrophil" }
+  | { type: "debugExpireNeutrophil" }
+  | { type: "debugKillNeutrophil" }
+  | { type: "debugToggleNearbyPathogen" }
+  | { type: "debugToggleNearbyCivilian" }
   | { type: "restart" };
 
 export function applyCommand(state: GameState, command: GameCommand): GameState {
@@ -49,6 +57,10 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
 
   if (state.status !== "running") {
     return state;
+  }
+
+  if (import.meta.env.DEV && isNeutrophilDebugCommand(command)) {
+    return applyNeutrophilDebugCommand(state, command);
   }
 
   if (command.type === "produceMacrophage") {
@@ -99,7 +111,9 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
     const next = cloneState(state);
     const entity = command.entityId ? next.entities[command.entityId] : null;
     next.selectedEntityIds =
-      entity && isImmuneUnit(entity) && command.entityId ? [command.entityId] : [];
+      entity && isControllableImmuneUnit(entity) && command.entityId
+        ? [command.entityId]
+        : [];
 
     return next;
   }
@@ -110,7 +124,7 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
       (entityId) => {
         const entity = next.entities[entityId];
 
-        return entity ? isImmuneUnit(entity) : false;
+        return entity ? isControllableImmuneUnit(entity) : false;
       },
     );
 
@@ -122,24 +136,76 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
     const selectedIds = next.selectedEntityIds.filter((entityId) => {
       const selected = next.entities[entityId];
 
-      return selected ? isImmuneUnit(selected) : false;
+      return selected ? isControllableImmuneUnit(selected) : false;
     });
 
     selectedIds.forEach((entityId, index) => {
       const selected = next.entities[entityId];
 
-      if (selected && isImmuneUnit(selected)) {
+      if (selected && isControllableImmuneUnit(selected)) {
         selected.targetPosition = getFormationPosition(
           command.position,
           index,
           selectedIds.length,
         );
         selected.orderAnchor = { ...selected.targetPosition };
+        selected.guardRadius = unitDefinitions[selected.unitTypeId].guardRadius;
+        selected.leashRadius = unitDefinitions[selected.unitTypeId].leashRadius;
         selected.idleTargetPosition = null;
         selected.explicitTargetEntityId = null;
         selected.tacticalState = "movingToPoint";
         selected.lastOrderFeedback = "Unite envoyee en garde locale";
       }
+    });
+
+    return next;
+  }
+
+  if (command.type === "orderGuardArea") {
+    const next = cloneState(state);
+    const selectedIds = next.selectedEntityIds.filter((entityId) => {
+      const selected = next.entities[entityId];
+
+      return selected ? isControllableImmuneUnit(selected) : false;
+    });
+
+    selectedIds.forEach((entityId, index) => {
+      const selected = next.entities[entityId];
+
+      if (!selected || !isControllableImmuneUnit(selected)) {
+        return;
+      }
+
+      const definition = unitDefinitions[selected.unitTypeId];
+      const formationPosition = getFormationPosition(
+        command.position,
+        index,
+        selectedIds.length,
+      );
+      const maximumFormationOffset = Math.max(
+        0,
+        command.radius * balanceValues.combatSiteOrders.formationRadiusRatio -
+          selected.radius,
+      );
+
+      selected.targetPosition = clampPositionAroundAnchor(
+        formationPosition,
+        command.position,
+        maximumFormationOffset,
+      );
+      selected.orderAnchor = { ...command.position };
+      selected.guardRadius = Math.min(
+        definition.guardRadius,
+        command.radius * balanceValues.combatSiteOrders.patrolRadiusRatio,
+      );
+      selected.leashRadius = Math.max(
+        selected.attackRange + selected.radius,
+        command.radius * balanceValues.combatSiteOrders.leashRadiusRatio,
+      );
+      selected.idleTargetPosition = null;
+      selected.explicitTargetEntityId = null;
+      selected.tacticalState = "movingToSite";
+      selected.lastOrderFeedback = "Patrouille assignee au foyer";
     });
 
     return next;
@@ -156,7 +222,11 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
     for (const entityId of next.selectedEntityIds) {
       const selected = next.entities[entityId];
 
-      if (selected && isImmuneUnit(selected) && selected.attackDamage > 0) {
+      if (
+        selected &&
+        isControllableImmuneUnit(selected) &&
+        selected.attackDamage > 0
+      ) {
         selected.orderAnchor = selected.orderAnchor ?? { ...selected.position };
         selected.targetPosition = { ...target.position };
         selected.idleTargetPosition = null;
@@ -203,7 +273,7 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
 
       if (
         selected &&
-        isImmuneUnit(selected) &&
+        isControllableImmuneUnit(selected) &&
         (selected.kind === "nkCell" || selected.kind === "cytotoxicT")
       ) {
         selected.targetPosition = { ...cell.position };
@@ -255,7 +325,7 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
     for (const entityId of next.selectedEntityIds) {
       const selected = next.entities[entityId];
 
-      if (selected && isImmuneUnit(selected)) {
+      if (selected && isControllableImmuneUnit(selected)) {
         selected.targetPosition = null;
         selected.idleTargetPosition = null;
         selected.explicitTargetEntityId = null;
@@ -274,7 +344,7 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
     for (const entityId of next.selectedEntityIds) {
       const selected = next.entities[entityId];
 
-      if (selected && isImmuneUnit(selected)) {
+      if (selected && isControllableImmuneUnit(selected)) {
         const target = getEntryPointForUnit(
           next.tacticalMap,
           missionDefinitions[next.missionId].map,
@@ -296,6 +366,120 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
   return state;
 }
 
+function isNeutrophilDebugCommand(
+  command: GameCommand,
+): command is Extract<GameCommand, { type: `debug${string}` }> {
+  return command.type.startsWith("debug");
+}
+
+function applyNeutrophilDebugCommand(
+  state: GameState,
+  command: Extract<GameCommand, { type: `debug${string}` }>,
+): GameState {
+  if (command.type === "debugSpawnNeutrophil") {
+    const next = cloneState(state);
+    const definition = unitDefinitions.neutrophil;
+    const id = `neutrophil-${next.nextEntityNumber}`;
+    const position = getEntryPointForUnit(
+      next.tacticalMap,
+      missionDefinitions[next.missionId].map,
+      "neutrophil",
+      getSelectedCommandAnchor(next),
+    );
+
+    next.nextEntityNumber += 1;
+    next.entities[id] = {
+      id,
+      kind: "neutrophil",
+      unitTypeId: "neutrophil",
+      position: { ...position },
+      targetPosition: null,
+      idleTargetPosition: null,
+      nextIdleRetargetMs: next.elapsedMs + 1200,
+      health: definition.maxHealth,
+      maxHealth: definition.maxHealth,
+      radius: definition.radius,
+      movementSpeed: definition.movementSpeed,
+      idleMovementSpeed: definition.idleMovementSpeed,
+      attackRange: definition.attackRange,
+      attackDamage: definition.attackDamage,
+      attackCooldownMs: definition.attackCooldownMs,
+      attackCooldownRemainingMs: 0,
+      tacticalState: "guardingArea",
+      orderAnchor: { ...position },
+      engagementRadius: definition.engagementRadius,
+      leashRadius: definition.leashRadius,
+      guardRadius: definition.guardRadius,
+      explicitTargetEntityId: null,
+      lastOrderFeedback: "Neutrophile debug",
+      lifeRemainingMs: definition.lifetimeMs,
+      carriedAntigenValue: 0,
+      carriedDebrisCount: 0,
+    };
+    next.selectedEntityIds = [id];
+    return next;
+  }
+
+  const next = cloneState(state);
+  const neutrophil =
+    next.selectedEntityIds
+      .map((id) => next.entities[id])
+      .find((entity) => entity && isNeutrophil(entity) && !entity.deathState) ??
+    Object.values(next.entities).find(
+      (entity) => isNeutrophil(entity) && !entity.deathState,
+    );
+
+  if (!neutrophil || !isNeutrophil(neutrophil)) {
+    return next;
+  }
+
+  if (command.type === "debugExpireNeutrophil") {
+    neutrophil.lifeRemainingMs = 1;
+    return next;
+  }
+
+  if (command.type === "debugKillNeutrophil") {
+    neutrophil.health = 0;
+    return next;
+  }
+
+  if (command.type === "debugToggleNearbyPathogen") {
+    const nearby = Object.values(next.entities)
+      .filter(isHostilePathogen)
+      .find(
+        (pathogen) =>
+          distance(pathogen.position, neutrophil.position) <=
+          balanceValues.netosis.triggerRadius + pathogen.radius,
+      );
+
+    if (nearby) {
+      delete next.entities[nearby.id];
+    } else {
+      spawnBacterium(next, "cocciRapid", {
+        x: neutrophil.position.x + balanceValues.netosis.captureRadius + 18,
+        y: neutrophil.position.y,
+      });
+    }
+    return next;
+  }
+
+  const civilian = next.tissueCells.find((cell) => cell.status !== "destroyed");
+  if (civilian) {
+    const isNearby =
+      distance(civilian.position, neutrophil.position) <=
+      balanceValues.netosis.triggerRadius + civilian.radius;
+    civilian.position = {
+      x:
+        neutrophil.position.x +
+        (isNearby
+          ? balanceValues.netosis.triggerRadius + civilian.radius + 80
+          : balanceValues.netosis.captureRadius),
+      y: neutrophil.position.y,
+    };
+  }
+  return next;
+}
+
 function getFormationPosition(
   center: Vector2,
   index: number,
@@ -314,6 +498,25 @@ function getFormationPosition(
   return {
     x: center.x + (column - (columns - 1) / 2) * spacing,
     y: center.y + (row - (rows - 1) / 2) * spacing,
+  };
+}
+
+function clampPositionAroundAnchor(
+  position: Vector2,
+  anchor: Vector2,
+  maximumDistance: number,
+): Vector2 {
+  const dx = position.x - anchor.x;
+  const dy = position.y - anchor.y;
+  const currentDistance = Math.sqrt(dx * dx + dy * dy);
+
+  if (currentDistance <= maximumDistance || currentDistance === 0) {
+    return { ...position };
+  }
+
+  return {
+    x: anchor.x + (dx / currentDistance) * maximumDistance,
+    y: anchor.y + (dy / currentDistance) * maximumDistance,
   };
 }
 
@@ -535,7 +738,7 @@ function getSelectedCommandAnchor(state: GameState): Vector2 | null {
   for (const entityId of state.selectedEntityIds) {
     const entity = state.entities[entityId];
 
-    if (entity && isImmuneUnit(entity)) {
+    if (entity && isControllableImmuneUnit(entity)) {
       return entity.orderAnchor ?? entity.targetPosition ?? entity.position;
     }
   }
@@ -770,6 +973,16 @@ function applyAntibiotic(state: GameState): void {
 }
 
 function getMissionFocusPosition(state: GameState): Vector2 {
+  for (const entityId of state.selectedEntityIds) {
+    const entity = state.entities[entityId];
+
+    if (entity && isControllableImmuneUnit(entity)) {
+      return {
+        ...(entity.orderAnchor ?? entity.targetPosition ?? entity.position),
+      };
+    }
+  }
+
   return (
     state.tacticalMap.combatSites[0]?.position ??
     missionDefinitions[state.missionId].map.tissueCore
