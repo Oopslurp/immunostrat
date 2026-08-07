@@ -60,6 +60,7 @@ export class AntibodyDebugViewer {
       const animation = antibodyProjectileSprite.animations[state];
       const sprite = scene.add
         .sprite(x, y, antibodyProjectileSprite.textureKey)
+        .setScale(antibodyProjectileSprite.scale)
         .setScrollFactor(0)
         .setDepth(396);
       const caption = scene.add
@@ -97,6 +98,7 @@ export class AntibodyDebugViewer {
   ): void {
     const sprite = this.scene.add
       .sprite(x, y, antibodyImpactSprite.textureKey)
+      .setScale(antibodyImpactSprite.scale)
       .setScrollFactor(0)
       .setDepth(396);
     const caption = this.scene.add
@@ -131,6 +133,7 @@ export class AntibodyDebugViewer {
     [-58, 0, 58].forEach((arc, index) => {
       const sprite = this.scene.add
         .sprite(start.x, start.y, antibodyProjectileSprite.textureKey)
+        .setScale(antibodyProjectileSprite.scale)
         .setScrollFactor(0)
         .setDepth(396);
       const animation = antibodyProjectileSprite.animations.right;

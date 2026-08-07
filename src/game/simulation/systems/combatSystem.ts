@@ -17,8 +17,10 @@ import {
   type AdvancedThreatEntity,
   type GameEntity,
   type ImmuneUnitEntity,
+  type NkCellEntity,
   type VirusEntity,
 } from "../entities";
+import { applyPathogenDamage } from "./damageSystem";
 import { isTreatmentActive } from "./treatmentSystem";
 import { launchAntibodySalvo } from "./antibodyProjectileSystem";
 
@@ -36,6 +38,11 @@ export function applyCombatSystem(state: GameState, deltaMs: number): void {
     }
 
     if (entity.attackDamage <= 0 || entity.attackRange <= 0) {
+      continue;
+    }
+
+    if (isNkCell(entity)) {
+      processNkCell(state, entity, deltaMs);
       continue;
     }
 
@@ -133,11 +140,246 @@ export function applyCombatSystem(state: GameState, deltaMs: number): void {
 
 }
 
+type NkDetectionTarget = Readonly<{
+  id: string;
+  kind: "tissueCell" | "cancerCell";
+  outcome: "normal" | "abnormal";
+  position: { x: number; y: number };
+  radius: number;
+}>;
+
+function processNkCell(
+  state: GameState,
+  nkCell: NkCellEntity,
+  deltaMs: number,
+): void {
+  nkCell.attackCooldownRemainingMs = Math.max(
+    0,
+    nkCell.attackCooldownRemainingMs - deltaMs,
+  );
+
+  if (nkCell.detectionState) {
+    const target = resolveNkDetectionTarget(state, nkCell.detectionState);
+
+    if (
+      !target ||
+      distance(nkCell.position, target.position) > nkCell.attackRange + target.radius
+    ) {
+      nkCell.detectionState = undefined;
+      nkCell.tacticalState = "guardingArea";
+      nkCell.lastOrderFeedback = "Analyse interrompue";
+      return;
+    }
+
+    nkCell.detectionState.outcome = target.outcome;
+    nkCell.detectionState.remainingMs = Math.max(
+      0,
+      nkCell.detectionState.remainingMs - deltaMs,
+    );
+    nkCell.targetPosition = null;
+    nkCell.idleTargetPosition = null;
+    nkCell.tacticalState = "holdingPosition";
+
+    if (nkCell.detectionState.remainingMs > 0) {
+      return;
+    }
+
+    nkCell.detectionState = undefined;
+    nkCell.tacticalState = "guardingArea";
+
+    if (target.outcome === "normal") {
+      const scanned = new Set(nkCell.scannedNormalCellIds ?? []);
+      scanned.add(target.id);
+      nkCell.scannedNormalCellIds = [...scanned];
+      nkCell.attackCooldownRemainingMs = nkCell.attackCooldownMs;
+      nkCell.lastOrderFeedback = "Cellule normale reconnue";
+      return;
+    }
+
+    executeNkFinisher(state, nkCell, target);
+    return;
+  }
+
+  if (nkCell.attackCooldownRemainingMs > 0) {
+    return;
+  }
+
+  const target = findNkDetectionTarget(state, nkCell);
+
+  if (!target) {
+    if (nkCell.tacticalState === "engagingNearbyTarget") {
+      nkCell.targetPosition = nkCell.orderAnchor ? { ...nkCell.orderAnchor } : null;
+      nkCell.tacticalState = nkCell.targetPosition
+        ? "movingToPoint"
+        : "guardingArea";
+      nkCell.lastOrderFeedback = "Aucune cellule suspecte locale";
+    }
+    return;
+  }
+
+  if (
+    distance(nkCell.position, target.position) >
+    nkCell.attackRange + target.radius
+  ) {
+    nkCell.targetPosition = { ...target.position };
+    nkCell.idleTargetPosition = null;
+    nkCell.tacticalState = "engagingNearbyTarget";
+    nkCell.lastOrderFeedback = "Approche pour analyse cellulaire";
+    return;
+  }
+
+  nkCell.detectionState = {
+    targetId: target.id,
+    targetKind: target.kind,
+    outcome: target.outcome,
+    remainingMs: balanceValues.combat.nkDetectionDurationMs,
+  };
+  nkCell.targetPosition = null;
+  nkCell.idleTargetPosition = null;
+  nkCell.tacticalState = "holdingPosition";
+  nkCell.lastOrderFeedback = "Analyse cellulaire en cours";
+}
+
+function findNkDetectionTarget(
+  state: GameState,
+  nkCell: NkCellEntity,
+): NkDetectionTarget | null {
+  const maxDistance = nkCell.engagementRadius ?? nkCell.attackRange;
+  const scannedNormalCells = new Set(nkCell.scannedNormalCellIds ?? []);
+  const candidates: NkDetectionTarget[] = [];
+
+  for (const cell of state.tissueCells) {
+    if (cell.status === "destroyed") continue;
+    const outcome = cell.status === "infected" ? "abnormal" : "normal";
+    if (outcome === "normal" && scannedNormalCells.has(cell.id)) continue;
+    if (
+      distance(nkCell.position, cell.position) <= maxDistance &&
+      isWithinLeash(nkCell, cell.position)
+    ) {
+      candidates.push({
+        id: cell.id,
+        kind: "tissueCell",
+        outcome,
+        position: cell.position,
+        radius: cell.radius,
+      });
+    }
+  }
+
+  for (const entity of Object.values(state.entities)) {
+    if (
+      !isAdvancedThreat(entity) ||
+      entity.category !== "cancerCell" ||
+      entity.health <= 0
+    ) {
+      continue;
+    }
+    if (
+      distance(nkCell.position, entity.position) <= maxDistance &&
+      isWithinLeash(nkCell, entity.position)
+    ) {
+      candidates.push({
+        id: entity.id,
+        kind: "cancerCell",
+        outcome: "abnormal",
+        position: entity.position,
+        radius: entity.radius,
+      });
+    }
+  }
+
+  return (
+    candidates.sort((a, b) => {
+      if (a.outcome !== b.outcome) return a.outcome === "abnormal" ? -1 : 1;
+      return (
+        distance(nkCell.position, a.position) -
+        distance(nkCell.position, b.position)
+      );
+    })[0] ?? null
+  );
+}
+
+function resolveNkDetectionTarget(
+  state: GameState,
+  detection: NonNullable<NkCellEntity["detectionState"]>,
+): NkDetectionTarget | null {
+  if (detection.targetKind === "tissueCell") {
+    const cell = state.tissueCells.find((candidate) => candidate.id === detection.targetId);
+    if (!cell || cell.status === "destroyed") return null;
+    return {
+      id: cell.id,
+      kind: "tissueCell",
+      outcome: cell.status === "infected" ? "abnormal" : "normal",
+      position: cell.position,
+      radius: cell.radius,
+    };
+  }
+
+  const entity = state.entities[detection.targetId];
+  if (
+    !entity ||
+    !isAdvancedThreat(entity) ||
+    entity.category !== "cancerCell" ||
+    entity.health <= 0
+  ) {
+    return null;
+  }
+  return {
+    id: entity.id,
+    kind: "cancerCell",
+    outcome: "abnormal",
+    position: entity.position,
+    radius: entity.radius,
+  };
+}
+
+function executeNkFinisher(
+  state: GameState,
+  nkCell: NkCellEntity,
+  target: NkDetectionTarget,
+): void {
+  if (target.kind === "tissueCell") {
+    const cell = state.tissueCells.find((candidate) => candidate.id === target.id);
+    if (cell?.status === "infected") {
+      attackInfectedCell(state, nkCell, cell, cell.health);
+      nkCell.lastOrderFeedback = "Cellule anormale eliminee";
+    }
+    return;
+  }
+
+  const cancerCell = state.entities[target.id];
+  if (
+    !cancerCell ||
+    !isAdvancedThreat(cancerCell) ||
+    cancerCell.category !== "cancerCell"
+  ) {
+    return;
+  }
+
+  cancerCell.detected = true;
+  applyPathogenDamage(cancerCell, cancerCell.health);
+  nkCell.attackCooldownRemainingMs = nkCell.attackCooldownMs;
+  nkCell.lastOrderFeedback = "Cellule cancereuse eliminee";
+  state.inflammation.value = Math.min(
+    balanceValues.inflammation.maxValue,
+    state.inflammation.value + balanceValues.combat.nkInflammationPerAttack,
+  );
+  state.effects.push({
+    id: `effect-${state.nextEffectNumber}`,
+    sourceEntityId: nkCell.id,
+    kind: "cytotoxic",
+    position: { ...cancerCell.position },
+    radius: cancerCell.radius + balanceValues.attackEffectRadiusBonus,
+    ttlMs: balanceValues.attackEffectTtlMs,
+  });
+  state.nextEffectNumber += 1;
+}
+
 function findInfectedCellTarget(
   state: GameState,
   immuneUnit: ImmuneUnitEntity,
 ): TissueCellState | null {
-  if (!isNkCell(immuneUnit) && !isCytotoxicT(immuneUnit)) {
+  if (!isCytotoxicT(immuneUnit)) {
     return null;
   }
 
@@ -170,8 +412,9 @@ function attackInfectedCell(
   state: GameState,
   immuneUnit: ImmuneUnitEntity,
   cell: TissueCellState,
+  damage = immuneUnit.attackDamage,
 ): void {
-  cell.health -= immuneUnit.attackDamage;
+  cell.health = Math.max(0, cell.health - damage);
   immuneUnit.attackCooldownRemainingMs = immuneUnit.attackCooldownMs;
   state.inflammation.value = Math.min(
     balanceValues.inflammation.maxValue,

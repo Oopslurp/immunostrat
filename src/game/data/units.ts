@@ -102,7 +102,7 @@ export const unitDefinitions = {
     radius: 20,
     movementSpeed: 35,
     idleMovementSpeed: 0,
-    attackRange: 300,
+    attackRange: 440,
     engagementRadius: 440,
     leashRadius: 500,
     guardRadius: 90,

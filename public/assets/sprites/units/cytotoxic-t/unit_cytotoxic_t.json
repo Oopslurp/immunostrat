@@ -1,33 +1,47 @@
 {
-  "entityType": "nkCell",
-  "source": "D:\\Mathieu's data\\Vibe learning\\Immunos\\NK-ss2.png",
+  "entityType": "cytotoxicT",
+  "source": "D:\\Mathieu's data\\Vibe learning\\Immunos\\T_cytotoxique-ss.png",
   "sourceSize": [
     1448,
     1086
   ],
   "sourceMode": "RGB",
   "background": {
-    "mode": "chroma-variance",
-    "threshold": 3,
-    "minimumComponentSize": 8,
-    "fillEnclosedHoles": true
+    "mode": "key-color",
+    "color": [
+      16,
+      242,
+      15
+    ],
+    "tolerance": 70
   },
-  "output": "public\\assets\\sprites\\units\\nk-cell\\unit_nk.png",
+  "despill": {
+    "mode": "green",
+    "threshold": 12,
+    "animations": [
+      "idle",
+      "move",
+      "special",
+      "hurt",
+      "dead"
+    ]
+  },
+  "output": "public\\assets\\sprites\\units\\cytotoxic-t\\unit_cytotoxic_t.png",
   "outputSize": [
     576,
-    512
+    448
   ],
   "frameSize": [
     72,
     64
   ],
   "columns": 8,
-  "rows": 8,
-  "frameCount": 64,
-  "contentFrameCount": 64,
+  "rows": 7,
+  "frameCount": 56,
+  "contentFrameCount": 56,
   "padding": 2,
   "alignment": "bottom-center",
-  "commonScale": 0.38857142857142857,
+  "commonScale": 0.40963855421686746,
   "animations": [
     {
       "name": "idle",
@@ -44,44 +58,37 @@
       "repeat": -1
     },
     {
-      "name": "attack",
+      "name": "special",
       "startFrame": 16,
       "endFrame": 23,
       "frameRate": 14,
       "repeat": 0
     },
     {
-      "name": "special",
+      "name": "hurt",
       "startFrame": 24,
       "endFrame": 31,
       "frameRate": 14,
       "repeat": 0
     },
     {
-      "name": "hurt",
+      "name": "dead",
       "startFrame": 32,
       "endFrame": 39,
-      "frameRate": 14,
-      "repeat": 0
-    },
-    {
-      "name": "dead",
-      "startFrame": 40,
-      "endFrame": 47,
       "frameRate": 10,
       "repeat": 0
     },
     {
       "name": "detectNormal",
-      "startFrame": 48,
-      "endFrame": 55,
+      "startFrame": 40,
+      "endFrame": 47,
       "frameRate": 6,
       "repeat": -1
     },
     {
       "name": "detectAbnormal",
-      "startFrame": 56,
-      "endFrame": 63,
+      "startFrame": 48,
+      "endFrame": 55,
       "frameRate": 6,
       "repeat": -1
     }
@@ -92,24 +99,24 @@
       "index": 0,
       "sourceRect": [
         20,
-        38,
+        40,
         170,
-        90
+        100
       ],
       "contentBounds": [
-        48,
-        0,
-        142,
-        85
+        55,
+        8,
+        137,
+        89
       ],
       "contentSize": [
-        94,
-        85
+        82,
+        81
       ],
       "outputBounds": [
-        17,
+        19,
         29,
-        37,
+        34,
         33
       ],
       "sheetFrame": 0
@@ -119,25 +126,25 @@
       "index": 1,
       "sourceRect": [
         190,
-        38,
+        40,
         175,
-        90
+        100
       ],
       "contentBounds": [
-        53,
-        0,
-        146,
-        85
+        59,
+        10,
+        141,
+        89
       ],
       "contentSize": [
-        93,
-        85
+        82,
+        79
       ],
       "outputBounds": [
-        18,
-        29,
-        36,
-        33
+        19,
+        30,
+        34,
+        32
       ],
       "sheetFrame": 1
     },
@@ -146,25 +153,25 @@
       "index": 2,
       "sourceRect": [
         365,
-        38,
+        40,
         175,
-        90
+        100
       ],
       "contentBounds": [
-        48,
-        0,
+        57,
+        10,
         139,
-        85
+        89
       ],
       "contentSize": [
-        91,
-        85
+        82,
+        79
       ],
       "outputBounds": [
-        18,
-        29,
-        35,
-        33
+        19,
+        30,
+        34,
+        32
       ],
       "sheetFrame": 2
     },
@@ -173,24 +180,24 @@
       "index": 3,
       "sourceRect": [
         540,
-        38,
+        40,
         175,
-        90
+        100
       ],
       "contentBounds": [
-        37,
-        0,
-        130,
-        85
+        54,
+        9,
+        133,
+        89
       ],
       "contentSize": [
-        93,
-        85
+        79,
+        80
       ],
       "outputBounds": [
-        18,
+        20,
         29,
-        36,
+        32,
         33
       ],
       "sheetFrame": 3
@@ -200,24 +207,24 @@
       "index": 4,
       "sourceRect": [
         715,
-        38,
+        40,
         175,
-        90
+        100
       ],
       "contentBounds": [
-        26,
-        0,
-        120,
-        85
+        45,
+        9,
+        126,
+        89
       ],
       "contentSize": [
-        94,
-        85
+        81,
+        80
       ],
       "outputBounds": [
-        17,
+        19,
         29,
-        37,
+        33,
         33
       ],
       "sheetFrame": 4
@@ -227,25 +234,25 @@
       "index": 5,
       "sourceRect": [
         890,
-        38,
+        40,
         175,
-        90
+        100
       ],
       "contentBounds": [
-        22,
-        0,
-        117,
-        85
+        39,
+        11,
+        119,
+        89
       ],
       "contentSize": [
-        95,
-        85
+        80,
+        78
       ],
       "outputBounds": [
-        17,
-        29,
-        37,
-        33
+        19,
+        30,
+        33,
+        32
       ],
       "sheetFrame": 5
     },
@@ -254,24 +261,24 @@
       "index": 6,
       "sourceRect": [
         1065,
-        38,
+        40,
         175,
-        90
+        100
       ],
       "contentBounds": [
-        19,
-        0,
+        30,
+        9,
         110,
-        85
+        89
       ],
       "contentSize": [
-        91,
-        85
+        80,
+        80
       ],
       "outputBounds": [
-        18,
+        19,
         29,
-        35,
+        33,
         33
       ],
       "sheetFrame": 6
@@ -281,25 +288,25 @@
       "index": 7,
       "sourceRect": [
         1240,
-        38,
+        40,
         200,
-        90
+        100
       ],
       "contentBounds": [
-        6,
-        0,
-        100,
-        84
+        20,
+        10,
+        98,
+        89
       ],
       "contentSize": [
-        94,
-        84
+        78,
+        79
       ],
       "outputBounds": [
-        17,
-        29,
-        37,
-        33
+        20,
+        30,
+        32,
+        32
       ],
       "sheetFrame": 7
     },
@@ -308,24 +315,24 @@
       "index": 0,
       "sourceRect": [
         20,
-        159,
+        175,
         170,
-        86
+        105
       ],
       "contentBounds": [
-        43,
-        0,
-        153,
-        84
+        54,
+        6,
+        137,
+        86
       ],
       "contentSize": [
-        110,
-        84
+        83,
+        80
       ],
       "outputBounds": [
-        14,
+        19,
         29,
-        43,
+        34,
         33
       ],
       "sheetFrame": 8
@@ -335,25 +342,25 @@
       "index": 1,
       "sourceRect": [
         190,
-        159,
         175,
-        86
+        175,
+        105
       ],
       "contentBounds": [
-        48,
-        0,
-        165,
-        83
+        57,
+        9,
+        151,
+        85
       ],
       "contentSize": [
-        117,
-        83
+        94,
+        76
       ],
       "outputBounds": [
-        13,
-        30,
-        45,
-        32
+        16,
+        31,
+        39,
+        31
       ],
       "sheetFrame": 9
     },
@@ -362,25 +369,25 @@
       "index": 2,
       "sourceRect": [
         365,
-        159,
         175,
-        86
+        175,
+        105
       ],
       "contentBounds": [
-        39,
-        0,
-        156,
-        83
+        51,
+        10,
+        146,
+        85
       ],
       "contentSize": [
-        117,
-        83
+        95,
+        75
       ],
       "outputBounds": [
-        13,
-        30,
-        45,
-        32
+        16,
+        31,
+        39,
+        31
       ],
       "sheetFrame": 10
     },
@@ -389,25 +396,25 @@
       "index": 3,
       "sourceRect": [
         540,
-        159,
         175,
-        86
+        175,
+        105
       ],
       "contentBounds": [
-        32,
-        0,
-        154,
-        83
+        39,
+        9,
+        143,
+        85
       ],
       "contentSize": [
-        122,
-        83
+        104,
+        76
       ],
       "outputBounds": [
-        12,
-        30,
-        47,
-        32
+        14,
+        31,
+        43,
+        31
       ],
       "sheetFrame": 11
     },
@@ -416,25 +423,25 @@
       "index": 4,
       "sourceRect": [
         715,
-        159,
         175,
-        86
+        175,
+        105
       ],
       "contentBounds": [
-        18,
-        2,
-        142,
-        84
+        31,
+        9,
+        138,
+        85
       ],
       "contentSize": [
-        124,
-        82
+        107,
+        76
       ],
       "outputBounds": [
-        12,
-        30,
-        48,
-        32
+        14,
+        31,
+        44,
+        31
       ],
       "sheetFrame": 12
     },
@@ -443,24 +450,24 @@
       "index": 5,
       "sourceRect": [
         890,
-        159,
         175,
-        86
+        175,
+        105
       ],
       "contentBounds": [
-        16,
-        4,
-        136,
+        23,
+        9,
+        133,
         85
       ],
       "contentSize": [
-        120,
-        81
+        110,
+        76
       ],
       "outputBounds": [
-        12,
+        13,
         31,
-        47,
+        45,
         31
       ],
       "sheetFrame": 13
@@ -470,25 +477,25 @@
       "index": 6,
       "sourceRect": [
         1065,
-        159,
         175,
-        86
+        175,
+        105
       ],
       "contentBounds": [
-        8,
-        1,
-        175,
+        14,
+        9,
+        125,
         85
       ],
       "contentSize": [
-        167,
-        84
+        111,
+        76
       ],
       "outputBounds": [
-        3,
-        29,
-        65,
-        33
+        13,
+        31,
+        45,
+        31
       ],
       "sheetFrame": 14
     },
@@ -497,1153 +504,694 @@
       "index": 7,
       "sourceRect": [
         1240,
-        159,
+        175,
         200,
-        86
+        105
       ],
       "contentBounds": [
-        0,
-        2,
-        109,
-        83
+        5,
+        9,
+        121,
+        85
       ],
       "contentSize": [
-        109,
-        81
+        116,
+        76
       ],
       "outputBounds": [
-        15,
+        12,
         31,
-        42,
+        48,
         31
       ],
       "sheetFrame": 15
     },
     {
-      "animation": "attack",
+      "animation": "special",
       "index": 0,
       "sourceRect": [
         20,
-        285,
+        310,
         170,
-        82
+        135
       ],
       "contentBounds": [
-        48,
-        0,
-        142,
-        82
+        45,
+        13,
+        152,
+        95
       ],
       "contentSize": [
-        94,
+        107,
         82
       ],
       "outputBounds": [
-        17,
-        30,
-        37,
-        32
+        14,
+        28,
+        44,
+        34
       ],
       "sheetFrame": 16
     },
     {
-      "animation": "attack",
+      "animation": "special",
       "index": 1,
       "sourceRect": [
         190,
-        285,
+        310,
         175,
-        82
+        135
       ],
       "contentBounds": [
-        53,
-        0,
-        162,
-        82
+        47,
+        4,
+        155,
+        104
       ],
       "contentSize": [
-        109,
-        82
+        108,
+        100
       ],
       "outputBounds": [
-        15,
-        30,
-        42,
-        32
+        14,
+        21,
+        44,
+        41
       ],
       "sheetFrame": 17
     },
     {
-      "animation": "attack",
+      "animation": "special",
       "index": 2,
       "sourceRect": [
         365,
-        285,
+        310,
         175,
-        82
+        135
       ],
       "contentBounds": [
-        43,
-        1,
-        160,
-        82
+        42,
+        5,
+        165,
+        104
       ],
       "contentSize": [
-        117,
-        81
+        123,
+        99
       ],
       "outputBounds": [
-        13,
-        31,
-        45,
-        31
+        11,
+        21,
+        50,
+        41
       ],
       "sheetFrame": 18
     },
     {
-      "animation": "attack",
+      "animation": "special",
       "index": 3,
       "sourceRect": [
         540,
-        285,
+        310,
         175,
-        82
+        135
       ],
       "contentBounds": [
-        36,
-        0,
-        163,
-        81
+        37,
+        5,
+        166,
+        106
       ],
       "contentSize": [
-        127,
-        81
+        129,
+        101
       ],
       "outputBounds": [
-        11,
-        31,
-        49,
-        31
+        9,
+        21,
+        53,
+        41
       ],
       "sheetFrame": 19
     },
     {
-      "animation": "attack",
-      "index": 4,
-      "sourceRect": [
-        715,
-        285,
-        175,
-        82
-      ],
-      "contentBounds": [
-        28,
-        0,
-        152,
-        78
-      ],
-      "contentSize": [
-        124,
-        78
-      ],
-      "outputBounds": [
-        12,
-        32,
-        48,
-        30
-      ],
-      "sheetFrame": 20
-    },
-    {
-      "animation": "attack",
-      "index": 5,
-      "sourceRect": [
-        890,
-        285,
-        175,
-        82
-      ],
-      "contentBounds": [
-        16,
-        0,
-        135,
-        78
-      ],
-      "contentSize": [
-        119,
-        78
-      ],
-      "outputBounds": [
-        13,
-        32,
-        46,
-        30
-      ],
-      "sheetFrame": 21
-    },
-    {
-      "animation": "attack",
-      "index": 6,
-      "sourceRect": [
-        1065,
-        285,
-        175,
-        82
-      ],
-      "contentBounds": [
-        10,
-        0,
-        175,
-        81
-      ],
-      "contentSize": [
-        165,
-        81
-      ],
-      "outputBounds": [
-        4,
-        31,
-        64,
-        31
-      ],
-      "sheetFrame": 22
-    },
-    {
-      "animation": "attack",
-      "index": 7,
-      "sourceRect": [
-        1240,
-        285,
-        200,
-        82
-      ],
-      "contentBounds": [
-        0,
-        1,
-        127,
-        79
-      ],
-      "contentSize": [
-        127,
-        78
-      ],
-      "outputBounds": [
-        11,
-        32,
-        49,
-        30
-      ],
-      "sheetFrame": 23
-    },
-    {
-      "animation": "special",
-      "index": 0,
-      "sourceRect": [
-        20,
-        409,
-        170,
-        104
-      ],
-      "contentBounds": [
-        42,
-        0,
-        155,
-        101
-      ],
-      "contentSize": [
-        113,
-        101
-      ],
-      "outputBounds": [
-        14,
-        23,
-        44,
-        39
-      ],
-      "sheetFrame": 24
-    },
-    {
-      "animation": "special",
-      "index": 1,
-      "sourceRect": [
-        190,
-        409,
-        175,
-        104
-      ],
-      "contentBounds": [
-        41,
-        3,
-        175,
-        100
-      ],
-      "contentSize": [
-        134,
-        97
-      ],
-      "outputBounds": [
-        10,
-        24,
-        52,
-        38
-      ],
-      "sheetFrame": 25
-    },
-    {
-      "animation": "special",
-      "index": 2,
-      "sourceRect": [
-        365,
-        409,
-        175,
-        104
-      ],
-      "contentBounds": [
-        0,
-        2,
-        175,
-        98
-      ],
-      "contentSize": [
-        175,
-        96
-      ],
-      "outputBounds": [
-        2,
-        25,
-        68,
-        37
-      ],
-      "sheetFrame": 26
-    },
-    {
-      "animation": "special",
-      "index": 3,
-      "sourceRect": [
-        540,
-        409,
-        175,
-        104
-      ],
-      "contentBounds": [
-        0,
-        0,
-        175,
-        104
-      ],
-      "contentSize": [
-        175,
-        104
-      ],
-      "outputBounds": [
-        2,
-        22,
-        68,
-        40
-      ],
-      "sheetFrame": 27
-    },
-    {
       "animation": "special",
       "index": 4,
       "sourceRect": [
         715,
-        409,
+        310,
         175,
-        104
+        135
       ],
       "contentBounds": [
-        23,
-        0,
-        168,
-        99
+        29,
+        6,
+        160,
+        108
       ],
       "contentSize": [
-        145,
-        99
-      ],
-      "outputBounds": [
-        8,
-        24,
-        56,
-        38
-      ],
-      "sheetFrame": 28
-    },
-    {
-      "animation": "special",
-      "index": 5,
-      "sourceRect": [
-        890,
-        409,
-        175,
-        104
-      ],
-      "contentBounds": [
-        19,
-        0,
-        158,
-        102
-      ],
-      "contentSize": [
-        139,
+        131,
         102
       ],
       "outputBounds": [
         9,
-        22,
+        20,
         54,
-        40
+        42
       ],
-      "sheetFrame": 29
+      "sheetFrame": 20
+    },
+    {
+      "animation": "special",
+      "index": 5,
+      "sourceRect": [
+        890,
+        310,
+        175,
+        135
+      ],
+      "contentBounds": [
+        19,
+        0,
+        155,
+        106
+      ],
+      "contentSize": [
+        136,
+        106
+      ],
+      "outputBounds": [
+        8,
+        19,
+        56,
+        43
+      ],
+      "sheetFrame": 21
     },
     {
       "animation": "special",
       "index": 6,
       "sourceRect": [
         1065,
-        409,
+        310,
         175,
-        104
+        135
       ],
       "contentBounds": [
-        13,
-        0,
+        9,
+        4,
         175,
-        103
+        116
       ],
       "contentSize": [
-        162,
-        103
+        166,
+        112
       ],
       "outputBounds": [
-        4,
-        22,
-        63,
-        40
+        2,
+        16,
+        68,
+        46
       ],
-      "sheetFrame": 30
+      "sheetFrame": 22
     },
     {
       "animation": "special",
       "index": 7,
       "sourceRect": [
         1240,
-        409,
+        310,
         200,
-        104
+        135
       ],
       "contentBounds": [
         0,
-        7,
-        129,
-        92
+        0,
+        145,
+        116
       ],
       "contentSize": [
-        129,
-        85
+        145,
+        116
       ],
       "outputBounds": [
-        11,
-        29,
-        50,
-        33
+        6,
+        14,
+        59,
+        48
       ],
-      "sheetFrame": 31
+      "sheetFrame": 23
     },
     {
       "animation": "hurt",
       "index": 0,
       "sourceRect": [
         20,
-        557,
+        470,
         170,
-        96
+        115
       ],
       "contentBounds": [
-        45,
-        0,
-        142,
-        85
+        55,
+        7,
+        139,
+        96
       ],
       "contentSize": [
-        97,
-        85
+        84,
+        89
+      ],
+      "outputBounds": [
+        19,
+        26,
+        34,
+        36
+      ],
+      "sheetFrame": 24
+    },
+    {
+      "animation": "hurt",
+      "index": 1,
+      "sourceRect": [
+        190,
+        470,
+        175,
+        115
+      ],
+      "contentBounds": [
+        55,
+        13,
+        145,
+        94
+      ],
+      "contentSize": [
+        90,
+        81
       ],
       "outputBounds": [
         17,
         29,
-        38,
+        37,
         33
+      ],
+      "sheetFrame": 25
+    },
+    {
+      "animation": "hurt",
+      "index": 2,
+      "sourceRect": [
+        365,
+        470,
+        175,
+        115
+      ],
+      "contentBounds": [
+        52,
+        14,
+        142,
+        94
+      ],
+      "contentSize": [
+        90,
+        80
+      ],
+      "outputBounds": [
+        17,
+        29,
+        37,
+        33
+      ],
+      "sheetFrame": 26
+    },
+    {
+      "animation": "hurt",
+      "index": 3,
+      "sourceRect": [
+        540,
+        470,
+        175,
+        115
+      ],
+      "contentBounds": [
+        42,
+        16,
+        143,
+        92
+      ],
+      "contentSize": [
+        101,
+        76
+      ],
+      "outputBounds": [
+        15,
+        31,
+        41,
+        31
+      ],
+      "sheetFrame": 27
+    },
+    {
+      "animation": "hurt",
+      "index": 4,
+      "sourceRect": [
+        715,
+        470,
+        175,
+        115
+      ],
+      "contentBounds": [
+        35,
+        19,
+        145,
+        92
+      ],
+      "contentSize": [
+        110,
+        73
+      ],
+      "outputBounds": [
+        13,
+        32,
+        45,
+        30
+      ],
+      "sheetFrame": 28
+    },
+    {
+      "animation": "hurt",
+      "index": 5,
+      "sourceRect": [
+        890,
+        470,
+        175,
+        115
+      ],
+      "contentBounds": [
+        27,
+        14,
+        132,
+        93
+      ],
+      "contentSize": [
+        105,
+        79
+      ],
+      "outputBounds": [
+        14,
+        30,
+        43,
+        32
+      ],
+      "sheetFrame": 29
+    },
+    {
+      "animation": "hurt",
+      "index": 6,
+      "sourceRect": [
+        1065,
+        470,
+        175,
+        115
+      ],
+      "contentBounds": [
+        19,
+        14,
+        124,
+        93
+      ],
+      "contentSize": [
+        105,
+        79
+      ],
+      "outputBounds": [
+        14,
+        30,
+        43,
+        32
+      ],
+      "sheetFrame": 30
+    },
+    {
+      "animation": "hurt",
+      "index": 7,
+      "sourceRect": [
+        1240,
+        470,
+        200,
+        115
+      ],
+      "contentBounds": [
+        9,
+        11,
+        112,
+        93
+      ],
+      "contentSize": [
+        103,
+        82
+      ],
+      "outputBounds": [
+        15,
+        28,
+        42,
+        34
+      ],
+      "sheetFrame": 31
+    },
+    {
+      "animation": "dead",
+      "index": 0,
+      "sourceRect": [
+        20,
+        615,
+        170,
+        110
+      ],
+      "contentBounds": [
+        56,
+        11,
+        138,
+        95
+      ],
+      "contentSize": [
+        82,
+        84
+      ],
+      "outputBounds": [
+        19,
+        28,
+        34,
+        34
       ],
       "sheetFrame": 32
     },
     {
-      "animation": "hurt",
+      "animation": "dead",
       "index": 1,
       "sourceRect": [
         190,
-        557,
+        615,
         175,
-        96
+        110
       ],
       "contentBounds": [
-        40,
+        49,
         0,
-        140,
-        84
+        145,
+        95
       ],
       "contentSize": [
-        100,
-        84
+        96,
+        95
       ],
       "outputBounds": [
         16,
-        29,
+        23,
         39,
-        33
+        39
       ],
       "sheetFrame": 33
     },
     {
-      "animation": "hurt",
+      "animation": "dead",
       "index": 2,
       "sourceRect": [
         365,
-        557,
+        615,
         175,
-        96
+        110
       ],
       "contentBounds": [
-        41,
-        0,
-        141,
-        85
+        48,
+        2,
+        142,
+        96
       ],
       "contentSize": [
-        100,
-        85
+        94,
+        94
       ],
       "outputBounds": [
         16,
-        29,
+        23,
         39,
-        33
+        39
       ],
       "sheetFrame": 34
     },
     {
-      "animation": "hurt",
+      "animation": "dead",
       "index": 3,
       "sourceRect": [
         540,
-        557,
+        615,
         175,
-        96
+        110
       ],
       "contentBounds": [
-        34,
-        0,
-        134,
-        83
+        38,
+        4,
+        146,
+        96
       ],
       "contentSize": [
-        100,
-        83
+        108,
+        92
       ],
       "outputBounds": [
-        16,
-        30,
-        39,
-        32
+        14,
+        24,
+        44,
+        38
       ],
       "sheetFrame": 35
     },
     {
-      "animation": "hurt",
+      "animation": "dead",
       "index": 4,
       "sourceRect": [
         715,
-        557,
+        615,
         175,
-        96
+        110
       ],
       "contentBounds": [
-        27,
-        0,
-        120,
-        83
+        35,
+        11,
+        131,
+        95
       ],
       "contentSize": [
-        93,
-        83
+        96,
+        84
       ],
       "outputBounds": [
-        18,
-        30,
-        36,
-        32
+        16,
+        28,
+        39,
+        34
       ],
       "sheetFrame": 36
     },
     {
-      "animation": "hurt",
+      "animation": "dead",
       "index": 5,
       "sourceRect": [
         890,
-        557,
+        615,
         175,
-        96
+        110
       ],
       "contentBounds": [
-        16,
-        1,
-        117,
-        83
+        32,
+        20,
+        125,
+        95
       ],
       "contentSize": [
-        101,
-        82
+        93,
+        75
       ],
       "outputBounds": [
-        16,
-        30,
-        39,
-        32
+        17,
+        31,
+        38,
+        31
       ],
       "sheetFrame": 37
     },
     {
-      "animation": "hurt",
+      "animation": "dead",
       "index": 6,
       "sourceRect": [
         1065,
-        557,
+        615,
         175,
-        96
+        110
       ],
       "contentBounds": [
-        10,
-        0,
-        175,
-        83
+        30,
+        28,
+        105,
+        95
       ],
       "contentSize": [
-        165,
-        83
+        75,
+        67
       ],
       "outputBounds": [
-        4,
-        30,
-        64,
-        32
+        20,
+        35,
+        31,
+        27
       ],
       "sheetFrame": 38
     },
     {
-      "animation": "hurt",
+      "animation": "dead",
       "index": 7,
       "sourceRect": [
         1240,
-        557,
+        615,
         200,
-        96
+        110
       ],
       "contentBounds": [
-        0,
-        3,
-        91,
-        82
+        25,
+        51,
+        85,
+        95
       ],
       "contentSize": [
-        91,
-        79
+        60,
+        44
       ],
       "outputBounds": [
-        18,
-        31,
-        35,
-        31
+        23,
+        44,
+        25,
+        18
       ],
       "sheetFrame": 39
     },
     {
-      "animation": "dead",
+      "animation": "detectNormal",
       "index": 0,
       "sourceRect": [
         20,
-        693,
+        755,
         170,
-        88
+        115
       ],
       "contentBounds": [
-        41,
-        0,
-        146,
-        72
-      ],
-      "contentSize": [
-        105,
-        72
-      ],
-      "outputBounds": [
-        15,
-        34,
-        41,
-        28
-      ],
-      "sheetFrame": 40
-    },
-    {
-      "animation": "dead",
-      "index": 1,
-      "sourceRect": [
-        190,
-        693,
-        175,
-        88
-      ],
-      "contentBounds": [
-        33,
-        2,
-        149,
-        71
-      ],
-      "contentSize": [
-        116,
-        69
-      ],
-      "outputBounds": [
-        13,
-        35,
-        45,
-        27
-      ],
-      "sheetFrame": 41
-    },
-    {
-      "animation": "dead",
-      "index": 2,
-      "sourceRect": [
-        365,
-        693,
-        175,
-        88
-      ],
-      "contentBounds": [
-        29,
-        3,
-        151,
-        69
-      ],
-      "contentSize": [
-        122,
-        66
-      ],
-      "outputBounds": [
-        12,
-        36,
-        47,
-        26
-      ],
-      "sheetFrame": 42
-    },
-    {
-      "animation": "dead",
-      "index": 3,
-      "sourceRect": [
-        540,
-        693,
-        175,
-        88
-      ],
-      "contentBounds": [
-        23,
-        7,
-        146,
-        67
-      ],
-      "contentSize": [
-        123,
-        60
-      ],
-      "outputBounds": [
-        12,
-        39,
-        48,
-        23
-      ],
-      "sheetFrame": 43
-    },
-    {
-      "animation": "dead",
-      "index": 4,
-      "sourceRect": [
-        715,
-        693,
-        175,
-        88
-      ],
-      "contentBounds": [
-        22,
-        1,
-        135,
-        67
+        40,
+        9,
+        153,
+        87
       ],
       "contentSize": [
         113,
-        66
-      ],
-      "outputBounds": [
-        14,
-        36,
-        44,
-        26
-      ],
-      "sheetFrame": 44
-    },
-    {
-      "animation": "dead",
-      "index": 5,
-      "sourceRect": [
-        890,
-        693,
-        175,
-        88
-      ],
-      "contentBounds": [
-        10,
-        7,
-        130,
-        68
-      ],
-      "contentSize": [
-        120,
-        61
-      ],
-      "outputBounds": [
-        12,
-        38,
-        47,
-        24
-      ],
-      "sheetFrame": 45
-    },
-    {
-      "animation": "dead",
-      "index": 6,
-      "sourceRect": [
-        1065,
-        693,
-        175,
-        88
-      ],
-      "contentBounds": [
-        8,
-        8,
-        175,
-        63
-      ],
-      "contentSize": [
-        167,
-        55
-      ],
-      "outputBounds": [
-        3,
-        41,
-        65,
-        21
-      ],
-      "sheetFrame": 46
-    },
-    {
-      "animation": "dead",
-      "index": 7,
-      "sourceRect": [
-        1240,
-        693,
-        200,
-        88
-      ],
-      "contentBounds": [
-        0,
-        19,
-        85,
-        61
-      ],
-      "contentSize": [
-        85,
-        42
-      ],
-      "outputBounds": [
-        19,
-        46,
-        33,
-        16
-      ],
-      "sheetFrame": 47
-    },
-    {
-      "animation": "detectNormal",
-      "index": 0,
-      "sourceRect": [
-        20,
-        818,
-        170,
-        83
-      ],
-      "contentBounds": [
-        41,
-        0,
-        152,
-        81
-      ],
-      "contentSize": [
-        111,
-        81
-      ],
-      "outputBounds": [
-        14,
-        31,
-        43,
-        31
-      ],
-      "sheetFrame": 48
-    },
-    {
-      "animation": "detectNormal",
-      "index": 1,
-      "sourceRect": [
-        190,
-        818,
-        175,
-        83
-      ],
-      "contentBounds": [
-        39,
-        0,
-        157,
-        81
-      ],
-      "contentSize": [
-        118,
-        81
-      ],
-      "outputBounds": [
-        13,
-        31,
-        46,
-        31
-      ],
-      "sheetFrame": 49
-    },
-    {
-      "animation": "detectNormal",
-      "index": 2,
-      "sourceRect": [
-        365,
-        818,
-        175,
-        83
-      ],
-      "contentBounds": [
-        35,
-        0,
-        143,
-        79
-      ],
-      "contentSize": [
-        108,
-        79
-      ],
-      "outputBounds": [
-        15,
-        31,
-        42,
-        31
-      ],
-      "sheetFrame": 50
-    },
-    {
-      "animation": "detectNormal",
-      "index": 3,
-      "sourceRect": [
-        540,
-        818,
-        175,
-        83
-      ],
-      "contentBounds": [
-        26,
-        0,
-        138,
-        80
-      ],
-      "contentSize": [
-        112,
-        80
-      ],
-      "outputBounds": [
-        14,
-        31,
-        44,
-        31
-      ],
-      "sheetFrame": 51
-    },
-    {
-      "animation": "detectNormal",
-      "index": 4,
-      "sourceRect": [
-        715,
-        818,
-        175,
-        83
-      ],
-      "contentBounds": [
-        21,
-        0,
-        127,
-        81
-      ],
-      "contentSize": [
-        106,
-        81
-      ],
-      "outputBounds": [
-        15,
-        31,
-        41,
-        31
-      ],
-      "sheetFrame": 52
-    },
-    {
-      "animation": "detectNormal",
-      "index": 5,
-      "sourceRect": [
-        890,
-        818,
-        175,
-        83
-      ],
-      "contentBounds": [
-        8,
-        0,
-        118,
-        80
-      ],
-      "contentSize": [
-        110,
-        80
-      ],
-      "outputBounds": [
-        14,
-        31,
-        43,
-        31
-      ],
-      "sheetFrame": 53
-    },
-    {
-      "animation": "detectNormal",
-      "index": 6,
-      "sourceRect": [
-        1065,
-        818,
-        175,
-        83
-      ],
-      "contentBounds": [
-        4,
-        0,
-        175,
-        79
-      ],
-      "contentSize": [
-        171,
-        79
-      ],
-      "outputBounds": [
-        3,
-        31,
-        66,
-        31
-      ],
-      "sheetFrame": 54
-    },
-    {
-      "animation": "detectNormal",
-      "index": 7,
-      "sourceRect": [
-        1240,
-        818,
-        200,
-        83
-      ],
-      "contentBounds": [
-        0,
-        0,
-        86,
         78
-      ],
-      "contentSize": [
-        86,
-        78
-      ],
-      "outputBounds": [
-        19,
-        32,
-        33,
-        30
-      ],
-      "sheetFrame": 55
-    },
-    {
-      "animation": "detectAbnormal",
-      "index": 0,
-      "sourceRect": [
-        20,
-        944,
-        170,
-        92
-      ],
-      "contentBounds": [
-        41,
-        1,
-        153,
-        86
-      ],
-      "contentSize": [
-        112,
-        85
-      ],
-      "outputBounds": [
-        14,
-        29,
-        44,
-        33
-      ],
-      "sheetFrame": 56
-    },
-    {
-      "animation": "detectAbnormal",
-      "index": 1,
-      "sourceRect": [
-        190,
-        944,
-        175,
-        92
-      ],
-      "contentBounds": [
-        38,
-        3,
-        157,
-        86
-      ],
-      "contentSize": [
-        119,
-        83
       ],
       "outputBounds": [
         13,
@@ -1651,169 +1199,412 @@
         46,
         32
       ],
-      "sheetFrame": 57
+      "sheetFrame": 40
+    },
+    {
+      "animation": "detectNormal",
+      "index": 1,
+      "sourceRect": [
+        190,
+        755,
+        175,
+        115
+      ],
+      "contentBounds": [
+        41,
+        8,
+        159,
+        86
+      ],
+      "contentSize": [
+        118,
+        78
+      ],
+      "outputBounds": [
+        12,
+        30,
+        48,
+        32
+      ],
+      "sheetFrame": 41
+    },
+    {
+      "animation": "detectNormal",
+      "index": 2,
+      "sourceRect": [
+        365,
+        755,
+        175,
+        115
+      ],
+      "contentBounds": [
+        37,
+        1,
+        149,
+        96
+      ],
+      "contentSize": [
+        112,
+        95
+      ],
+      "outputBounds": [
+        13,
+        23,
+        46,
+        39
+      ],
+      "sheetFrame": 42
+    },
+    {
+      "animation": "detectNormal",
+      "index": 3,
+      "sourceRect": [
+        540,
+        755,
+        175,
+        115
+      ],
+      "contentBounds": [
+        31,
+        1,
+        144,
+        96
+      ],
+      "contentSize": [
+        113,
+        95
+      ],
+      "outputBounds": [
+        13,
+        23,
+        46,
+        39
+      ],
+      "sheetFrame": 43
+    },
+    {
+      "animation": "detectNormal",
+      "index": 4,
+      "sourceRect": [
+        715,
+        755,
+        175,
+        115
+      ],
+      "contentBounds": [
+        23,
+        1,
+        136,
+        96
+      ],
+      "contentSize": [
+        113,
+        95
+      ],
+      "outputBounds": [
+        13,
+        23,
+        46,
+        39
+      ],
+      "sheetFrame": 44
+    },
+    {
+      "animation": "detectNormal",
+      "index": 5,
+      "sourceRect": [
+        890,
+        755,
+        175,
+        115
+      ],
+      "contentBounds": [
+        16,
+        1,
+        130,
+        96
+      ],
+      "contentSize": [
+        114,
+        95
+      ],
+      "outputBounds": [
+        12,
+        23,
+        47,
+        39
+      ],
+      "sheetFrame": 45
+    },
+    {
+      "animation": "detectNormal",
+      "index": 6,
+      "sourceRect": [
+        1065,
+        755,
+        175,
+        115
+      ],
+      "contentBounds": [
+        12,
+        1,
+        175,
+        96
+      ],
+      "contentSize": [
+        163,
+        95
+      ],
+      "outputBounds": [
+        2,
+        23,
+        67,
+        39
+      ],
+      "sheetFrame": 46
+    },
+    {
+      "animation": "detectNormal",
+      "index": 7,
+      "sourceRect": [
+        1240,
+        755,
+        200,
+        115
+      ],
+      "contentBounds": [
+        0,
+        6,
+        107,
+        99
+      ],
+      "contentSize": [
+        107,
+        93
+      ],
+      "outputBounds": [
+        14,
+        24,
+        44,
+        38
+      ],
+      "sheetFrame": 47
+    },
+    {
+      "animation": "detectAbnormal",
+      "index": 0,
+      "sourceRect": [
+        20,
+        910,
+        170,
+        125
+      ],
+      "contentBounds": [
+        40,
+        7,
+        151,
+        84
+      ],
+      "contentSize": [
+        111,
+        77
+      ],
+      "outputBounds": [
+        13,
+        30,
+        45,
+        32
+      ],
+      "sheetFrame": 48
+    },
+    {
+      "animation": "detectAbnormal",
+      "index": 1,
+      "sourceRect": [
+        190,
+        910,
+        175,
+        125
+      ],
+      "contentBounds": [
+        41,
+        6,
+        158,
+        84
+      ],
+      "contentSize": [
+        117,
+        78
+      ],
+      "outputBounds": [
+        12,
+        30,
+        48,
+        32
+      ],
+      "sheetFrame": 49
     },
     {
       "animation": "detectAbnormal",
       "index": 2,
       "sourceRect": [
         365,
-        944,
+        910,
         175,
-        92
+        125
       ],
       "contentBounds": [
-        34,
+        37,
         0,
-        142,
-        92
+        149,
+        95
       ],
       "contentSize": [
-        108,
-        92
+        112,
+        95
       ],
       "outputBounds": [
-        15,
-        26,
-        42,
-        36
+        13,
+        23,
+        46,
+        39
       ],
-      "sheetFrame": 58
+      "sheetFrame": 50
     },
     {
       "animation": "detectAbnormal",
       "index": 3,
       "sourceRect": [
         540,
-        944,
+        910,
         175,
-        92
+        125
       ],
       "contentBounds": [
-        25,
+        31,
         0,
-        138,
-        92
+        144,
+        95
       ],
       "contentSize": [
         113,
-        92
+        95
       ],
       "outputBounds": [
-        14,
-        26,
-        44,
-        36
+        13,
+        23,
+        46,
+        39
       ],
-      "sheetFrame": 59
+      "sheetFrame": 51
     },
     {
       "animation": "detectAbnormal",
       "index": 4,
       "sourceRect": [
         715,
-        944,
+        910,
         175,
-        92
+        125
       ],
       "contentBounds": [
-        18,
+        23,
         0,
-        127,
-        92
+        136,
+        95
       ],
       "contentSize": [
-        109,
-        92
+        113,
+        95
       ],
       "outputBounds": [
-        15,
-        26,
-        42,
-        36
+        13,
+        23,
+        46,
+        39
       ],
-      "sheetFrame": 60
+      "sheetFrame": 52
     },
     {
       "animation": "detectAbnormal",
       "index": 5,
       "sourceRect": [
         890,
-        944,
+        910,
         175,
-        92
+        125
       ],
       "contentBounds": [
-        7,
+        16,
         0,
-        120,
-        92
+        130,
+        95
       ],
       "contentSize": [
-        113,
-        92
+        114,
+        95
       ],
       "outputBounds": [
-        14,
-        26,
-        44,
-        36
+        12,
+        23,
+        47,
+        39
       ],
-      "sheetFrame": 61
+      "sheetFrame": 53
     },
     {
       "animation": "detectAbnormal",
       "index": 6,
       "sourceRect": [
         1065,
-        944,
+        910,
         175,
-        92
+        125
       ],
       "contentBounds": [
-        1,
+        12,
         0,
         175,
-        92
+        95
       ],
       "contentSize": [
-        174,
-        92
+        163,
+        95
       ],
       "outputBounds": [
         2,
-        26,
-        68,
-        36
+        23,
+        67,
+        39
       ],
-      "sheetFrame": 62
+      "sheetFrame": 54
     },
     {
       "animation": "detectAbnormal",
       "index": 7,
       "sourceRect": [
         1240,
-        944,
+        910,
         200,
-        92
+        125
       ],
       "contentBounds": [
         0,
         0,
-        100,
-        91
+        110,
+        95
       ],
       "contentSize": [
-        100,
-        91
+        110,
+        95
       ],
       "outputBounds": [
-        16,
-        27,
-        39,
-        35
+        13,
+        23,
+        45,
+        39
       ],
-      "sheetFrame": 63
+      "sheetFrame": 55
     }
   ]
 }

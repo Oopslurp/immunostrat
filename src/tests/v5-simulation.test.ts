@@ -119,7 +119,7 @@ describe("V5 viral infection and tissue cells", () => {
     );
   });
 
-  it("produces NK cells that damage infected tissue cells", () => {
+  it("produces NK cells that detect then finish infected tissue cells", () => {
     const produced = applyCommand(
       {
         ...createInitialState("viralCleanupV7"),
@@ -155,9 +155,15 @@ describe("V5 viral infection and tissue cells", () => {
           : cell,
       ),
     };
-    const next = stepSimulation(state, unitDefinitions.nkCell.attackCooldownMs);
+    const detecting = stepSimulation(state, 16);
+    expect(detecting.tissueCells[0].health).toBe(infectedHealth);
+    const next = stepSimulation(
+      detecting,
+      balanceValues.combat.nkDetectionDurationMs,
+    );
 
-    expect(next.tissueCells[0].health).toBeLessThan(infectedHealth);
+    expect(next.tissueCells[0].health).toBe(0);
+    expect(next.tissueCells[0].status).toBe("destroyed");
   });
 
   it("locks cytotoxic T cells behind viral analysis and antigen cost", () => {

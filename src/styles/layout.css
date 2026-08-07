@@ -1197,6 +1197,51 @@
   display: block;
 }
 
+.sprite-lab-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.sprite-lab-page-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sprite-lab-page-header h1 {
+  margin: 0.2rem 0 0;
+  color: var(--v11-ui-warning);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+}
+
+.sprite-lab-page-header p {
+  margin: 0.35rem 0 0;
+  color: var(--v11-ui-text-muted);
+}
+
+.sprite-lab-warning {
+  border: 1px solid rgba(248, 216, 74, 0.42);
+  border-radius: var(--v11-ui-radius);
+  padding: 0.65rem 0.85rem;
+  color: var(--v11-ui-text-panel);
+  background: rgba(89, 68, 18, 0.35);
+}
+
+.sprite-lab-host {
+  width: 100%;
+  min-height: min(72vh, 700px);
+  overflow: hidden;
+  border: 1px solid rgba(98, 211, 200, 0.45);
+  border-radius: var(--v11-ui-radius);
+  background: #071217;
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.38);
+}
+
+.sprite-lab-host canvas {
+  display: block;
+}
+
 .hud-strip {
   display: flex;
   flex-wrap: wrap;

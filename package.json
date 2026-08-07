@@ -1,7 +1,21 @@
 {
   "name": "immunostrat",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Jeu de strategie 2D dans le navigateur inspire du systeme immunitaire.",
+  "keywords": [
+    "browser-game",
+    "phaser",
+    "react",
+    "strategy-game",
+    "typescript",
+    "vite",
+    "immunology"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

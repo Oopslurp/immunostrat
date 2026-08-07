@@ -1,5 +1,5 @@
 import type { GameState } from "./GameState";
-import { isImmuneUnit } from "../entities";
+import { isImmuneUnit, isNkCell } from "../entities";
 
 export function cloneState(state: GameState): GameState {
   return {
@@ -79,6 +79,12 @@ export function cloneState(state: GameState): GameState {
             : {}),
           ...(entity.kind === "dendriticCell" && entity.lymphTransit
             ? { lymphTransit: { ...entity.lymphTransit } }
+            : {}),
+          ...(isNkCell(entity) && entity.detectionState
+            ? { detectionState: { ...entity.detectionState } }
+            : {}),
+          ...(isNkCell(entity) && entity.scannedNormalCellIds
+            ? { scannedNormalCellIds: [...entity.scannedNormalCellIds] }
             : {}),
         },
       ]),

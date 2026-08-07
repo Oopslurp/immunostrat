@@ -29,7 +29,9 @@ export type EntityVisualState =
   | "downRight"
   | "left"
   | "impact"
-  | "fixed";
+  | "fixed"
+  | "detectNormal"
+  | "detectAbnormal";
 
 export type SpriteOrientation =
   | "none"
@@ -87,13 +89,16 @@ export type SpriteManifestIssue = Readonly<{
   message: string;
 }>;
 
+const publicAssetPath = (path: string) =>
+  `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
+
 /** V11.3B macrophage sheet: six rows of eight normalized 64 px frames. */
 export const macrophagePilotSprite: EntitySpriteDefinition = {
   entityType: "macrophage",
   category: "unit",
   enabled: true,
   textureKey: "unit_macrophage",
-  path: "/assets/sprites/units/macrophage/unit_macrophage.png",
+  path: publicAssetPath("assets/sprites/units/macrophage/unit_macrophage.png"),
   assetType: "spritesheet",
   frameWidth: 64,
   frameHeight: 64,
@@ -166,7 +171,7 @@ export const neutrophilSprite: EntitySpriteDefinition = {
   category: "unit",
   enabled: true,
   textureKey: "unit_neutrophil",
-  path: "/assets/sprites/units/neutrophil/unit_neutrophil.png",
+  path: publicAssetPath("assets/sprites/units/neutrophil/unit_neutrophil.png"),
   assetType: "spritesheet",
   frameWidth: 64,
   frameHeight: 64,
@@ -245,7 +250,7 @@ export const dendriticCellSprite: EntitySpriteDefinition = {
   category: "unit",
   enabled: true,
   textureKey: "unit_dendritic",
-  path: "/assets/sprites/units/dendritic/unit_dendritic.png",
+  path: publicAssetPath("assets/sprites/units/dendritic/unit_dendritic.png"),
   assetType: "spritesheet",
   frameWidth: 64,
   frameHeight: 64,
@@ -346,7 +351,7 @@ export const plasmocyteSprite: EntitySpriteDefinition = {
   category: "unit",
   enabled: true,
   textureKey: "unit_plasmocyte",
-  path: "/assets/sprites/units/plasmocyte/unit_plasmocyte.png",
+  path: publicAssetPath("assets/sprites/units/plasmocyte/unit_plasmocyte.png"),
   assetType: "spritesheet",
   frameWidth: 80,
   frameHeight: 64,
@@ -412,19 +417,19 @@ export const plasmocyteSprite: EntitySpriteDefinition = {
   },
 };
 
-/** V11.3H NK-cell sheet: six rows of eight normalized 72 by 64 frames. */
+/** V11.3H NK-cell sheet: eight rows of eight normalized 72 by 64 frames. */
 export const nkCellSprite: EntitySpriteDefinition = {
   entityType: "nkCell",
   category: "unit",
   enabled: true,
   textureKey: "unit_nk",
-  path: "/assets/sprites/units/nk-cell/unit_nk.png",
+  path: publicAssetPath("assets/sprites/units/nk-cell/unit_nk.png"),
   assetType: "spritesheet",
   frameWidth: 72,
   frameHeight: 64,
-  frameCount: 48,
+  frameCount: 64,
   columns: 8,
-  rows: 6,
+  rows: 8,
   anchor: { x: 0.5, y: 1 },
   visualOffset: { x: 0, y: 20 },
   scale: 1,
@@ -475,9 +480,109 @@ export const nkCellSprite: EntitySpriteDefinition = {
       frameRate: 10,
       repeat: 0,
     },
+    detectNormal: {
+      key: "unit.nk.detect-normal",
+      startFrame: 48,
+      endFrame: 55,
+      frameRate: 6,
+      repeat: -1,
+    },
+    detectAbnormal: {
+      key: "unit.nk.detect-abnormal",
+      startFrame: 56,
+      endFrame: 63,
+      frameRate: 6,
+      repeat: -1,
+    },
   },
   attachmentPoints: {
     attack: { x: 23, y: -5 },
+    impact: { x: 0, y: -4 },
+    visualCenter: { x: 0, y: 0 },
+    groundEffect: { x: 0, y: 20 },
+  },
+};
+
+/** V11.3I cytotoxic-T sheet: seven rows of eight normalized 72 by 64 frames. */
+export const cytotoxicTSprite: EntitySpriteDefinition = {
+  entityType: "cytotoxicT",
+  category: "unit",
+  enabled: true,
+  textureKey: "unit_cytotoxic_t",
+  path: publicAssetPath("assets/sprites/units/cytotoxic-t/unit_cytotoxic_t.png"),
+  assetType: "spritesheet",
+  frameWidth: 72,
+  frameHeight: 64,
+  frameCount: 56,
+  columns: 8,
+  rows: 7,
+  anchor: { x: 0.5, y: 1 },
+  visualOffset: { x: 0, y: 20 },
+  scale: 1,
+  orientation: "flipHorizontal",
+  allowProceduralFallback: true,
+  animations: {
+    idle: {
+      key: "unit.cytotoxic-t.idle",
+      startFrame: 0,
+      endFrame: 7,
+      frameRate: 7,
+      repeat: -1,
+    },
+    move: {
+      key: "unit.cytotoxic-t.move",
+      startFrame: 8,
+      endFrame: 15,
+      frameRate: 11,
+      repeat: -1,
+    },
+    attack: {
+      key: "unit.cytotoxic-t.attack-cytotoxic",
+      startFrame: 16,
+      endFrame: 23,
+      frameRate: 14,
+      repeat: 0,
+      impactFrame: 20,
+    },
+    special: {
+      key: "unit.cytotoxic-t.cytotoxic-strike",
+      startFrame: 16,
+      endFrame: 23,
+      frameRate: 14,
+      repeat: 0,
+      impactFrame: 20,
+    },
+    hurt: {
+      key: "unit.cytotoxic-t.hurt",
+      startFrame: 24,
+      endFrame: 31,
+      frameRate: 14,
+      repeat: 0,
+    },
+    dead: {
+      key: "unit.cytotoxic-t.death",
+      startFrame: 32,
+      endFrame: 39,
+      frameRate: 10,
+      repeat: 0,
+    },
+    detectNormal: {
+      key: "unit.cytotoxic-t.detect-normal",
+      startFrame: 40,
+      endFrame: 47,
+      frameRate: 6,
+      repeat: -1,
+    },
+    detectAbnormal: {
+      key: "unit.cytotoxic-t.detect-abnormal",
+      startFrame: 48,
+      endFrame: 55,
+      frameRate: 6,
+      repeat: -1,
+    },
+  },
+  attachmentPoints: {
+    attack: { x: 24, y: -5 },
     impact: { x: 0, y: -4 },
     visualCenter: { x: 0, y: 0 },
     groundEffect: { x: 0, y: 20 },
@@ -490,7 +595,9 @@ export const antibodyProjectileSprite: EntitySpriteDefinition = {
   category: "effect",
   enabled: true,
   textureKey: "effect_antibody_projectile",
-  path: "/assets/sprites/effects/antibody-projectile/effect_antibody_projectile.png",
+  path: publicAssetPath(
+    "assets/sprites/effects/antibody-projectile/effect_antibody_projectile.png",
+  ),
   assetType: "spritesheet",
   frameWidth: 48,
   frameHeight: 40,
@@ -499,7 +606,7 @@ export const antibodyProjectileSprite: EntitySpriteDefinition = {
   rows: 4,
   anchor: { x: 0.5, y: 0.5 },
   visualOffset: { x: 0, y: 0 },
-  scale: 1,
+  scale: 0.28,
   orientation: "eightDirections",
   allowProceduralFallback: true,
   animations: {
@@ -544,7 +651,9 @@ export const antibodyImpactSprite: EntitySpriteDefinition = {
   category: "effect",
   enabled: true,
   textureKey: "effect_antibody_impact",
-  path: "/assets/sprites/effects/antibody-impact/effect_antibody_impact.png",
+  path: publicAssetPath(
+    "assets/sprites/effects/antibody-impact/effect_antibody_impact.png",
+  ),
   assetType: "spritesheet",
   frameWidth: 48,
   frameHeight: 40,
@@ -553,7 +662,7 @@ export const antibodyImpactSprite: EntitySpriteDefinition = {
   rows: 2,
   anchor: { x: 0.5, y: 0.5 },
   visualOffset: { x: 0, y: 0 },
-  scale: 1,
+  scale: 0.28,
   orientation: "none",
   allowProceduralFallback: true,
   animations: {
@@ -585,7 +694,7 @@ export const tissueCellSprite: EntitySpriteDefinition = {
   category: "tissue",
   enabled: true,
   textureKey: "cell_civilian",
-  path: "/assets/sprites/tissue/tissue-cell/cell_civilian.png",
+  path: publicAssetPath("assets/sprites/tissue/tissue-cell/cell_civilian.png"),
   assetType: "spritesheet",
   frameWidth: 64,
   frameHeight: 64,
@@ -646,6 +755,7 @@ export const entitySpriteManifest = [
   dendriticCellSprite,
   plasmocyteSprite,
   nkCellSprite,
+  cytotoxicTSprite,
   antibodyProjectileSprite,
   antibodyImpactSprite,
   tissueCellSprite,

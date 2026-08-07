@@ -8,6 +8,7 @@ trois projectiles partagent le résultat du calcul de dégâts de l’attaque.
 
 - Les dégâts ne sont plus instantanés.
 - La salve commence pendant l’animation `SECRETE`.
+- Les trois anticorps partent successivement, espacés de `240 ms`.
 - Chaque projectile suit une courbe quadratique jusqu’à sa cible mobile.
 - Si la cible meurt avant l’arrivée, le projectile recherche une menace vivante
   proche.
@@ -22,14 +23,15 @@ ces projectiles.
 Le plasmocyte peut désormais soutenir un front sans entrer dans le cercle de
 bataille :
 
-- portée de tir : 300 px ;
-- rayon de détection : 440 px ;
+- cercle d’activation et portée de tir : 440 px ;
+- vitesse pendant l’activation : 35 % de la vitesse normale ;
 - poursuite maximale autour de son point de garde : 500 px ;
 - rayon de garde : 90 px.
 
-Une cible située entre 300 et 440 px provoque une approche automatique jusqu’à
-la portée de tir. Une menace au-delà de 440 px n’active pas le plasmocyte ; la
-limite de 500 px empêche une poursuite à travers toute la carte.
+Une cible vivante située dans le cercle de 440 px active le plasmocyte, ralentit
+son déplacement et déclenche la sécrétion dès que le cooldown est prêt. Une
+menace au-delà du cercle ne l’active pas ; la limite de 500 px empêche une
+poursuite à travers toute la carte.
 
 ## Sources et préparation
 
@@ -41,6 +43,8 @@ limite de 500 px empêche une poursuite à travers toute la carte.
 Les fonds verts ont été retirés par couleur clé. Les labels ont été exclus des
 zones de découpe. Toutes les frames sont normalisées sur des canvases 48 × 40,
 avec une échelle commune de 0,375 pour le vol et 0,4190476 pour l’impact.
+Le rendu Phaser applique ensuite une échelle uniforme de 0,28 aux projectiles
+et aux anticorps fixés, sans étirement ni rééchantillonnage du spritesheet.
 
 ## Matrice de couverture
 

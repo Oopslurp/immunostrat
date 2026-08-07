@@ -8,7 +8,6 @@ import {
   isCytotoxicT,
   isControllableImmuneUnit,
   isImmuneUnit,
-  isNkCell,
   type AdvancedThreatEntity,
 } from "../entities";
 import { spawnAdvancedThreat } from "../pathogens/createAdvancedThreat";
@@ -91,7 +90,7 @@ function updateCancerDetection(
     .filter(isImmuneUnit)
     .find(
       (immuneUnit) =>
-        (isNkCell(immuneUnit) || isCytotoxicT(immuneUnit)) &&
+        isCytotoxicT(immuneUnit) &&
         distance(immuneUnit.position, entity.position) <= 150,
     );
 

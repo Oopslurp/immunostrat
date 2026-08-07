@@ -1,42 +1,49 @@
 import Phaser from "phaser";
 import {
-  nkCellSprite,
+  cytotoxicTSprite,
   type EntityVisualState,
 } from "../assets/entitySpriteManifest";
 
-const DEBUG_QUERY = "nkDebug";
-const STATES: ReadonlyArray<Readonly<{ label: string; state: EntityVisualState }>> = [
+const DEBUG_QUERY = "cytotoxicTDebug";
+const STATES: ReadonlyArray<
+  Readonly<{ label: string; state: EntityVisualState }>
+> = [
   { label: "IDLE", state: "idle" },
   { label: "MOVE", state: "move" },
-  { label: "CYTOTOXIC", state: "special" },
+  { label: "STRIKE", state: "special" },
   { label: "HURT", state: "hurt" },
   { label: "DEATH", state: "dead" },
   { label: "DETECT OK", state: "detectNormal" },
   { label: "DETECT KO", state: "detectAbnormal" },
 ];
 
-export function isNkDebugRequested(search = window.location.search): boolean {
-  return import.meta.env.DEV && new URLSearchParams(search).get(DEBUG_QUERY) === "1";
+export function isCytotoxicTDebugRequested(
+  search = window.location.search,
+): boolean {
+  return (
+    import.meta.env.DEV &&
+    new URLSearchParams(search).get(DEBUG_QUERY) === "1"
+  );
 }
 
-export class NkDebugViewer {
+export class CytotoxicTDebugViewer {
   private readonly objects: Phaser.GameObjects.GameObject[] = [];
 
   constructor(private readonly scene: Phaser.Scene) {
     if (
-      !isNkDebugRequested() ||
-      !scene.textures.exists(nkCellSprite.textureKey)
+      !isCytotoxicTDebugRequested() ||
+      !scene.textures.exists(cytotoxicTSprite.textureKey)
     ) {
       return;
     }
 
     const panel = scene.add
-      .rectangle(scene.scale.width / 2, 185, 860, 260, 0x071217, 0.94)
+      .rectangle(scene.scale.width / 2, 185, 680, 260, 0x071217, 0.94)
       .setScrollFactor(0)
       .setDepth(390)
-      .setStrokeStyle(2, 0x5fd3ff, 0.9);
+      .setStrokeStyle(2, 0xf06cd6, 0.9);
     const title = scene.add
-      .text(scene.scale.width / 2, 70, "NK SPRITE DEBUG", {
+      .text(scene.scale.width / 2, 70, "CYTOTOXIC T SPRITE DEBUG", {
         color: "#f5fbff",
         fontFamily: "monospace",
         fontSize: "18px",
@@ -47,18 +54,18 @@ export class NkDebugViewer {
     this.objects.push(panel, title);
 
     STATES.forEach(({ label, state }, index) => {
-      const x = scene.scale.width / 2 - 360 + index * 120;
+      const x = scene.scale.width / 2 - 270 + index * 90;
       const y = 185;
-      const animation = nkCellSprite.animations[state];
+      const animation = cytotoxicTSprite.animations[state];
       const sprite = scene.add
-        .sprite(x, y, nkCellSprite.textureKey)
-        .setOrigin(nkCellSprite.anchor.x, nkCellSprite.anchor.y)
-        .setScale(1.4)
+        .sprite(x, y, cytotoxicTSprite.textureKey)
+        .setOrigin(cytotoxicTSprite.anchor.x, cytotoxicTSprite.anchor.y)
+        .setScale(1.25)
         .setScrollFactor(0)
         .setDepth(391);
       const caption = scene.add
         .text(x, y + 18, label, {
-          color: "#9deaff",
+          color: "#ffb5ed",
           fontFamily: "monospace",
           fontSize: "12px",
         })

@@ -83,6 +83,13 @@ export type PlasmocyteEntity = ImmuneUnitEntity & {
 export type NkCellEntity = ImmuneUnitEntity & {
   kind: "nkCell";
   unitTypeId: "nkCell";
+  detectionState?: {
+    targetId: EntityId;
+    targetKind: "tissueCell" | "cancerCell";
+    outcome: "normal" | "abnormal";
+    remainingMs: number;
+  };
+  scannedNormalCellIds?: EntityId[];
 };
 
 export type CytotoxicTEntity = ImmuneUnitEntity & {

@@ -5,6 +5,7 @@ export const routes = {
   bodyMap: "bodyMap",
   infinite: "infinite",
   game: "game",
+  spriteLab: "spriteLab",
 } as const;
 
 export type AppRoute = (typeof routes)[keyof typeof routes];

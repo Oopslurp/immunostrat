@@ -8,12 +8,15 @@ import {
   missionDefinitions,
 } from "../game/data/missions";
 import { pathogenDefinitions } from "../game/data/pathogens";
+import { balanceValues } from "../game/data/balance";
 import { createGeneratedBodyMapState } from "../game/bodyMap/bodyMapGenerator";
 import { createInitialState } from "../game/simulation/core/createInitialState";
 import type { GameState } from "../game/simulation/core/GameState";
 import { stepSimulation } from "../game/simulation/core/stepSimulation";
 import { spawnAdvancedThreat } from "../game/simulation/pathogens/createAdvancedThreat";
 import { applyAdvancedThreatSystem } from "../game/simulation/systems/advancedThreatSystem";
+import { applyCombatSystem } from "../game/simulation/systems/combatSystem";
+import { isNkCell } from "../game/simulation/entities";
 
 describe("V9 advanced threats", () => {
   it("defines fungi, parasites, cancer cells and opportunists as data-driven pathogen classes", () => {
@@ -58,9 +61,9 @@ describe("V9 advanced threats", () => {
     ).toBe(true);
   });
 
-  it("marks cancer-like cells as detected when NK or cytotoxic units approach", () => {
+  it("requires NK analysis time before revealing and finishing a cancer-like cell", () => {
     const state = createInitialState("lungCancerSuspectCells");
-    const nk = Object.values(state.entities).find((entity) => entity.kind === "nkCell");
+    const nk = Object.values(state.entities).find(isNkCell);
 
     expect(nk).toBeDefined();
 
@@ -69,6 +72,7 @@ describe("V9 advanced threats", () => {
     }
 
     nk.position = { x: 600, y: 400 };
+    nk.orderAnchor = { ...nk.position };
     const cancer = spawnAdvancedThreat(state, "cancerCellCluster", {
       x: 620,
       y: 400,
@@ -77,8 +81,13 @@ describe("V9 advanced threats", () => {
     expect(cancer.detected).toBe(false);
 
     applyAdvancedThreatSystem(state, 16);
+    expect(cancer.detected).toBe(false);
+
+    applyCombatSystem(state, 16);
+    applyCombatSystem(state, balanceValues.combat.nkDetectionDurationMs);
 
     expect(cancer.detected).toBe(true);
+    expect(cancer.health).toBe(0);
   });
 
   it("registers V9 body battle presets and advanced infinite pressure", () => {

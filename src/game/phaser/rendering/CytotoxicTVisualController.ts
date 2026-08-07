@@ -1,47 +1,50 @@
 import Phaser from "phaser";
 import type { GameState } from "../../simulation/core/GameState";
-import { isNkCell, type NkCellEntity } from "../../simulation/entities";
-import { nkCellSprite } from "../assets/entitySpriteManifest";
 import {
-  canInterruptNkState,
-  didNkFinisherTrigger,
-  didNkCytotoxicStrike,
-  isLoopingNkState,
-  isOneShotNkState,
-  nextNkStateAfterComplete,
-  selectNkVisualState,
-  toNkEntityVisualState,
-  type NkVisualState,
-} from "./nkVisualState";
+  isCytotoxicT,
+  type CytotoxicTEntity,
+} from "../../simulation/entities";
+import { cytotoxicTSprite } from "../assets/entitySpriteManifest";
+import {
+  canInterruptCytotoxicTState,
+  didCytotoxicTAttackTrigger,
+  didCytotoxicTStrikeEffect,
+  isLoopingCytotoxicTState,
+  isOneShotCytotoxicTState,
+  nextCytotoxicTStateAfterComplete,
+  selectCytotoxicTVisualState,
+  toCytotoxicTEntityVisualState,
+  type CytotoxicTVisualState,
+} from "./cytotoxicTVisualState";
 import { resolveEntityVisual } from "./spriteResolver";
 
-type NkVisualRecord = {
+type CytotoxicTVisualRecord = {
   entityId: string;
   sprite: Phaser.GameObjects.Sprite;
   lastPosition: { x: number; y: number };
   lastHealth: number;
   lastAttackCooldownMs: number;
   facing: -1 | 1;
-  state: NkVisualState;
+  state: CytotoxicTVisualState;
   animationKey: string | null;
-  lockedState: NkVisualState | null;
+  lockedState: CytotoxicTVisualState | null;
   moving: boolean;
 };
 
 const MOVEMENT_EPSILON_SQUARED = 0.05 * 0.05;
 
-export class NkVisualController {
-  private readonly records = new Map<string, NkVisualRecord>();
+export class CytotoxicTVisualController {
+  private readonly records = new Map<string, CytotoxicTVisualRecord>();
 
   constructor(private readonly scene: Phaser.Scene) {}
 
   update(state: GameState): void {
-    const nkCells = Object.values(state.entities).filter(isNkCell);
-    const activeIds = new Set(nkCells.map((entity) => entity.id));
+    const cells = Object.values(state.entities).filter(isCytotoxicT);
+    const activeIds = new Set(cells.map((entity) => entity.id));
 
-    for (const nkCell of nkCells) {
-      const record = this.ensureRecord(nkCell);
-      if (record) this.updateRecord(record, nkCell, state);
+    for (const cell of cells) {
+      const record = this.ensureRecord(cell);
+      if (record) this.updateRecord(record, cell, state);
     }
 
     for (const record of this.records.values()) {
@@ -65,33 +68,33 @@ export class NkVisualController {
     this.records.clear();
   }
 
-  private ensureRecord(nkCell: NkCellEntity): NkVisualRecord | null {
-    const existing = this.records.get(nkCell.id);
+  private ensureRecord(cell: CytotoxicTEntity): CytotoxicTVisualRecord | null {
+    const existing = this.records.get(cell.id);
     if (existing) return existing;
 
     const resolved = this.resolve("idle");
     if (resolved.kind !== "sprite") {
       if (import.meta.env.DEV) {
-        console.warn(`[nk-visual] procedural fallback: ${resolved.reason}`);
+        console.warn(`[cytotoxic-t-visual] procedural fallback: ${resolved.reason}`);
       }
       return null;
     }
 
     const sprite = this.scene.add
       .sprite(
-        nkCell.position.x + nkCellSprite.visualOffset.x,
-        nkCell.position.y + nkCellSprite.visualOffset.y,
-        nkCellSprite.textureKey,
+        cell.position.x + cytotoxicTSprite.visualOffset.x,
+        cell.position.y + cytotoxicTSprite.visualOffset.y,
+        cytotoxicTSprite.textureKey,
       )
-      .setOrigin(nkCellSprite.anchor.x, nkCellSprite.anchor.y)
-      .setScale(nkCellSprite.scale)
+      .setOrigin(cytotoxicTSprite.anchor.x, cytotoxicTSprite.anchor.y)
+      .setScale(cytotoxicTSprite.scale)
       .setDepth(1);
-    const record: NkVisualRecord = {
-      entityId: nkCell.id,
+    const record: CytotoxicTVisualRecord = {
+      entityId: cell.id,
       sprite,
-      lastPosition: { ...nkCell.position },
-      lastHealth: nkCell.health,
-      lastAttackCooldownMs: nkCell.attackCooldownRemainingMs,
+      lastPosition: { ...cell.position },
+      lastHealth: cell.health,
+      lastAttackCooldownMs: cell.attackCooldownRemainingMs,
       facing: 1,
       state: "idle",
       animationKey: null,
@@ -104,27 +107,28 @@ export class NkVisualController {
       (animation: Phaser.Animations.Animation) =>
         this.handleAnimationComplete(record, animation.key),
     );
-    this.records.set(nkCell.id, record);
+    this.records.set(cell.id, record);
     this.playState(record, "idle");
     return record;
   }
 
   private updateRecord(
-    record: NkVisualRecord,
-    nkCell: NkCellEntity,
+    record: CytotoxicTVisualRecord,
+    cell: CytotoxicTEntity,
     state: GameState,
   ): void {
-    const deltaX = nkCell.position.x - record.lastPosition.x;
-    const deltaY = nkCell.position.y - record.lastPosition.y;
+    const deltaX = cell.position.x - record.lastPosition.x;
+    const deltaY = cell.position.y - record.lastPosition.y;
     const targetDeltaX =
-      (nkCell.targetPosition?.x ?? nkCell.position.x) - nkCell.position.x;
+      (cell.targetPosition?.x ?? cell.position.x) - cell.position.x;
     const moving =
       deltaX * deltaX + deltaY * deltaY >= MOVEMENT_EPSILON_SQUARED;
-    const hurt = nkCell.health < record.lastHealth - 0.01;
-    const finishing = didNkFinisherTrigger(
-      record.lastAttackCooldownMs,
-      nkCell.attackCooldownRemainingMs,
-    ) && didNkCytotoxicStrike(state.effects, nkCell.id);
+    const hurt = cell.health < record.lastHealth - 0.01;
+    const attacking =
+      didCytotoxicTAttackTrigger(
+        record.lastAttackCooldownMs,
+        cell.attackCooldownRemainingMs,
+      ) && didCytotoxicTStrikeEffect(state.effects, cell.id);
 
     if (Math.abs(deltaX) > 0.05) {
       record.facing = deltaX < 0 ? -1 : 1;
@@ -135,38 +139,37 @@ export class NkVisualController {
     record.moving = moving;
     record.sprite
       .setPosition(
-        nkCell.position.x + nkCellSprite.visualOffset.x,
-        nkCell.position.y + nkCellSprite.visualOffset.y,
+        cell.position.x + cytotoxicTSprite.visualOffset.x,
+        cell.position.y + cytotoxicTSprite.visualOffset.y,
       )
       .setFlipX(record.facing < 0)
       .setVisible(true);
 
-    const desiredState = selectNkVisualState({
-      dead: nkCell.health <= 0,
+    const desiredState = selectCytotoxicTVisualState({
+      dead: cell.health <= 0,
       hurt,
-      finishing,
-      detectionOutcome: nkCell.detectionState?.outcome ?? null,
+      attacking,
       moving,
     });
     const stateToPlay =
       record.lockedState &&
-      !canInterruptNkState(record.lockedState, desiredState)
+      !canInterruptCytotoxicTState(record.lockedState, desiredState)
         ? record.lockedState
         : desiredState;
 
     this.playState(record, stateToPlay);
-    record.lastPosition = { ...nkCell.position };
-    record.lastHealth = nkCell.health;
-    record.lastAttackCooldownMs = nkCell.attackCooldownRemainingMs;
+    record.lastPosition = { ...cell.position };
+    record.lastHealth = cell.health;
+    record.lastAttackCooldownMs = cell.attackCooldownRemainingMs;
   }
 
   private playState(
-    record: NkVisualRecord,
-    requestedState: NkVisualState,
+    record: CytotoxicTVisualRecord,
+    requestedState: CytotoxicTVisualState,
   ): void {
     if (record.state === "death" && requestedState !== "death") return;
 
-    const requestedVisualState = toNkEntityVisualState(requestedState);
+    const requestedVisualState = toCytotoxicTEntityVisualState(requestedState);
     const resolved = this.resolve(requestedState);
     if (
       resolved.kind !== "sprite" ||
@@ -183,19 +186,20 @@ export class NkVisualController {
 
     const shouldPlay =
       resolved.animationKey !== record.animationKey ||
-      (!record.sprite.anims.isPlaying && isLoopingNkState(requestedState));
+      (!record.sprite.anims.isPlaying &&
+        isLoopingCytotoxicTState(requestedState));
     if (shouldPlay) {
       record.sprite.play(resolved.animationKey);
       record.animationKey = resolved.animationKey;
     }
     record.state = requestedState;
-    record.lockedState = isOneShotNkState(requestedState)
+    record.lockedState = isOneShotCytotoxicTState(requestedState)
       ? requestedState
       : null;
   }
 
   private handleAnimationComplete(
-    record: NkVisualRecord,
+    record: CytotoxicTVisualRecord,
     animationKey: string,
   ): void {
     if (animationKey !== record.animationKey) return;
@@ -206,19 +210,26 @@ export class NkVisualController {
       return;
     }
 
-    const nextState = nextNkStateAfterComplete(record.state, record.moving);
+    const nextState = nextCytotoxicTStateAfterComplete(
+      record.state,
+      record.moving,
+    );
     record.lockedState = null;
     this.playState(record, nextState);
   }
 
-  private resolve(state: NkVisualState) {
-    return resolveEntityVisual("nkCell", toNkEntityVisualState(state), {
-      hasTexture: (key) => this.scene.textures.exists(key),
-      hasAnimation: (key) => this.scene.anims.exists(key),
-    });
+  private resolve(state: CytotoxicTVisualState) {
+    return resolveEntityVisual(
+      "cytotoxicT",
+      toCytotoxicTEntityVisualState(state),
+      {
+        hasTexture: (key) => this.scene.textures.exists(key),
+        hasAnimation: (key) => this.scene.anims.exists(key),
+      },
+    );
   }
 
-  private playProceduralDeathFallback(record: NkVisualRecord): void {
+  private playProceduralDeathFallback(record: CytotoxicTVisualRecord): void {
     record.state = "death";
     record.lockedState = "death";
     record.sprite.setVisible(true);

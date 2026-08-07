@@ -19,6 +19,7 @@ import {
   launchAntibodySalvo,
 } from "../game/simulation/systems/antibodyProjectileSystem";
 import { applyCombatSystem } from "../game/simulation/systems/combatSystem";
+import { applyMovementSystem } from "../game/simulation/systems/movementSystem";
 
 function createPlasmocyte(id = "plasmocyte-test"): PlasmocyteEntity {
   const definition = unitDefinitions.plasmocyte;
@@ -117,6 +118,8 @@ describe("V11.3G guided antibody projectiles", () => {
       endFrame: 15,
       repeat: -1,
     });
+    expect(antibodyProjectileSprite.scale).toBe(0.28);
+    expect(antibodyImpactSprite.scale).toBe(0.28);
   });
 
   it("keeps the procedural fallback when an effect texture is missing", () => {
@@ -151,6 +154,7 @@ describe("V11.3G guided antibody projectiles", () => {
       balanceValues.adaptive.antibodyLaunchDelayMs +
         balanceValues.adaptive.antibodySalvoIntervalMs * 2,
     ]);
+    expect(balanceValues.adaptive.antibodySalvoIntervalMs).toBeGreaterThanOrEqual(200);
   });
 
   it("fires as nearby support from outside the former battle range", () => {
@@ -173,7 +177,7 @@ describe("V11.3G guided antibody projectiles", () => {
     expect(source.targetPosition).toBeNull();
   });
 
-  it("approaches a support target inside detection range but ignores distant fronts", () => {
+  it("uses one activation circle for detection and antibody secretion", () => {
     const state = createProjectileState();
     const source = state.entities["plasmocyte-test"];
     const target = state.entities["bacterium-test"];
@@ -182,20 +186,25 @@ describe("V11.3G guided antibody projectiles", () => {
     }
 
     target.position = {
-      x: source.position.x + unitDefinitions.plasmocyte.attackRange + 55,
+      x: source.position.x + unitDefinitions.plasmocyte.attackRange - 1,
       y: source.position.y,
     };
     applyCombatSystem(state, 16);
 
-    expect(state.antibodyProjectiles).toHaveLength(0);
-    expect(source.tacticalState).toBe("engagingNearbyTarget");
-    expect(source.targetPosition).toEqual(target.position);
+    expect(unitDefinitions.plasmocyte.attackRange).toBe(
+      unitDefinitions.plasmocyte.engagementRadius,
+    );
+    expect(state.antibodyProjectiles).toHaveLength(
+      balanceValues.adaptive.antibodyProjectileCount,
+    );
+    expect(source.targetPosition).toBeNull();
 
+    state.antibodyProjectiles = [];
     source.attackCooldownRemainingMs = 0;
     source.targetPosition = null;
     source.tacticalState = "guardingArea";
     target.position = {
-      x: source.position.x + unitDefinitions.plasmocyte.engagementRadius + 20,
+      x: source.position.x + unitDefinitions.plasmocyte.attackRange + 1,
       y: source.position.y,
     };
     applyCombatSystem(state, 16);
@@ -203,6 +212,41 @@ describe("V11.3G guided antibody projectiles", () => {
     expect(state.antibodyProjectiles).toHaveLength(0);
     expect(source.tacticalState).toBe("guardingArea");
     expect(source.targetPosition).toBeNull();
+  });
+
+  it("slows the plasmocyte while a living pathogen is inside its activation circle", () => {
+    const activeState = createProjectileState();
+    const inactiveState = createProjectileState();
+    const activeSource = activeState.entities["plasmocyte-test"];
+    const inactiveSource = inactiveState.entities["plasmocyte-test"];
+    const activeTarget = activeState.entities["bacterium-test"];
+    const inactiveTarget = inactiveState.entities["bacterium-test"];
+    if (
+      !isPlasmocyte(activeSource) ||
+      !isPlasmocyte(inactiveSource) ||
+      activeTarget.kind !== "bacterium" ||
+      inactiveTarget.kind !== "bacterium"
+    ) {
+      throw new Error("Expected plasmocytes and bacteria");
+    }
+
+    activeSource.targetPosition = { x: 600, y: 200 };
+    inactiveSource.targetPosition = { x: 600, y: 200 };
+    activeTarget.position = { x: activeSource.position.x + 100, y: 200 };
+    inactiveTarget.position = {
+      x: inactiveSource.position.x + inactiveSource.attackRange + 1,
+      y: 200,
+    };
+
+    applyMovementSystem(activeState, 1000);
+    applyMovementSystem(inactiveState, 1000);
+
+    const activeTravel = activeSource.position.x - 200;
+    const inactiveTravel = inactiveSource.position.x - 200;
+    expect(activeTravel / inactiveTravel).toBeCloseTo(
+      balanceValues.adaptive.plasmocyteActiveMovementMultiplier,
+      5,
+    );
   });
 
   it("applies the salvo damage only on impact and emits the binding effect", () => {

@@ -188,6 +188,18 @@ def build_mask(image: Image.Image, background: dict[str, Any]) -> Image.Image:
     raise SystemExit(f"Unsupported background mode: {mode}.")
 
 
+def despill_green(image: Image.Image, threshold: int) -> Image.Image:
+    """Clamp dominant green chroma spill without changing alpha or aspect ratio."""
+    output = image.copy()
+    pixels = output.load()
+    for y in range(output.height):
+        for x in range(output.width):
+            red, green, blue, alpha = pixels[x, y]
+            if alpha > 0 and green > red + threshold and green > blue + threshold:
+                pixels[x, y] = (red, (red + blue) // 2, blue, alpha)
+    return output
+
+
 def checkerboard(width: int, height: int, tile: int = 8) -> Image.Image:
     image = Image.new("RGBA", (width, height), (242, 244, 247, 255))
     draw = ImageDraw.Draw(image)
@@ -226,6 +238,9 @@ def main() -> None:
         raise SystemExit("Animation names must be present and unique.")
 
     background = config.get("background", {"mode": "alpha"})
+    despill = config.get("despill", {})
+    despill_animations = set(despill.get("animations", []))
+    despill_threshold = int(despill.get("threshold", 12))
     extracted_rows: list[list[Image.Image]] = []
     frame_metadata: list[dict[str, Any]] = []
     maximum_width = 0
@@ -244,6 +259,8 @@ def main() -> None:
             if bounds is None:
                 raise SystemExit(f"{animation['name']} frame {index} is empty.")
             slot.putalpha(mask)
+            if despill.get("mode") == "green" and animation["name"] in despill_animations:
+                slot = despill_green(slot, despill_threshold)
             content = slot.crop(bounds)
             maximum_width = max(maximum_width, content.width)
             maximum_height = max(maximum_height, content.height)
@@ -345,6 +362,7 @@ def main() -> None:
         "sourceSize": [source.width, source.height],
         "sourceMode": source.mode,
         "background": background,
+        "despill": despill,
         "output": str(output_path),
         "outputSize": list(sheet.size),
         "frameSize": [frame_width, frame_height],

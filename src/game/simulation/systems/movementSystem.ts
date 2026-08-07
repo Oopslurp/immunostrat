@@ -5,8 +5,10 @@ import type { GameState } from "../core/GameState";
 import {
   isBacterium,
   isDendriticCell,
+  isHostilePathogen,
   isImmuneUnit,
   isNeutrophil,
+  isPlasmocyte,
   type ImmuneUnitEntity,
 } from "../entities";
 import { getRuntimeMapBalance } from "./runtimeMapBalance";
@@ -49,12 +51,17 @@ export function applyMovementSystem(state: GameState, deltaMs: number): void {
 
       if (entity.targetPosition) {
         const biofilmSlowMultiplier = getBiofilmSlowMultiplier(state, entity.position);
+        const plasmocyteActiveMultiplier =
+          isPlasmocyte(entity) && hasHostileInPlasmocyteRange(state, entity)
+            ? balanceValues.adaptive.plasmocyteActiveMovementMultiplier
+            : 1;
         entity.position = moveToward(
           entity.position,
           entity.targetPosition,
           entity.movementSpeed *
             mapBalance.unitTravelCompensation *
             biofilmSlowMultiplier *
+            plasmocyteActiveMultiplier *
             maxMoveScale,
         );
 
@@ -109,6 +116,18 @@ export function applyMovementSystem(state: GameState, deltaMs: number): void {
       }
     }
   }
+}
+
+function hasHostileInPlasmocyteRange(
+  state: GameState,
+  plasmocyte: ImmuneUnitEntity,
+): boolean {
+  return Object.values(state.entities).some(
+    (entity) =>
+      isHostilePathogen(entity) &&
+      entity.health > 0 &&
+      distance(plasmocyte.position, entity.position) <= plasmocyte.attackRange,
+  );
 }
 
 function applyIdleMovement(

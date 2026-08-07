@@ -69,6 +69,8 @@ import { AntibodyProjectileVisualController } from "../rendering/AntibodyProject
 import { AntibodyDebugViewer } from "../rendering/AntibodyDebugViewer";
 import { NkVisualController } from "../rendering/NkVisualController";
 import { NkDebugViewer } from "../rendering/NkDebugViewer";
+import { CytotoxicTVisualController } from "../rendering/CytotoxicTVisualController";
+import { CytotoxicTDebugViewer } from "../rendering/CytotoxicTDebugViewer";
 
 type CameraKeys = {
   upW: Phaser.Input.Keyboard.Key;
@@ -99,6 +101,8 @@ export class MissionScene extends Phaser.Scene {
   private plasmocyteDebugViewer?: PlasmocyteDebugViewer;
   private nkVisualController?: NkVisualController;
   private nkDebugViewer?: NkDebugViewer;
+  private cytotoxicTVisualController?: CytotoxicTVisualController;
+  private cytotoxicTDebugViewer?: CytotoxicTDebugViewer;
   private antibodyProjectileVisualController?: AntibodyProjectileVisualController;
   private antibodyDebugViewer?: AntibodyDebugViewer;
   private combatSiteRenderer?: CombatSiteLayerRenderer;
@@ -156,6 +160,8 @@ export class MissionScene extends Phaser.Scene {
     this.plasmocyteDebugViewer = new PlasmocyteDebugViewer(this);
     this.nkVisualController = new NkVisualController(this);
     this.nkDebugViewer = new NkDebugViewer(this);
+    this.cytotoxicTVisualController = new CytotoxicTVisualController(this);
+    this.cytotoxicTDebugViewer = new CytotoxicTDebugViewer(this);
     this.antibodyProjectileVisualController =
       new AntibodyProjectileVisualController(this);
     this.antibodyDebugViewer = new AntibodyDebugViewer(this);
@@ -262,6 +268,10 @@ export class MissionScene extends Phaser.Scene {
     this.nkVisualController = undefined;
     this.nkDebugViewer?.destroy();
     this.nkDebugViewer = undefined;
+    this.cytotoxicTVisualController?.destroy();
+    this.cytotoxicTVisualController = undefined;
+    this.cytotoxicTDebugViewer?.destroy();
+    this.cytotoxicTDebugViewer = undefined;
     this.antibodyProjectileVisualController?.destroy();
     this.antibodyProjectileVisualController = undefined;
     this.antibodyDebugViewer?.destroy();
@@ -775,6 +785,7 @@ export class MissionScene extends Phaser.Scene {
     this.dendriticVisualController?.update(state);
     this.plasmocyteVisualController?.update(state);
     this.nkVisualController?.update(state);
+    this.cytotoxicTVisualController?.update(state);
     this.antibodyProjectileVisualController?.update(state);
     this.drawMap(mapGraphics, state);
     this.inflammationFieldRenderer?.update(state, deltaMs);
@@ -1059,12 +1070,16 @@ export class MissionScene extends Phaser.Scene {
         const usesNkSprite =
           isNkCell(entity) &&
           Boolean(this.nkVisualController?.hasVisual(entity.id));
+        const usesCytotoxicTSprite =
+          isCytotoxicT(entity) &&
+          Boolean(this.cytotoxicTVisualController?.hasVisual(entity.id));
         const usesUnitSprite =
           usesMacrophageSprite ||
           usesNeutrophilSprite ||
           usesDendriticSprite ||
           usesPlasmocyteSprite ||
-          usesNkSprite;
+          usesNkSprite ||
+          usesCytotoxicTSprite;
         const overlayGraphics = usesUnitSprite
           ? this.macrophageOverlayLayer ?? graphics
           : graphics;
@@ -1150,9 +1165,11 @@ export class MissionScene extends Phaser.Scene {
           if (entity.orderAnchor) {
             overlayGraphics.lineStyle(2, 0xffc76b, 0.32);
             overlayGraphics.strokeCircle(
-              entity.orderAnchor.x,
-              entity.orderAnchor.y,
-              entity.engagementRadius ?? entity.attackRange,
+              isPlasmocyte(entity) ? entity.position.x : entity.orderAnchor.x,
+              isPlasmocyte(entity) ? entity.position.y : entity.orderAnchor.y,
+              isPlasmocyte(entity)
+                ? entity.attackRange
+                : (entity.engagementRadius ?? entity.attackRange),
             );
           }
         }

@@ -4,12 +4,13 @@ import type { CombatEffect } from "../../simulation/core/GameState";
 export type NkVisualState =
   | "idle"
   | "move"
-  | "attack"
+  | "detectNormal"
+  | "detectAbnormal"
   | "cytotoxicStrike"
   | "hurt"
   | "death";
 
-export function didNkAttackTrigger(
+export function didNkFinisherTrigger(
   previousCooldownMs: number,
   currentCooldownMs: number,
 ): boolean {
@@ -29,14 +30,15 @@ export function didNkCytotoxicStrike(
 export function selectNkVisualState(input: Readonly<{
   dead: boolean;
   hurt: boolean;
-  attacking: boolean;
-  cytotoxicStrike: boolean;
+  finishing: boolean;
+  detectionOutcome: "normal" | "abnormal" | null;
   moving: boolean;
 }>): NkVisualState {
   if (input.dead) return "death";
   if (input.hurt) return "hurt";
-  if (input.attacking && input.cytotoxicStrike) return "cytotoxicStrike";
-  if (input.attacking) return "attack";
+  if (input.finishing) return "cytotoxicStrike";
+  if (input.detectionOutcome === "abnormal") return "detectAbnormal";
+  if (input.detectionOutcome === "normal") return "detectNormal";
   return input.moving ? "move" : "idle";
 }
 
@@ -47,7 +49,8 @@ export function canInterruptNkState(
   const priority: Record<NkVisualState, number> = {
     idle: 0,
     move: 1,
-    attack: 2,
+    detectNormal: 2,
+    detectAbnormal: 2,
     cytotoxicStrike: 3,
     hurt: 4,
     death: 5,
@@ -57,16 +60,16 @@ export function canInterruptNkState(
 }
 
 export function isOneShotNkState(state: NkVisualState): boolean {
-  return (
-    state === "attack" ||
-    state === "cytotoxicStrike" ||
-    state === "hurt" ||
-    state === "death"
-  );
+  return state === "cytotoxicStrike" || state === "hurt" || state === "death";
 }
 
 export function isLoopingNkState(state: NkVisualState): boolean {
-  return state === "idle" || state === "move";
+  return (
+    state === "idle" ||
+    state === "move" ||
+    state === "detectNormal" ||
+    state === "detectAbnormal"
+  );
 }
 
 export function nextNkStateAfterComplete(
