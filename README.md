@@ -92,7 +92,7 @@ ce type sont exclus par `.gitignore`.
 - conception, direction et sélection des assets : **Mathieu C. / Oopslurp** ;
 - ressources visuelles générées avec **ChatGPT**, puis sélectionnées et
   intégrées pour Immunostrat ;
-- assistance au développement : **OpenAI Codex** et **Anthropic Claude Code** ;
+- assistance au développement : **OpenAI Codex** ;
 - moteur et interface : Phaser, React et React DOM — voir
   [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
