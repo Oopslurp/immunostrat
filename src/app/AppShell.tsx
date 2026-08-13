@@ -66,6 +66,17 @@ export function AppShell({
           >
             Mode infini
           </button>
+          {import.meta.env.DEV ? (
+            <button
+              className={`nav-button ${
+                currentRoute === routes.spriteLab ? "nav-button-active" : ""
+              }`}
+              type="button"
+              onClick={() => onNavigate(routes.spriteLab)}
+            >
+              Laboratoire
+            </button>
+          ) : null}
         </nav>
       </header>
       <main>{children}</main>
