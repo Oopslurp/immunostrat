@@ -45,13 +45,11 @@ import { HomePage } from "./pages/HomePage";
 import { InfinitePage } from "./pages/InfinitePage";
 import { NormalGamePage } from "./pages/NormalGamePage";
 
-const SpriteLabPage = import.meta.env.DEV
-  ? lazy(() =>
-      import("./pages/SpriteLabPage").then((module) => ({
-        default: module.SpriteLabPage,
-      })),
-    )
-  : null;
+const SpriteLabPage = lazy(() =>
+  import("./pages/SpriteLabPage").then((module) => ({
+    default: module.SpriteLabPage,
+  })),
+);
 
 export default function App() {
   const [route, setRoute] = useState<AppRoute>(routes.home);
@@ -302,7 +300,7 @@ export default function App() {
           canRestartBattle={canRestartCurrentBattle}
         />
       ) : null}
-      {SpriteLabPage && route === routes.spriteLab ? (
+      {route === routes.spriteLab ? (
         <Suspense fallback={<div className="page">Chargement du laboratoire...</div>}>
           <SpriteLabPage onBack={() => setRoute(routes.home)} />
         </Suspense>

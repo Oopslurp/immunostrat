@@ -60,19 +60,15 @@ export function HomePage({
       actionLabel: "Survivre",
       onClick: onOpenInfinite,
     },
-    ...(import.meta.env.DEV
-      ? [
-          {
-            title: "Laboratoire sprites",
-            subtitle: "Debug visuel isole",
-            description:
-              "Glisse une unite vers un pathogene pour tester ses mouvements et ses attaques.",
-            icon: scienceIcon,
-            actionLabel: "Tester",
-            onClick: onOpenSpriteLab,
-          },
-        ]
-      : []),
+    {
+      title: "Laboratoire sprites",
+      subtitle: "Debug visuel isole",
+      description:
+        "Glisse une unite vers un pathogene pour tester ses mouvements et ses attaques.",
+      icon: scienceIcon,
+      actionLabel: "Tester",
+      onClick: onOpenSpriteLab,
+    },
   ];
 
   return (

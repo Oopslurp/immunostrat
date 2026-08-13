@@ -11,7 +11,7 @@ export function SpriteLabPage({ onBack }: SpriteLabPageProps) {
     <div className="page sprite-lab-page">
       <header className="sprite-lab-page-header">
         <div>
-          <span className="eyebrow">Outil temporaire · developpement uniquement</span>
+          <span className="eyebrow">Outil temporaire · version de test</span>
           <h1>Laboratoire de sprites</h1>
           <p>
             {spriteLabUnits.length} unites et {spriteLabPathogens.length} pathogene(s),
