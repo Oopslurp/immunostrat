@@ -31,7 +31,7 @@ describe("V1 simulation", () => {
     expect(refused.resources.atp).toBe(unitDefinitions.macrophage.atpCost - 1);
   });
 
-  it("regenerates ATP slowly and never spends below zero", () => {
+  it("regenerates ATP steadily and never spends below zero", () => {
     const initial = createInitialState();
     const poorState: GameState = {
       ...initial,
@@ -41,7 +41,7 @@ describe("V1 simulation", () => {
     const regenerated = stepSimulation(refused, 1000);
 
     expect(refused.resources.atp).toBe(0);
-    expect(regenerated.resources.atp).toBe(1.18);
+    expect(regenerated.resources.atp).toBeCloseTo(1.475);
   });
 
   it("selects multiple macrophages and sends them in formation near the same target", () => {

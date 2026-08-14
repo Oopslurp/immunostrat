@@ -24,8 +24,11 @@ export type GameSnapshot = {
   tissueRepairRatePerSecond: number;
   elapsedMs: number;
   atp: number;
+  atpPerSecond: number;
   cytokines: number;
+  cytokinesPerSecond: number;
   antigens: number;
+  antigensPerSecond: number;
   inflammation: number;
   neutrophilCooldownMs: number;
   massiveNeutralizationCooldownMs: number;

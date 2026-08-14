@@ -3280,6 +3280,14 @@
   font-size: 0.64rem;
 }
 
+.battle-resource-chip .hud-gauge-income {
+  margin-left: 0.22rem;
+  color: #7ce8ba;
+  font-size: 0.52rem;
+  font-weight: 800;
+  text-shadow: 0 0 7px rgba(124, 232, 186, 0.38);
+}
+
 .battle-resource-chip .hud-gauge-track {
   height: 6px;
 }
