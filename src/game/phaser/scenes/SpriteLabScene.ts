@@ -1,7 +1,6 @@
 import Phaser from "phaser";
 import {
   pathogenDefinitions,
-  type PathogenShape,
   type PathogenTypeId,
 } from "../../data/pathogens";
 import { unitDefinitions, type UnitTypeId } from "../../data/units";
@@ -26,6 +25,7 @@ import {
 import { registerEntityAnimations } from "../animations/registerEntityAnimations";
 import { getEntitySpriteDefinition } from "../assets/entitySpriteManifest";
 import { preloadEntitySprites } from "../assets/preloadEntitySprites";
+import { drawProceduralPathogen } from "../rendering/drawProceduralPathogen";
 
 const LAB_HEIGHT = 700;
 const TOOLBAR_Y = 646;
@@ -82,7 +82,7 @@ export class SpriteLabScene extends Phaser.Scene {
     this.updateToolbarStatus();
   }
 
-  update(_time: number, deltaMs: number): void {
+  update(time: number, deltaMs: number): void {
     const direction =
       (this.cameraRight?.isDown ? 1 : 0) -
       (this.cameraLeft?.isDown ? 1 : 0);
@@ -95,6 +95,9 @@ export class SpriteLabScene extends Phaser.Scene {
 
     this.simulation = result.state;
     this.syncUnitViews();
+    for (const pathogen of spriteLabPathogens) {
+      this.renderPathogen(pathogen.id, time);
+    }
     for (const event of result.events) {
       this.playInteractionEffect(event);
     }
@@ -321,7 +324,7 @@ export class SpriteLabScene extends Phaser.Scene {
     return graphics;
   }
 
-  private renderPathogen(id: PathogenTypeId): void {
+  private renderPathogen(id: PathogenTypeId, elapsedMs = 0): void {
     const entry = spriteLabPathogens.find((candidate) => candidate.id === id);
     const view = this.pathogenViews.get(id);
 
@@ -334,10 +337,15 @@ export class SpriteLabScene extends Phaser.Scene {
     const radius = Phaser.Math.Clamp(definition.radius * 1.2, 12, 30);
 
     graphics.clear();
-    graphics.fillStyle(definition.color, 0.95);
-    drawPathogenShape(graphics, entry.x, entry.y, radius, definition.shape);
-    graphics.lineStyle(2, definition.outlineColor, 0.8);
-    strokePathogenShape(graphics, entry.x, entry.y, radius, definition.shape);
+    drawProceduralPathogen(graphics, {
+      identity: `sprite-lab-${id}`,
+      pathogenTypeId: id,
+      x: entry.x,
+      y: entry.y,
+      radius,
+      alpha: 0.95,
+      elapsedMs,
+    });
     graphics.fillStyle(0x071217, 0.9);
     graphics.fillRoundedRect(entry.x - 30, entry.y - 43, 60, 6, 3);
     graphics.fillStyle(0x7ee28a, 1);
@@ -744,112 +752,6 @@ export class SpriteLabScene extends Phaser.Scene {
       } | cible: ${target.displayName} (PV ∞)`,
     );
   }
-}
-
-function drawPathogenShape(
-  graphics: Phaser.GameObjects.Graphics,
-  x: number,
-  y: number,
-  radius: number,
-  shape: PathogenShape,
-): void {
-  if (shape === "coccus") {
-    graphics.fillCircle(x, y, radius);
-    return;
-  }
-  if (shape === "cluster") {
-    graphics.fillCircle(x - radius * 0.45, y, radius * 0.72);
-    graphics.fillCircle(x + radius * 0.4, y + radius * 0.1, radius * 0.7);
-    graphics.fillCircle(x, y - radius * 0.45, radius * 0.62);
-    return;
-  }
-  if (shape === "spore") {
-    graphics.fillTriangle(
-      x,
-      y - radius,
-      x - radius,
-      y + radius * 0.8,
-      x + radius,
-      y + radius * 0.8,
-    );
-    return;
-  }
-  if (shape === "virus") {
-    graphics.fillCircle(x, y, radius);
-    graphics.fillTriangle(
-      x,
-      y - radius * 1.7,
-      x - radius * 0.45,
-      y - radius * 0.65,
-      x + radius * 0.45,
-      y - radius * 0.65,
-    );
-    graphics.fillTriangle(
-      x,
-      y + radius * 1.7,
-      x - radius * 0.45,
-      y + radius * 0.65,
-      x + radius * 0.45,
-      y + radius * 0.65,
-    );
-    graphics.fillTriangle(
-      x - radius * 1.7,
-      y,
-      x - radius * 0.65,
-      y - radius * 0.45,
-      x - radius * 0.65,
-      y + radius * 0.45,
-    );
-    graphics.fillTriangle(
-      x + radius * 1.7,
-      y,
-      x + radius * 0.65,
-      y - radius * 0.45,
-      x + radius * 0.65,
-      y + radius * 0.45,
-    );
-    return;
-  }
-  graphics.fillEllipse(
-    x,
-    y,
-    radius * 2.35,
-    radius * (shape === "rod" ? 1.25 : 1.55),
-  );
-}
-
-function strokePathogenShape(
-  graphics: Phaser.GameObjects.Graphics,
-  x: number,
-  y: number,
-  radius: number,
-  shape: PathogenShape,
-): void {
-  if (shape === "coccus" || shape === "cluster") {
-    graphics.strokeCircle(x, y, radius * 1.15);
-    return;
-  }
-  if (shape === "spore") {
-    graphics.strokeTriangle(
-      x,
-      y - radius,
-      x - radius,
-      y + radius * 0.8,
-      x + radius,
-      y + radius * 0.8,
-    );
-    return;
-  }
-  if (shape === "virus") {
-    graphics.strokeCircle(x, y, radius * 1.25);
-    return;
-  }
-  graphics.strokeEllipse(
-    x,
-    y,
-    radius * 2.5,
-    radius * (shape === "rod" ? 1.38 : 1.75),
-  );
 }
 
 function getUnitColor(id: UnitTypeId): number {

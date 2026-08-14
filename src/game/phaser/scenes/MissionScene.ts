@@ -72,6 +72,8 @@ import { NkVisualController } from "../rendering/NkVisualController";
 import { NkDebugViewer } from "../rendering/NkDebugViewer";
 import { CytotoxicTVisualController } from "../rendering/CytotoxicTVisualController";
 import { CytotoxicTDebugViewer } from "../rendering/CytotoxicTDebugViewer";
+import { drawProceduralPathogen } from "../rendering/drawProceduralPathogen";
+import { PathogenExitVisualController } from "../rendering/PathogenExitVisualController";
 
 type CameraKeys = {
   upW: Phaser.Input.Keyboard.Key;
@@ -106,6 +108,7 @@ export class MissionScene extends Phaser.Scene {
   private cytotoxicTDebugViewer?: CytotoxicTDebugViewer;
   private antibodyProjectileVisualController?: AntibodyProjectileVisualController;
   private antibodyDebugViewer?: AntibodyDebugViewer;
+  private pathogenExitVisualController?: PathogenExitVisualController;
   private combatSiteRenderer?: CombatSiteLayerRenderer;
   private inflammationFieldRenderer?: InflammationFieldRenderer;
   private diapedesisMarkers = new Map<string, Phaser.GameObjects.Image>();
@@ -166,6 +169,7 @@ export class MissionScene extends Phaser.Scene {
     this.antibodyProjectileVisualController =
       new AntibodyProjectileVisualController(this);
     this.antibodyDebugViewer = new AntibodyDebugViewer(this);
+    this.pathogenExitVisualController = new PathogenExitVisualController(this);
     this.setupDiapedesisMarkers(map);
     this.setupLymphaticExitMarkers(map);
 
@@ -277,6 +281,8 @@ export class MissionScene extends Phaser.Scene {
     this.antibodyProjectileVisualController = undefined;
     this.antibodyDebugViewer?.destroy();
     this.antibodyDebugViewer = undefined;
+    this.pathogenExitVisualController?.destroy();
+    this.pathogenExitVisualController = undefined;
     this.macrophageOverlayLayer?.destroy();
     this.macrophageOverlayLayer = undefined;
     this.diapedesisMarkers.clear();
@@ -780,6 +786,15 @@ export class MissionScene extends Phaser.Scene {
     graphics.clear();
     this.macrophageOverlayLayer?.clear();
     this.macrophageVisualController?.update(state, deltaMs);
+    this.pathogenExitVisualController?.update(
+      state,
+      deltaMs,
+      (bacterium) =>
+        this.macrophageVisualController?.getCapturedTargetVisual(
+          bacterium,
+          state,
+        ) ?? null,
+    );
     this.tissueCellVisualController?.update(state);
     this.neutrophilVisualController?.update(state);
     this.netTrapVisualController?.update(state);
@@ -1239,7 +1254,6 @@ export class MissionScene extends Phaser.Scene {
       }
 
       if (isBacterium(entity)) {
-        const definition = pathogenDefinitions[entity.pathogenTypeId];
         const capturedVisual = this.macrophageVisualController?.getCapturedTargetVisual(
           entity,
           state,
@@ -1248,12 +1262,20 @@ export class MissionScene extends Phaser.Scene {
         const entityY = capturedVisual?.y ?? entity.position.y;
         const entityRadius = entity.radius * (capturedVisual?.scale ?? 1);
 
-        graphics.fillStyle(definition.color, 0.95);
-        drawPathogenShape(graphics, entityX, entityY, entityRadius, definition.shape);
-        graphics.lineStyle(2, definition.outlineColor, 0.58);
-        strokePathogenShape(graphics, entityX, entityY, entityRadius, definition.shape);
-        graphics.fillStyle(0xf5fbff, 0.86);
-        graphics.fillCircle(entityX + entityRadius * 0.62, entityY - entityRadius * 0.28, Math.max(0.8, 2.2 * (capturedVisual?.scale ?? 1)));
+        drawProceduralPathogen(graphics, {
+          identity: entity.id,
+          pathogenTypeId: entity.pathogenTypeId,
+          x: entityX,
+          y: entityY,
+          radius: entity.radius,
+          scale: capturedVisual?.scale ?? 1,
+          alpha: 0.95,
+          elapsedMs: state.elapsedMs,
+          attackCooldownMs: capturedVisual ? undefined : entity.attackCooldownMs,
+          attackCooldownRemainingMs: capturedVisual
+            ? undefined
+            : entity.attackCooldownRemainingMs,
+        });
         if (!capturedVisual) {
           this.drawHealthBar(graphics, entityX, entityY - 24, entity.health, entity.maxHealth);
         }
@@ -1266,24 +1288,15 @@ export class MissionScene extends Phaser.Scene {
       }
 
       if (isVirus(entity)) {
-        const definition = pathogenDefinitions[entity.pathogenTypeId];
-
-        graphics.fillStyle(definition.color, 0.95);
-        drawPathogenShape(
-          graphics,
-          entity.position.x,
-          entity.position.y,
-          entity.radius,
-          definition.shape,
-        );
-        graphics.lineStyle(2, definition.outlineColor, 0.68);
-        strokePathogenShape(
-          graphics,
-          entity.position.x,
-          entity.position.y,
-          entity.radius,
-          definition.shape,
-        );
+        drawProceduralPathogen(graphics, {
+          identity: entity.id,
+          pathogenTypeId: entity.pathogenTypeId,
+          x: entity.position.x,
+          y: entity.position.y,
+          radius: entity.radius,
+          alpha: 0.95,
+          elapsedMs: state.elapsedMs,
+        });
         this.drawHealthBar(
           graphics,
           entity.position.x,
@@ -1298,26 +1311,17 @@ export class MissionScene extends Phaser.Scene {
         const definition = pathogenDefinitions[entity.pathogenTypeId];
         const alpha = entity.detected ? 0.95 : 0.48;
 
-        graphics.fillStyle(definition.color, alpha);
-        drawPathogenShape(
-          graphics,
-          entity.position.x,
-          entity.position.y,
-          entity.radius,
-          definition.shape,
-        );
-        graphics.lineStyle(
-          entity.category === "parasite" ? 4 : 2,
-          definition.outlineColor,
-          entity.detected ? 0.74 : 0.35,
-        );
-        strokePathogenShape(
-          graphics,
-          entity.position.x,
-          entity.position.y,
-          entity.radius,
-          definition.shape,
-        );
+        drawProceduralPathogen(graphics, {
+          identity: entity.id,
+          pathogenTypeId: entity.pathogenTypeId,
+          x: entity.position.x,
+          y: entity.position.y,
+          radius: entity.radius,
+          alpha,
+          elapsedMs: state.elapsedMs,
+          attackCooldownMs: entity.attackCooldownMs,
+          attackCooldownRemainingMs: entity.attackCooldownRemainingMs,
+        });
 
         if (entity.category === "fungus") {
           graphics.lineStyle(2, 0xc7ed8a, 0.28);
@@ -1824,67 +1828,6 @@ function getInfiniteRunInfo(state: GameState): InfiniteRunInfo | undefined {
     tacticalMapSeed: state.tacticalMap.generationSummary.seed,
     tacticalMapTemplateId: state.tacticalMap.generationSummary.templateId,
   };
-}
-
-function drawPathogenShape(
-  graphics: Phaser.GameObjects.Graphics,
-  x: number,
-  y: number,
-  radius: number,
-  shape: string,
-): void {
-  if (shape === "coccus") {
-    graphics.fillCircle(x, y, radius);
-    return;
-  }
-
-  if (shape === "cluster") {
-    graphics.fillCircle(x - radius * 0.45, y, radius * 0.72);
-    graphics.fillCircle(x + radius * 0.4, y + radius * 0.1, radius * 0.7);
-    graphics.fillCircle(x, y - radius * 0.45, radius * 0.62);
-    return;
-  }
-
-  if (shape === "spore") {
-    graphics.fillTriangle(x, y - radius, x - radius, y + radius * 0.8, x + radius, y + radius * 0.8);
-    return;
-  }
-
-  if (shape === "virus") {
-    graphics.fillCircle(x, y, radius);
-    graphics.fillTriangle(x, y - radius * 1.7, x - radius * 0.45, y - radius * 0.65, x + radius * 0.45, y - radius * 0.65);
-    graphics.fillTriangle(x, y + radius * 1.7, x - radius * 0.45, y + radius * 0.65, x + radius * 0.45, y + radius * 0.65);
-    graphics.fillTriangle(x - radius * 1.7, y, x - radius * 0.65, y - radius * 0.45, x - radius * 0.65, y + radius * 0.45);
-    graphics.fillTriangle(x + radius * 1.7, y, x + radius * 0.65, y - radius * 0.45, x + radius * 0.65, y + radius * 0.45);
-    return;
-  }
-
-  graphics.fillEllipse(x, y, radius * 2.35, radius * (shape === "rod" ? 1.25 : 1.55));
-}
-
-function strokePathogenShape(
-  graphics: Phaser.GameObjects.Graphics,
-  x: number,
-  y: number,
-  radius: number,
-  shape: string,
-): void {
-  if (shape === "coccus" || shape === "cluster") {
-    graphics.strokeCircle(x, y, radius * 1.15);
-    return;
-  }
-
-  if (shape === "spore") {
-    graphics.strokeTriangle(x, y - radius, x - radius, y + radius * 0.8, x + radius, y + radius * 0.8);
-    return;
-  }
-
-  if (shape === "virus") {
-    graphics.strokeCircle(x, y, radius * 1.25);
-    return;
-  }
-
-  graphics.strokeEllipse(x, y, radius * 2.5, radius * (shape === "rod" ? 1.38 : 1.75));
 }
 
 function getThreatSummary(state: GameState): GameSnapshot["threatSummary"] {
