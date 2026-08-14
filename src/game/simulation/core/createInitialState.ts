@@ -106,12 +106,15 @@ export function createInitialState(
       };
     }),
     resources: {
-      atp: Math.max(
-        0,
-        mission.startingResources.atp *
-          infiniteResourceMultiplier *
-          mapBalance.resourceIncomeModifier -
-          (vaccination?.atpCost ?? 0),
+      atp: Math.min(
+        balanceValues.maxAtp,
+        Math.max(
+          0,
+          mission.startingResources.atp *
+            infiniteResourceMultiplier *
+            mapBalance.resourceIncomeModifier -
+            (vaccination?.atpCost ?? 0),
+        ),
       ),
       cytokines: Math.min(
         balanceValues.maxCytokines,

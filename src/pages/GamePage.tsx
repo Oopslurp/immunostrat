@@ -470,6 +470,7 @@ export function GamePage({
             icon={iconAtp}
             label="ATP"
             max={balanceValues.maxAtp}
+            ratePerSecond={snapshot?.atpPerSecond}
             tone="atp"
             value={formatAtp(snapshot?.atp)}
           />
@@ -477,6 +478,7 @@ export function GamePage({
             icon={iconCyt}
             label="CYT"
             max={balanceValues.maxCytokines}
+            ratePerSecond={snapshot?.cytokinesPerSecond}
             tone="cytokines"
             value={formatAtp(snapshot?.cytokines)}
           />
@@ -484,6 +486,7 @@ export function GamePage({
             icon={iconAg}
             label="AG"
             max={balanceValues.maxAntigens}
+            ratePerSecond={snapshot?.antigensPerSecond}
             tone="antigens"
             value={formatAtp(snapshot?.antigens)}
           />
@@ -884,6 +887,7 @@ type GaugeProps = {
   label: string;
   value: number;
   max: number;
+  ratePerSecond?: number;
   tone: "health" | "atp" | "cytokines" | "antigens" | "inflammation";
 };
 
@@ -950,24 +954,38 @@ function ResourceChip({
   icon,
   label,
   max,
+  ratePerSecond,
   tone,
   value,
 }: GaugeProps & { icon: string }) {
   return (
     <div className={`battle-resource-chip battle-resource-chip-${tone}`}>
       <img alt="" src={icon} />
-      <Gauge label={label} max={max} tone={tone} value={value} />
+      <Gauge
+        label={label}
+        max={max}
+        ratePerSecond={ratePerSecond}
+        tone={tone}
+        value={value}
+      />
     </div>
   );
 }
 
-function Gauge({ label, value, max, tone }: GaugeProps) {
+function Gauge({ label, value, max, ratePerSecond, tone }: GaugeProps) {
   const ratio = Math.max(0, Math.min(1, value / max));
 
   return (
     <div className="hud-gauge">
       <div className="hud-gauge-label">
-        <span>{label}</span>
+        <span>
+          {label}
+          {ratePerSecond !== undefined && ratePerSecond > 0 ? (
+            <small className="hud-gauge-income">
+              +{formatIncomeRate(ratePerSecond)}/s
+            </small>
+          ) : null}
+        </span>
         <span>
           {value}/{max}
         </span>
@@ -988,6 +1006,10 @@ function formatHealth(value: number | undefined): number {
 
 function formatAtp(value: number | undefined): number {
   return Math.floor(value ?? 0);
+}
+
+function formatIncomeRate(value: number): string {
+  return value >= 1 ? value.toFixed(1) : value.toFixed(2);
 }
 
 function formatCooldown(value: number | undefined): string {

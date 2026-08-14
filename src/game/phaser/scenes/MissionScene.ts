@@ -40,6 +40,7 @@ import { Simulation } from "../../simulation/core/Simulation";
 import type { GameCommand } from "../../simulation/core/commands";
 import type { GameState } from "../../simulation/core/GameState";
 import { getRuntimeMapBalance } from "../../simulation/systems/runtimeMapBalance";
+import { getResourceIncomeRates } from "../../simulation/systems/resourceSystem";
 import { distanceSquared } from "../../types/shared";
 import {
   isBacterium,
@@ -1672,6 +1673,7 @@ export class MissionScene extends Phaser.Scene {
   private publishSnapshot(state: GameState = this.simulation.getState()) {
     const mission = missionDefinitions[state.missionId];
     const score = calculateMissionScore(state);
+    const resourceIncomeRates = getResourceIncomeRates(state);
     const snapshot: GameSnapshot = {
       missionId: state.missionId,
       missionTitle: mission.title,
@@ -1683,8 +1685,11 @@ export class MissionScene extends Phaser.Scene {
       tissueRepairRatePerSecond: state.tissueRepair.ratePerSecond,
       elapsedMs: state.elapsedMs,
       atp: state.resources.atp,
+      atpPerSecond: resourceIncomeRates.atp,
       cytokines: state.resources.cytokines,
+      cytokinesPerSecond: resourceIncomeRates.cytokines,
       antigens: state.resources.antigens,
+      antigensPerSecond: resourceIncomeRates.antigens,
       inflammation: state.inflammation.value,
       neutrophilCooldownMs: state.productionCooldowns.neutrophilMs,
       massiveNeutralizationCooldownMs:
