@@ -95,6 +95,18 @@ export const COMBAT_VFX_DEPTHS = Object.freeze({
   command: 1.8,
 });
 
+export const COMBAT_VFX_READABILITY = Object.freeze({
+  radiusScale: 1.12,
+  radiusBonus: 2,
+  particleSizeBonus: 1,
+  maxParticleSize: 4,
+  lineWidthBonus: 1,
+  silhouetteColor: 0x0b1721,
+  silhouetteAlpha: 0.42,
+  burstHoldUntilProgress: 0.42,
+  particleHoldUntilProgress: 0.36,
+});
+
 function preset(
   id: CombatVfxPresetId,
   values: Omit<CombatVfxPreset, "id">,

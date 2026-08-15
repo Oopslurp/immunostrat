@@ -19,6 +19,7 @@ import {
   COMBAT_VFX_DEPTHS,
   COMBAT_VFX_LIMITS,
   COMBAT_VFX_PRESETS,
+  COMBAT_VFX_READABILITY,
   getPathogenDamagePreset,
   getImmuneArrivalPreset,
   resolveCommandFeedback,
@@ -422,7 +423,11 @@ export class CombatVfxController {
     burst.presetId = presetId;
     burst.x = position.x;
     burst.y = position.y;
-    burst.radius = Math.max(4, radius);
+    burst.radius = Math.max(
+      5,
+      radius * COMBAT_VFX_READABILITY.radiusScale +
+        COMBAT_VFX_READABILITY.radiusBonus,
+    );
     burst.ageMs = 0;
     burst.durationMs = preset.durationMs;
     burst.seed = stableHash(seedKey);
@@ -496,10 +501,14 @@ export class CombatVfxController {
         Math.sin(velocityAngle) * preset.speed * speedNoise * velocityScale;
       particle.ageMs = 0;
       particle.durationMs = preset.durationMs * (0.68 + distanceNoise * 0.24);
-      particle.size = Math.round(
-        preset.particleSize[0] +
-          deterministicUnit(burst.seed, index, 31) *
-            (preset.particleSize[1] - preset.particleSize[0]),
+      particle.size = Math.min(
+        COMBAT_VFX_READABILITY.maxParticleSize,
+        COMBAT_VFX_READABILITY.particleSizeBonus +
+          Math.round(
+            preset.particleSize[0] +
+              deterministicUnit(burst.seed, index, 31) *
+                (preset.particleSize[1] - preset.particleSize[0]),
+          ),
       );
       particle.color = index % 2 === 0
         ? preset.primaryColor
@@ -567,9 +576,15 @@ export class CombatVfxController {
   private drawBurst(burst: BurstRecord, preset: CombatVfxPreset): void {
     const graphics = this.getLayer(preset.layer);
     const progress = clamp(burst.ageMs / burst.durationMs, 0, 1);
-    const alpha = progress < 0.18
-      ? 0.68 + (progress / 0.18) * 0.32
-      : Math.pow((1 - progress) / 0.82, 1.25);
+    const alpha = getReadableAlpha(
+      progress,
+      COMBAT_VFX_READABILITY.burstHoldUntilProgress,
+      1.18,
+    );
+
+    if (preset.motion !== "command" && progress < 0.34) {
+      drawContactCore(graphics, burst, preset, progress, alpha);
+    }
 
     if (preset.motion === "command") {
       drawCommandBrackets(graphics, burst, preset, progress, alpha);
@@ -601,26 +616,25 @@ export class CombatVfxController {
       preset.secondaryColor,
       alpha,
       burst.seed,
-      preset.priority === 1 ? 3 : 2,
+      (preset.priority === 1 ? 3 : 2) +
+        COMBAT_VFX_READABILITY.lineWidthBonus,
     );
-
-    if (progress < 0.42) {
-      const size = preset.priority === 1 ? 4 : 3;
-      graphics.fillStyle(preset.primaryColor, alpha * (1 - progress / 0.42));
-      graphics.fillRect(pixel(burst.x - size / 2), pixel(burst.y - size / 2), size, size);
-    }
   }
 
   private drawParticle(particle: PixelParticle): void {
     const graphics = this.getLayer(particle.layer);
     const progress = clamp(particle.ageMs / particle.durationMs, 0, 1);
-    const alpha = Math.pow(1 - progress, 1.4);
-    const size = Math.max(1, particle.size - (progress > 0.72 ? 1 : 0));
+    const alpha = getReadableAlpha(
+      progress,
+      COMBAT_VFX_READABILITY.particleHoldUntilProgress,
+      1.28,
+    );
+    const size = Math.max(1, particle.size - (progress > 0.78 ? 1 : 0));
     const x = pixel(particle.x);
     const y = pixel(particle.y);
 
     if (particle.priority === 1 && size >= 2 && progress < 0.62) {
-      graphics.fillStyle(particle.color, alpha * 0.25);
+      graphics.fillStyle(particle.color, alpha * 0.36);
       graphics.fillRect(
         pixel(x - particle.velocityX * 0.025),
         pixel(y - particle.velocityY * 0.025),
@@ -628,6 +642,11 @@ export class CombatVfxController {
         1,
       );
     }
+    graphics.fillStyle(
+      COMBAT_VFX_READABILITY.silhouetteColor,
+      alpha * COMBAT_VFX_READABILITY.silhouetteAlpha,
+    );
+    graphics.fillRect(x + 1, y + 1, size, size);
     graphics.fillStyle(particle.color, alpha);
     graphics.fillRect(x, y, size, size);
   }
@@ -805,17 +824,22 @@ function drawBrokenPixelRing(
     const endAngle = ((index + 0.66) / segmentCount) * Math.PI * 2;
     const wobble = (deterministicUnit(seed, index, 43) - 0.5) * 3;
     const localRadius = radius + wobble;
+    const startX = pixel(x + Math.cos(startAngle) * localRadius);
+    const startY = pixel(y + Math.sin(startAngle) * localRadius);
+    const endX = pixel(x + Math.cos(endAngle) * localRadius);
+    const endY = pixel(y + Math.sin(endAngle) * localRadius);
+    graphics.lineStyle(
+      width + 2,
+      COMBAT_VFX_READABILITY.silhouetteColor,
+      alpha * COMBAT_VFX_READABILITY.silhouetteAlpha,
+    );
+    graphics.lineBetween(startX, startY + 1, endX, endY + 1);
     graphics.lineStyle(
       width,
       index % 3 === 0 ? secondaryColor : primaryColor,
       alpha * (index % 3 === 0 ? 0.72 : 1),
     );
-    graphics.lineBetween(
-      pixel(x + Math.cos(startAngle) * localRadius),
-      pixel(y + Math.sin(startAngle) * localRadius),
-      pixel(x + Math.cos(endAngle) * localRadius),
-      pixel(y + Math.sin(endAngle) * localRadius),
-    );
+    graphics.lineBetween(startX, startY, endX, endY);
   }
 }
 
@@ -838,8 +862,17 @@ function drawFilaments(
     const middleY = pixel(burst.y + Math.sin(angle) * reach * 0.48);
     const endX = pixel(middleX + Math.cos(bend) * reach * 0.5);
     const endY = pixel(middleY + Math.sin(bend) * reach * 0.5);
+    const width = (index % 2 === 0 ? 2 : 1) +
+      COMBAT_VFX_READABILITY.lineWidthBonus;
     graphics.lineStyle(
-      index % 2 === 0 ? 2 : 1,
+      width + 2,
+      COMBAT_VFX_READABILITY.silhouetteColor,
+      alpha * COMBAT_VFX_READABILITY.silhouetteAlpha,
+    );
+    graphics.lineBetween(pixel(burst.x), pixel(burst.y + 1), middleX, middleY + 1);
+    graphics.lineBetween(middleX, middleY + 1, endX, endY + 1);
+    graphics.lineStyle(
+      width,
       index % 2 === 0 ? preset.primaryColor : preset.secondaryColor,
       alpha * (0.72 + (index % 2) * 0.18),
     );
@@ -863,9 +896,22 @@ function drawDirectionalContact(
   const endX = burst.x + burst.directionX * reach * 0.38;
   const endY = burst.y + burst.directionY * reach * 0.38;
 
-  graphics.lineStyle(preset.priority === 1 ? 3 : 2, preset.primaryColor, alpha);
+  const contactWidth = (preset.priority === 1 ? 3 : 2) +
+    COMBAT_VFX_READABILITY.lineWidthBonus;
+  graphics.lineStyle(
+    contactWidth + 2,
+    COMBAT_VFX_READABILITY.silhouetteColor,
+    alpha * COMBAT_VFX_READABILITY.silhouetteAlpha,
+  );
+  graphics.lineBetween(
+    pixel(startX),
+    pixel(startY + 1),
+    pixel(endX),
+    pixel(endY + 1),
+  );
+  graphics.lineStyle(contactWidth, preset.primaryColor, alpha);
   graphics.lineBetween(pixel(startX), pixel(startY), pixel(endX), pixel(endY));
-  graphics.lineStyle(1, preset.secondaryColor, alpha * 0.78);
+  graphics.lineStyle(2, preset.secondaryColor, alpha * 0.82);
   for (const offset of [-4, 4]) {
     graphics.lineBetween(
       pixel(startX + perpendicularX * offset),
@@ -874,8 +920,6 @@ function drawDirectionalContact(
       pixel(burst.y + perpendicularY * offset * 0.35),
     );
   }
-  graphics.fillStyle(preset.primaryColor, alpha);
-  graphics.fillRect(pixel(burst.x - 2), pixel(burst.y - 2), 4, 4);
 }
 
 function drawRisingMembrane(
@@ -887,14 +931,25 @@ function drawRisingMembrane(
 ): void {
   const halfWidth = burst.radius * (0.35 + progress * 0.35);
   const yOffset = (progress - 0.5) * 8;
-  graphics.lineStyle(3, preset.secondaryColor, alpha * 0.56);
+  graphics.lineStyle(
+    5,
+    COMBAT_VFX_READABILITY.silhouetteColor,
+    alpha * COMBAT_VFX_READABILITY.silhouetteAlpha,
+  );
+  graphics.lineBetween(
+    pixel(burst.x - halfWidth),
+    pixel(burst.y + yOffset + 2),
+    pixel(burst.x + halfWidth),
+    pixel(burst.y + yOffset + 2),
+  );
+  graphics.lineStyle(4, preset.secondaryColor, alpha * 0.62);
   graphics.lineBetween(
     pixel(burst.x - halfWidth),
     pixel(burst.y + yOffset + 3),
     pixel(burst.x + halfWidth),
     pixel(burst.y + yOffset + 3),
   );
-  graphics.lineStyle(2, preset.primaryColor, alpha);
+  graphics.lineStyle(3, preset.primaryColor, alpha);
   const gaps = 4;
   for (let index = 0; index < gaps; index += 1) {
     const left = burst.x - halfWidth + (index / gaps) * halfWidth * 2;
@@ -919,18 +974,90 @@ function drawCommandBrackets(
   const corner = Math.max(4, Math.round(radius * 0.32));
   const x = pixel(burst.x);
   const y = pixel(burst.y);
-  graphics.lineStyle(2, preset.primaryColor, alpha);
 
   for (const xSign of [-1, 1]) {
     for (const ySign of [-1, 1]) {
       const cornerX = pixel(x + xSign * radius);
       const cornerY = pixel(y + ySign * radius);
+      graphics.lineStyle(
+        5,
+        COMBAT_VFX_READABILITY.silhouetteColor,
+        alpha * COMBAT_VFX_READABILITY.silhouetteAlpha,
+      );
+      graphics.lineBetween(
+        cornerX,
+        cornerY + 1,
+        pixel(cornerX - xSign * corner),
+        cornerY + 1,
+      );
+      graphics.lineBetween(
+        cornerX,
+        cornerY + 1,
+        cornerX,
+        pixel(cornerY - ySign * corner + 1),
+      );
+      graphics.lineStyle(3, preset.primaryColor, alpha);
       graphics.lineBetween(cornerX, cornerY, pixel(cornerX - xSign * corner), cornerY);
       graphics.lineBetween(cornerX, cornerY, cornerX, pixel(cornerY - ySign * corner));
     }
   }
-  graphics.fillStyle(preset.secondaryColor, alpha * 0.65);
+  graphics.fillStyle(
+    COMBAT_VFX_READABILITY.silhouetteColor,
+    alpha * COMBAT_VFX_READABILITY.silhouetteAlpha,
+  );
+  graphics.fillRect(x - 2, y - 2, 5, 5);
+  graphics.fillStyle(preset.secondaryColor, alpha * 0.82);
   graphics.fillRect(x - 1, y - 1, 3, 3);
+}
+
+function drawContactCore(
+  graphics: Phaser.GameObjects.Graphics,
+  burst: BurstRecord,
+  preset: CombatVfxPreset,
+  progress: number,
+  alpha: number,
+): void {
+  const coreAlpha = alpha * (1 - progress / 0.34);
+  const x = pixel(burst.x);
+  const y = pixel(burst.y);
+  const coreSize = preset.priority === 1 ? 5 : 4;
+  const shadowSize = coreSize + 2;
+
+  graphics.fillStyle(
+    COMBAT_VFX_READABILITY.silhouetteColor,
+    coreAlpha * COMBAT_VFX_READABILITY.silhouetteAlpha,
+  );
+  graphics.fillRect(
+    pixel(x - shadowSize / 2 + 1),
+    pixel(y - shadowSize / 2 + 1),
+    shadowSize,
+    shadowSize,
+  );
+  graphics.fillStyle(preset.primaryColor, coreAlpha);
+  graphics.fillRect(
+    pixel(x - coreSize / 2),
+    pixel(y - coreSize / 2),
+    coreSize,
+    coreSize,
+  );
+  graphics.fillStyle(preset.secondaryColor, coreAlpha * 0.9);
+  graphics.fillRect(x - 1, y - 1, 2, 2);
+}
+
+function getReadableAlpha(
+  progress: number,
+  holdUntilProgress: number,
+  fadePower: number,
+): number {
+  if (progress < 0.1) {
+    return 0.82 + (progress / 0.1) * 0.18;
+  }
+  if (progress <= holdUntilProgress) return 1;
+
+  return Math.pow(
+    (1 - progress) / (1 - holdUntilProgress),
+    fadePower,
+  );
 }
 
 function pixel(value: number): number {
