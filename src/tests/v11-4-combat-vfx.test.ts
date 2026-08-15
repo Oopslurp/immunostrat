@@ -18,6 +18,7 @@ import {
   COMBAT_VFX_DEPTHS,
   COMBAT_VFX_LIMITS,
   COMBAT_VFX_PRESETS,
+  COMBAT_VFX_READABILITY,
   getImmuneArrivalPreset,
   getPathogenDamagePreset,
   resolveCommandFeedback,
@@ -83,6 +84,27 @@ describe("V11.4 combat VFX and biological feedback", () => {
       expect(preset.durationMs).toBeLessThanOrEqual(520);
       expect(preset.particleCount).toBeLessThanOrEqual(5);
     }
+  });
+
+  it("raises VFX readability without increasing density or losing crisp bounds", () => {
+    expect(COMBAT_VFX_READABILITY.radiusScale).toBeGreaterThanOrEqual(1.08);
+    expect(COMBAT_VFX_READABILITY.radiusScale).toBeLessThanOrEqual(1.16);
+    expect(COMBAT_VFX_READABILITY.radiusBonus).toBeLessThanOrEqual(2);
+    expect(COMBAT_VFX_READABILITY.particleSizeBonus).toBe(1);
+    expect(COMBAT_VFX_READABILITY.maxParticleSize).toBeLessThanOrEqual(4);
+    expect(COMBAT_VFX_READABILITY.lineWidthBonus).toBe(1);
+    expect(COMBAT_VFX_READABILITY.silhouetteAlpha).toBeLessThanOrEqual(0.45);
+    expect(COMBAT_VFX_READABILITY.burstHoldUntilProgress).toBeLessThanOrEqual(
+      0.45,
+    );
+    expect(COMBAT_VFX_READABILITY.particleHoldUntilProgress).toBeLessThanOrEqual(
+      0.4,
+    );
+    expect(COMBAT_VFX_LIMITS).toMatchObject({
+      maxBursts: 48,
+      maxParticles: 168,
+      densityWindowMs: 180,
+    });
   });
 
   it("throttles repeated local events and opens a fresh density window", () => {
