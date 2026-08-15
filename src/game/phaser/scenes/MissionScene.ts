@@ -74,6 +74,7 @@ import { CytotoxicTVisualController } from "../rendering/CytotoxicTVisualControl
 import { CytotoxicTDebugViewer } from "../rendering/CytotoxicTDebugViewer";
 import { drawProceduralPathogen } from "../rendering/drawProceduralPathogen";
 import { PathogenExitVisualController } from "../rendering/PathogenExitVisualController";
+import { PathogenMotionVisualTracker } from "../rendering/PathogenMotionVisualTracker";
 
 type CameraKeys = {
   upW: Phaser.Input.Keyboard.Key;
@@ -109,6 +110,7 @@ export class MissionScene extends Phaser.Scene {
   private antibodyProjectileVisualController?: AntibodyProjectileVisualController;
   private antibodyDebugViewer?: AntibodyDebugViewer;
   private pathogenExitVisualController?: PathogenExitVisualController;
+  private pathogenMotionVisualTracker?: PathogenMotionVisualTracker;
   private combatSiteRenderer?: CombatSiteLayerRenderer;
   private inflammationFieldRenderer?: InflammationFieldRenderer;
   private diapedesisMarkers = new Map<string, Phaser.GameObjects.Image>();
@@ -170,6 +172,7 @@ export class MissionScene extends Phaser.Scene {
       new AntibodyProjectileVisualController(this);
     this.antibodyDebugViewer = new AntibodyDebugViewer(this);
     this.pathogenExitVisualController = new PathogenExitVisualController(this);
+    this.pathogenMotionVisualTracker = new PathogenMotionVisualTracker();
     this.setupDiapedesisMarkers(map);
     this.setupLymphaticExitMarkers(map);
 
@@ -283,6 +286,8 @@ export class MissionScene extends Phaser.Scene {
     this.antibodyDebugViewer = undefined;
     this.pathogenExitVisualController?.destroy();
     this.pathogenExitVisualController = undefined;
+    this.pathogenMotionVisualTracker?.destroy();
+    this.pathogenMotionVisualTracker = undefined;
     this.macrophageOverlayLayer?.destroy();
     this.macrophageOverlayLayer = undefined;
     this.diapedesisMarkers.clear();
@@ -785,6 +790,7 @@ export class MissionScene extends Phaser.Scene {
     mapGraphics.clear();
     graphics.clear();
     this.macrophageOverlayLayer?.clear();
+    this.pathogenMotionVisualTracker?.update(state, deltaMs);
     this.macrophageVisualController?.update(state, deltaMs);
     this.pathogenExitVisualController?.update(
       state,
@@ -1254,6 +1260,7 @@ export class MissionScene extends Phaser.Scene {
       }
 
       if (isBacterium(entity)) {
+        const motion = this.pathogenMotionVisualTracker?.get(entity.id);
         const capturedVisual = this.macrophageVisualController?.getCapturedTargetVisual(
           entity,
           state,
@@ -1275,6 +1282,9 @@ export class MissionScene extends Phaser.Scene {
           attackCooldownRemainingMs: capturedVisual
             ? undefined
             : entity.attackCooldownRemainingMs,
+          movementPhase: motion?.movementPhase,
+          movementIntensity: capturedVisual ? 0 : motion?.movementIntensity,
+          facingAngle: motion?.facingAngle,
         });
         if (!capturedVisual) {
           this.drawHealthBar(graphics, entityX, entityY - 24, entity.health, entity.maxHealth);
@@ -1288,6 +1298,7 @@ export class MissionScene extends Phaser.Scene {
       }
 
       if (isVirus(entity)) {
+        const motion = this.pathogenMotionVisualTracker?.get(entity.id);
         drawProceduralPathogen(graphics, {
           identity: entity.id,
           pathogenTypeId: entity.pathogenTypeId,
@@ -1296,6 +1307,9 @@ export class MissionScene extends Phaser.Scene {
           radius: entity.radius,
           alpha: 0.95,
           elapsedMs: state.elapsedMs,
+          movementPhase: motion?.movementPhase,
+          movementIntensity: motion?.movementIntensity,
+          facingAngle: motion?.facingAngle,
         });
         this.drawHealthBar(
           graphics,
@@ -1310,6 +1324,7 @@ export class MissionScene extends Phaser.Scene {
       if (isAdvancedThreat(entity)) {
         const definition = pathogenDefinitions[entity.pathogenTypeId];
         const alpha = entity.detected ? 0.95 : 0.48;
+        const motion = this.pathogenMotionVisualTracker?.get(entity.id);
 
         drawProceduralPathogen(graphics, {
           identity: entity.id,
@@ -1321,6 +1336,9 @@ export class MissionScene extends Phaser.Scene {
           elapsedMs: state.elapsedMs,
           attackCooldownMs: entity.attackCooldownMs,
           attackCooldownRemainingMs: entity.attackCooldownRemainingMs,
+          movementPhase: motion?.movementPhase,
+          movementIntensity: motion?.movementIntensity,
+          facingAngle: motion?.facingAngle,
         });
 
         if (entity.category === "fungus") {

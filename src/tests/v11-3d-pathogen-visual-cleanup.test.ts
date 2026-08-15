@@ -4,11 +4,14 @@ import {
   type PathogenTypeId,
 } from "../game/data/pathogens";
 import {
+  getPathogenFamilyAnimationProfile,
   getPathogenVisualVariant,
+  pathogenFamilyAnimationProfiles,
   pathogenVisualVariantCounts,
   resolvePathogenVisualFamily,
   resolvePathogenVisualPose,
 } from "../game/phaser/rendering/pathogenVisualModel";
+import { advancePathogenMotionVisual } from "../game/phaser/rendering/PathogenMotionVisualTracker";
 
 const pathogenTypeIds = Object.keys(pathogenDefinitions) as PathogenTypeId[];
 
@@ -72,6 +75,7 @@ describe("V11.3D pathogen visual cleanup", () => {
   it("derives bounded idle and attack poses without mutating visual input", () => {
     const input = {
       identity: "bacterium-42",
+      pathogenTypeId: "cocciRapid" as const,
       elapsedMs: 8_250,
       attackCooldownMs: 1_000,
       attackCooldownRemainingMs: 910,
@@ -86,5 +90,74 @@ describe("V11.3D pathogen visual cleanup", () => {
     expect(pose.scaleY).toBeGreaterThanOrEqual(0.92);
     expect(pose.scaleY).toBeLessThanOrEqual(1.03);
     expect(pose.attackPulse).toBeGreaterThan(0.9);
+  });
+
+  it("assigns a distinct movement, attack, and death language to every family", () => {
+    const profiles = Object.values(pathogenFamilyAnimationProfiles);
+
+    expect(new Set(profiles.map((profile) => profile.movement)).size).toBe(6);
+    expect(new Set(profiles.map((profile) => profile.attack)).size).toBe(6);
+    expect(new Set(profiles.map((profile) => profile.death)).size).toBe(6);
+    expect(getPathogenFamilyAnimationProfile("respiratoryVirus")).toEqual({
+      movement: "driftSpin",
+      attack: "viralEntry",
+      death: "capsidFracture",
+    });
+    expect(getPathogenFamilyAnimationProfile("parasiteHelminth")).toEqual({
+      movement: "slither",
+      attack: "tendrilStrike",
+      death: "segmentBreak",
+    });
+  });
+
+  it("derives visually different locomotion poses for the six pathogen families", () => {
+    const examples: PathogenTypeId[] = [
+      "cocciRapid",
+      "respiratoryVirus",
+      "fungalSpore",
+      "parasiteHelminth",
+      "invasiveCancerCell",
+      "biofilmColony",
+    ];
+    const poses = examples.map((pathogenTypeId) =>
+      resolvePathogenVisualPose({
+        identity: "shared-motion",
+        pathogenTypeId,
+        elapsedMs: 1_000,
+        movementPhase: Math.PI / 3,
+        movementIntensity: 1,
+        facingAngle: 0.7,
+      }),
+    );
+
+    expect(new Set(poses.map((pose) => `${pose.offsetX}:${pose.bobY}`)).size).toBeGreaterThan(2);
+    expect(poses[1].scaleX).toBeGreaterThan(poses[5].scaleX);
+    expect(poses.every((pose) => pose.facingAngle === 0.7)).toBe(true);
+  });
+
+  it("tracks locomotion as renderer-only state without mutating simulation input", () => {
+    const firstInput = {
+      identity: "pathogen-motion-1",
+      x: 10,
+      y: 20,
+      movementSpeed: 50,
+      deltaMs: 100,
+    };
+    const before = { ...firstInput };
+    const first = advancePathogenMotionVisual(undefined, firstInput);
+    const moved = advancePathogenMotionVisual(first, {
+      ...firstInput,
+      x: 15,
+    });
+    const stopped = advancePathogenMotionVisual(moved, {
+      ...firstInput,
+      x: 15,
+    });
+
+    expect(firstInput).toEqual(before);
+    expect(moved.movementIntensity).toBe(1);
+    expect(moved.facingAngle).toBeCloseTo(0);
+    expect(moved.movementPhase).toBeGreaterThan(first.movementPhase);
+    expect(stopped.movementIntensity).toBeLessThan(moved.movementIntensity);
   });
 });
