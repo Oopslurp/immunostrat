@@ -335,6 +335,9 @@ export class SpriteLabScene extends Phaser.Scene {
     const definition = pathogenDefinitions[id];
     const graphics = view.graphics;
     const radius = Phaser.Math.Clamp(definition.radius * 1.2, 12, 30);
+    const attackPreviewCooldownMs = 1_600;
+    const attackPreviewAgeMs =
+      (elapsedMs + entry.x * 3) % attackPreviewCooldownMs;
 
     graphics.clear();
     drawProceduralPathogen(graphics, {
@@ -345,6 +348,12 @@ export class SpriteLabScene extends Phaser.Scene {
       radius,
       alpha: 0.95,
       elapsedMs,
+      movementPhase: elapsedMs / 160,
+      movementIntensity: 0.72,
+      facingAngle: 0,
+      attackCooldownMs: attackPreviewCooldownMs,
+      attackCooldownRemainingMs:
+        attackPreviewCooldownMs - attackPreviewAgeMs,
     });
     graphics.fillStyle(0x071217, 0.9);
     graphics.fillRoundedRect(entry.x - 30, entry.y - 43, 60, 6, 3);

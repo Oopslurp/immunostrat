@@ -30,6 +30,7 @@ type ExitRecord = Readonly<{
   snapshot: PathogenSnapshot;
   mode: PathogenExitMode;
   durationMs: number;
+  target?: Readonly<{ x: number; y: number }>;
 }> & {
   remainingMs: number;
 };
@@ -108,6 +109,9 @@ export class PathogenExitVisualController {
         snapshot,
         mode,
         durationMs,
+        target: infectionEffect
+          ? { x: infectionEffect.position.x, y: infectionEffect.position.y }
+          : undefined,
         remainingMs: durationMs,
       });
     }
@@ -128,6 +132,7 @@ export class PathogenExitVisualController {
         elapsedMs: state.elapsedMs,
         exitMode: record.mode,
         exitProgress: progress,
+        exitTarget: record.target,
       });
 
       if (record.remainingMs <= 0) {
