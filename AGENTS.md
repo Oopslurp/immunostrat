@@ -9,11 +9,12 @@ gameplay visual state not represented by the provided spritesheet.
 ## Git workflow
 
 After completing and validating a coherent implementation, balance change,
-bugfix, or sprite batch, automatically stage the related files, create a
-descriptive commit, and push the current branch. Do not wait for a separate
-commit or push request.
+bugfix, documentation update, or sprite batch, automatically stage the related
+files, create a descriptive commit, push the current branch, create or update
+its pull request, and squash-merge that pull request. Do not wait for separate
+commit, push, pull-request, or merge requests.
 
 When the user splits one coherent feature into several mini-tasks, keep using
 the same feature branch and pull request when practical, and push each validated
-commit to that branch. Start a new branch after the previous pull request has
-been merged. Never merge a pull request without explicit user approval.
+commit to that branch. Squash-merge the pull request once the coherent feature
+is complete, then start a new branch for subsequent work.
