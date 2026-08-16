@@ -15,9 +15,8 @@ describe("pre-next-version selection polish", () => {
     expect(
       resolvePresentedRangeEntityId({
         selectedEntityIds: ["macrophage-1"],
-        focusedEntityId: null,
-        worldHoveredEntityId: null,
-        panelHoveredEntityId: null,
+        hoveredSelectedUnitId: null,
+        focusedSelectedUnitId: null,
       }),
     ).toBe("macrophage-1");
     expect(getPresentedAttackRangeRadius(56)).toBe(56);
@@ -30,25 +29,22 @@ describe("pre-next-version selection polish", () => {
     expect(
       resolvePresentedRangeEntityId({
         selectedEntityIds,
-        focusedEntityId: "nk-3",
-        worldHoveredEntityId: null,
-        panelHoveredEntityId: null,
+        hoveredSelectedUnitId: null,
+        focusedSelectedUnitId: "nk-3",
       }),
     ).toBe("nk-3");
     expect(
       resolvePresentedRangeEntityId({
         selectedEntityIds,
-        focusedEntityId: "nk-3",
-        worldHoveredEntityId: "macrophage-1",
-        panelHoveredEntityId: null,
+        hoveredSelectedUnitId: "macrophage-1",
+        focusedSelectedUnitId: "nk-3",
       }),
     ).toBe("macrophage-1");
     expect(
       resolvePresentedRangeEntityId({
         selectedEntityIds,
-        focusedEntityId: "nk-3",
-        worldHoveredEntityId: "macrophage-1",
-        panelHoveredEntityId: "neutrophil-2",
+        hoveredSelectedUnitId: "neutrophil-2",
+        focusedSelectedUnitId: "nk-3",
       }),
     ).toBe("neutrophil-2");
   });
@@ -61,14 +57,25 @@ describe("pre-next-version selection polish", () => {
   it("carries squad-card hover through a presentation-only bridge channel", () => {
     const bridge = new GameBridge();
     const received: Array<string | null> = [];
-    const unsubscribe = bridge.subscribePresentationFocus((entityId) => {
-      received.push(entityId);
+    const unsubscribe = bridge.subscribeSelectionPresentationCommand((command) => {
+      if (command.type === "hoverSelectedUnit") {
+        received.push(command.entityId);
+      }
     });
 
-    bridge.setPresentationFocus("neutrophil-2");
-    bridge.setPresentationFocus(null);
+    bridge.dispatchSelectionPresentation({
+      type: "hoverSelectedUnit",
+      entityId: "neutrophil-2",
+    });
+    bridge.dispatchSelectionPresentation({
+      type: "hoverSelectedUnit",
+      entityId: null,
+    });
     unsubscribe();
-    bridge.setPresentationFocus("ignored");
+    bridge.dispatchSelectionPresentation({
+      type: "hoverSelectedUnit",
+      entityId: "ignored",
+    });
 
     expect(received).toEqual(["neutrophil-2", null]);
   });
