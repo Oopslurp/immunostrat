@@ -33,9 +33,9 @@ export const treatmentDefinitions: Record<TreatmentId, TreatmentDefinition> = {
     displayName: "Antibiotique",
     shortLabel: "ATB",
     gameplayDescription:
-      "Inflige des degats moderes aux bacteries et affaiblit leur pression, avec efficacite reduite contre biofilm.",
+      "Inflige des dégâts modérés aux bactéries et affaiblit leur pression, avec efficacité réduite contre le biofilm.",
     scienceDescription:
-      "Inspire des medicaments qui ciblent des processus bacteriens, sans effet direct sur les virus.",
+      "Inspiré des médicaments qui ciblent des processus bactériens, sans effet direct sur les virus.",
     simplificationNote:
       "Le jeu condense l'effet en une impulsion tactique lisible, pas en traitement medical realiste.",
     atpCost: 34,
@@ -66,7 +66,7 @@ export const treatmentDefinitions: Record<TreatmentId, TreatmentDefinition> = {
     scienceDescription:
       "Inspire des traitements qui limitent la replication virale sans detruire instantanement les cellules infectees.",
     simplificationNote:
-      "Il ralentit la propagation mais ne remplace pas les interferons, NK ou T cytotoxiques.",
+      "Il ralentit la propagation mais ne remplace pas les interférons, NK ou T cytotoxiques.",
     atpCost: 30,
     cytokineCost: 18,
     antigenCost: 0,

@@ -713,7 +713,7 @@ export function getBodyMapVictoryProgress(state: BodyMapState): {
         regionName: definition.name,
         currentValue: Math.round(region.infection),
         requiredValue: bodyMapEndingRules.victoryMaxRegionInfection,
-        message: `${definition.name} encore infecte : ${Math.round(region.infection)}% > seuil ${bodyMapEndingRules.victoryMaxRegionInfection}%`,
+        message: `${definition.name} encore infecté : ${Math.round(region.infection)}% > seuil ${bodyMapEndingRules.victoryMaxRegionInfection}%`,
         severity: region.infection >= 60 ? "danger" : "warning",
       });
     }
@@ -726,7 +726,7 @@ export function getBodyMapVictoryProgress(state: BodyMapState): {
         regionName: definition.name,
         currentValue: Math.round(region.localHealth),
         requiredValue: 23,
-        message: `${definition.name} en etat critique : sante ${Math.round(region.localHealth)}%`,
+        message: `${definition.name} en état critique : santé ${Math.round(region.localHealth)}%`,
         severity: "danger",
       });
     }
@@ -742,7 +742,7 @@ export function getBodyMapVictoryProgress(state: BodyMapState): {
         regionName: definition.name,
         currentValue: Math.round(region.infection),
         requiredValue: bodyMapEndingRules.victoryMaxRegionInfection,
-        message: `Crise active non controlee : ${formatThreat(region.threat)} dans ${definition.name}`,
+        message: `Crise active non contrôlée : ${formatThreat(region.threat)} dans ${definition.name}`,
         severity: region.infection >= 45 ? "danger" : "warning",
       });
     }
@@ -754,7 +754,7 @@ export function getBodyMapVictoryProgress(state: BodyMapState): {
       type: "systemicInflammation",
       currentValue: Math.round(state.systemicInflammation),
       requiredValue: bodyMapEndingRules.victoryMaxSystemicInflammation,
-      message: `Inflammation systemique trop elevee : ${Math.round(state.systemicInflammation)}% > ${bodyMapEndingRules.victoryMaxSystemicInflammation}%`,
+      message: `Inflammation systémique trop élevée : ${Math.round(state.systemicInflammation)}% > ${bodyMapEndingRules.victoryMaxSystemicInflammation}%`,
       severity: state.systemicInflammation >= 80 ? "danger" : "warning",
     });
   }
@@ -765,7 +765,7 @@ export function getBodyMapVictoryProgress(state: BodyMapState): {
       type: "globalInfection",
       currentValue: Math.round(state.globalInfection),
       requiredValue: bodyMapEndingRules.victoryMaxGlobalInfection,
-      message: `Infection globale trop elevee : ${Math.round(state.globalInfection)}% > ${bodyMapEndingRules.victoryMaxGlobalInfection}%`,
+      message: `Infection globale trop élevée : ${Math.round(state.globalInfection)}% > ${bodyMapEndingRules.victoryMaxGlobalInfection}%`,
       severity: state.globalInfection >= 45 ? "danger" : "warning",
     });
   }
@@ -776,7 +776,7 @@ export function getBodyMapVictoryProgress(state: BodyMapState): {
       type: "globalHealth",
       currentValue: Math.round(state.globalHealth),
       requiredValue: bodyMapEndingRules.victoryMinGlobalHealth,
-      message: `Sante globale trop basse : ${Math.round(state.globalHealth)}% < ${bodyMapEndingRules.victoryMinGlobalHealth}%`,
+      message: `Santé globale trop basse : ${Math.round(state.globalHealth)}% < ${bodyMapEndingRules.victoryMinGlobalHealth}%`,
       severity: "danger",
     });
   }
@@ -1003,7 +1003,7 @@ function recalculateGlobalMetrics(state: BodyMapState): BodyMapState {
   if (next.systemicInflammation >= 70) {
     next.alerts = pushAlert(
       next.alerts,
-      "Inflammation systemique elevee : l'organisme fatigue.",
+      "Inflammation systémique élevée : l'organisme fatigue.",
     );
   }
 
@@ -1167,7 +1167,7 @@ function formatThreat(threat: BodyThreatProfile): string {
   }
 
   if (threat === "bacterial") {
-    return "bacterienne";
+    return "bactérienne";
   }
 
   if (threat === "mixed") {
@@ -1191,7 +1191,7 @@ function updateBodyMapEndState(state: BodyMapState): BodyMapState {
     next.alerts = pushAlert(next.alerts, next.finalSummary.cause);
     next.history = pushHistory(
       next.history,
-      `Tour ${next.strategicTurn} : defaite globale - ${next.finalSummary.cause}.`,
+      `Tour ${next.strategicTurn} : défaite globale - ${next.finalSummary.cause}.`,
     );
     return next;
   }
@@ -1206,10 +1206,10 @@ function updateBodyMapEndState(state: BodyMapState): BodyMapState {
   if (next.stabilizationStreak >= bodyMapEndingRules.victoryRequiredStableTurns) {
     next.runStatus = "victory";
     next.finalSummary = createFinalSummary(next, "victory");
-    next.alerts = pushAlert(next.alerts, "Organisme stabilise : partie normale gagnee.");
+    next.alerts = pushAlert(next.alerts, "Organisme stabilisé : partie normale gagnée.");
     next.history = pushHistory(
       next.history,
-      `Tour ${next.strategicTurn} : victoire globale, organisme stabilise.`,
+      `Tour ${next.strategicTurn} : victoire globale, organisme stabilisé.`,
     );
   }
 
@@ -1260,10 +1260,10 @@ function createFinalSummary(
 
   return {
     status,
-    title: status === "victory" ? "Organisme stabilise" : "Organisme submerge",
+    title: status === "victory" ? "Organisme stabilisé" : "Organisme submergé",
     cause:
       status === "victory"
-        ? "Stabilisation maintenue sur plusieurs tours strategiques"
+        ? "Stabilisation maintenue sur plusieurs tours stratégiques"
         : formatDefeatCause(defeatCause ?? "globalHealthCollapsed"),
     score,
     rank: getBodyMapRank(score),
@@ -1284,11 +1284,11 @@ function createFinalSummary(
 
 function formatDefeatCause(cause: BodyMapDefeatCause): string {
   const labels: Record<BodyMapDefeatCause, string> = {
-    globalHealthCollapsed: "Sante globale effondree",
-    globalInfectionOverrun: "Propagation systemique incontrolee",
-    systemicInflammationRunaway: "Inflammation systemique excessive",
-    tooManyCriticalRegions: "Trop de regions critiques",
-    bloodCrisis: "Infection du sang non controlee",
+    globalHealthCollapsed: "Santé globale effondrée",
+    globalInfectionOverrun: "Propagation systémique incontrôlée",
+    systemicInflammationRunaway: "Inflammation systémique excessive",
+    tooManyCriticalRegions: "Trop de régions critiques",
+    bloodCrisis: "Infection du sang non contrôlée",
   };
 
   return labels[cause];

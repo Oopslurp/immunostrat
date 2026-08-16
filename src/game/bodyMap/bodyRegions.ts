@@ -29,7 +29,7 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     tacticalMapId: "skin_multi_wound_template",
     preferredThreat: "bacterial",
     pedagogy:
-      "La peau est une barriere. Une plaie peut laisser entrer des bacteries vers la lymphe puis le sang.",
+      "La peau est une barrière. Une plaie peut laisser entrer des bactéries vers la lymphe puis le sang.",
     visualIdentity: {
       shapeHint: "surface protectrice avec fissure",
       colorHint: "rose corail et turquoise de soin",
@@ -54,7 +54,7 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     tacticalMapId: "lung_branching_vessels_template",
     preferredThreat: "viral",
     pedagogy:
-      "Les poumons exposent beaucoup de cellules aux virus respiratoires. Les interferons ralentissent la propagation.",
+      "Les poumons exposent beaucoup de cellules aux virus respiratoires. Les interférons ralentissent la propagation.",
     visualIdentity: {
       shapeHint: "deux lobes respiratoires stylises",
       colorHint: "bleu clair et violet viral",
@@ -79,7 +79,7 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     tacticalMapId: "intestine_clustered_sites_template",
     preferredThreat: "bacterial",
     pedagogy:
-      "L'intestin concentre beaucoup de microbes. Le gameplay le simplifie en foyer bacterien dense.",
+      "L'intestin concentre beaucoup de microbes. Le gameplay le simplifie en foyer bactérien dense.",
     visualIdentity: {
       shapeHint: "courbe digestive segmente",
       colorHint: "orange biologique et vert microbien",
@@ -104,7 +104,7 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     tacticalMapId: "blood_vessel_crossroads_template",
     preferredThreat: "mixed",
     pedagogy:
-      "Le sang transporte les cellules immunitaires, mais il peut aussi accelerer une propagation systemique.",
+      "Le sang transporte les cellules immunitaires, mais il peut aussi accélérer une propagation systémique.",
     visualIdentity: {
       shapeHint: "reseau de vaisseaux",
       colorHint: "rouge profond et cyan immunitaire",
@@ -129,7 +129,7 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     tacticalMapId: "lymph_node_signal_template",
     preferredThreat: "mixed",
     pedagogy:
-      "La lymphe transporte les informations antigeniques vers les ganglions regionaux.",
+      "La lymphe transporte les informations antigéniques vers les ganglions régionaux.",
     visualIdentity: {
       shapeHint: "chaine de ganglions connectes",
       colorHint: "violet clair et cyan signal",
@@ -154,7 +154,7 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     tacticalMapId: "blood_vessel_crossroads_template",
     preferredThreat: "mixed",
     pedagogy:
-      "La rate surveille le sang. Dans V7, elle sert surtout de relais strategique immunitaire.",
+      "La rate surveille le sang. Elle sert surtout de relais stratégique immunitaire.",
     visualIdentity: {
       shapeHint: "filtre organique arrondi",
       colorHint: "pourpre sombre et rouge filtre",
@@ -204,7 +204,7 @@ export const bodyRegionDefinitions: Record<BodyRegionId, BodyRegionDefinition> =
     tacticalMapId: "blood_vessel_crossroads_template",
     preferredThreat: "cancer",
     pedagogy:
-      "Le foie est une zone de stabilisation simplifiee. Une infection systemique le met sous pression.",
+      "Le foie est une zone de stabilisation simplifiée. Une infection systémique le met sous pression.",
     visualIdentity: {
       shapeHint: "grand organe de stabilisation",
       colorHint: "ambre et violet d'alerte",
@@ -229,28 +229,28 @@ export const regionalNodeDefinitions: Record<
     name: "Ganglion peau",
     associatedRegionIds: ["skin"],
     description:
-      "Recoit les signaux venus des tissus cutanes et accelere legerement l'analyse locale.",
+      "Reçoit les signaux venus des tissus cutanés et accélère légèrement l'analyse locale.",
   },
   thoracicNode: {
     id: "thoracicNode",
     name: "Ganglion thoracique",
     associatedRegionIds: ["lungs"],
     description:
-      "Coordonne les signaux respiratoires et aide les reponses antivirales locales.",
+      "Coordonne les signaux respiratoires et aide les réponses antivirales locales.",
   },
   gutNode: {
     id: "gutNode",
     name: "Ganglion intestinal",
     associatedRegionIds: ["intestine"],
     description:
-      "Filtre les signaux digestifs et prepare une reponse adaptee aux foyers bacteriens.",
+      "Filtre les signaux digestifs et prépare une réponse adaptée aux foyers bactériens.",
   },
   bloodNode: {
     id: "bloodNode",
-    name: "Rate / relais systemique",
+    name: "Rate / relais systémique",
     associatedRegionIds: ["blood", "lymphNodes", "spleen", "boneMarrow", "liver"],
     description:
-      "Relais strategique global pour les menaces circulantes et les signaux antigeniques.",
+      "Relais stratégique global pour les menaces circulantes et les signaux antigéniques.",
   },
 };
 

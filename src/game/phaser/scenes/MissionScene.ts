@@ -98,6 +98,8 @@ import {
   SELECTION_RING_RADIUS_PADDING,
   SELECTION_RING_WIDTH,
 } from "../rendering/selectionPresentation";
+import { CombatAudioTracker } from "../../../audio/CombatAudioTracker";
+import type { GameAudioEvent, GameAudioEventName } from "../../../audio/audioEvents";
 
 type CameraKeys = {
   upW: Phaser.Input.Keyboard.Key;
@@ -144,6 +146,9 @@ export class MissionScene extends Phaser.Scene {
   private lymphaticExitMarkers = new Map<string, Phaser.GameObjects.Image>();
   private bridgeUnsubscribe?: () => void;
   private bridgeSelectionPresentationUnsubscribe?: () => void;
+  private bridgeSessionPresentationUnsubscribe?: () => void;
+  private readonly combatAudioTracker = new CombatAudioTracker();
+  private gameplayInputEnabled = true;
   private snapshotElapsedMs = 0;
   private lastPublishedStatus: GameState["status"] | null = null;
   private leftDragStart: { x: number; y: number } | null = null;
@@ -156,6 +161,8 @@ export class MissionScene extends Phaser.Scene {
   private worldHoveredSelectedUnitId: EntityId | null = null;
   private panelHoveredSelectedUnitId: EntityId | null = null;
   private tacticalCameraZoom = 1;
+  private initialCameraScrollX = 0;
+  private initialCameraScrollY = 0;
   private focusCameraTween?: Phaser.Tweens.Tween;
 
   constructor(
@@ -196,6 +203,8 @@ export class MissionScene extends Phaser.Scene {
         map.worldHeight,
       );
     this.tacticalCameraZoom = this.cameras.main.zoom;
+    this.initialCameraScrollX = this.cameras.main.scrollX;
+    this.initialCameraScrollY = this.cameras.main.scrollY;
     this.macrophageDebugViewer = new MacrophageDebugViewer(this);
     this.tissueCellDebugViewer = new TissueCellDebugViewer(this);
     this.dendriticDebugViewer = new DendriticDebugViewer(this);
@@ -253,15 +262,40 @@ export class MissionScene extends Phaser.Scene {
       this.bridge.subscribeSelectionPresentationCommand((command) => {
         this.handleSelectionPresentationCommand(command);
       });
+    this.bridgeSessionPresentationUnsubscribe =
+      this.bridge.subscribeSessionPresentation((session) => {
+        this.setGameplayInputEnabled(!session.paused && !session.inputBlocked);
+        if (session.paused) {
+          this.anims.pauseAll();
+          this.tweens.pauseAll();
+        } else {
+          if (session.inputBlocked) {
+            this.cancelFocusCameraTween();
+          }
+          this.anims.resumeAll();
+          this.tweens.resumeAll();
+        }
+      });
 
+    this.combatAudioTracker.reset(state);
     this.publishSelectionPresentation();
     this.publishSnapshot();
   }
 
   update(_time: number, delta: number) {
+    const currentState = this.simulation.getState();
+    if (!this.gameplayInputEnabled || currentState.status !== "running") {
+      this.clearPointerTransients();
+      return;
+    }
+
     this.recoverLostPointerRelease();
     this.updateCameraFromKeyboard(delta);
     const state = this.simulation.step(delta);
+
+    for (const event of this.combatAudioTracker.update(state)) {
+      this.publishCombatAudioEvent(event);
+    }
 
     this.renderState(state, delta);
     this.snapshotElapsedMs += delta;
@@ -283,11 +317,10 @@ export class MissionScene extends Phaser.Scene {
     this.bridgeUnsubscribe = undefined;
     this.bridgeSelectionPresentationUnsubscribe?.();
     this.bridgeSelectionPresentationUnsubscribe = undefined;
-    this.leftDragStart = null;
-    this.leftDragCurrent = null;
-    this.rightDragStartScreen = null;
-    this.rightDragLastScreen = null;
-    this.rightDragMoved = false;
+    this.bridgeSessionPresentationUnsubscribe?.();
+    this.bridgeSessionPresentationUnsubscribe = undefined;
+    this.clearPointerTransients();
+    this.combatAudioTracker.reset();
     this.focusCameraTween?.stop();
     this.focusCameraTween = undefined;
     this.focusedSelectedUnitId = null;
@@ -468,14 +501,29 @@ export class MissionScene extends Phaser.Scene {
   }
 
   private handleCommand(command: GameCommand) {
+    if (!this.gameplayInputEnabled && command.type !== "restart") {
+      return;
+    }
+
     const previousState = this.simulation.getState();
     const nextState = this.simulation.dispatch(command);
 
     if (command.type === "restart") {
       this.resetPresentationControllers(nextState);
       this.resetSelectionPresentation();
+      this.resetCameraPresentation();
+      this.clearPointerTransients();
+      this.combatAudioTracker.reset(nextState);
+      this.bridge.publishAudioEvent({ name: "restart", priority: 1 });
     } else if (nextState !== previousState) {
       this.combatVfxController?.acknowledgeCommand(command, nextState);
+      for (const event of this.combatAudioTracker.update(nextState)) {
+        this.publishCombatAudioEvent(event);
+      }
+      const commandSound = getCommandAudioEvent(command.type);
+      if (commandSound) {
+        this.bridge.publishAudioEvent({ name: commandSound, priority: 2 });
+      }
     }
     this.publishSnapshot();
   }
@@ -485,7 +533,7 @@ export class MissionScene extends Phaser.Scene {
   ): void {
     const state = this.simulation.getState();
 
-    if (state.status !== "running") {
+    if (!this.gameplayInputEnabled || state.status !== "running") {
       return;
     }
 
@@ -517,6 +565,8 @@ export class MissionScene extends Phaser.Scene {
     } else {
       this.focusSelectedUnit(unit, state);
     }
+
+    this.bridge.publishAudioEvent({ name: "focus", priority: 2 });
 
     this.publishSelectionPresentation();
   }
@@ -589,7 +639,7 @@ export class MissionScene extends Phaser.Scene {
   private handlePointerDown(pointer: Phaser.Input.Pointer) {
     const state = this.simulation.getState();
 
-    if (state.status !== "running") {
+    if (!this.gameplayInputEnabled || state.status !== "running") {
       return;
     }
 
@@ -611,6 +661,11 @@ export class MissionScene extends Phaser.Scene {
 
   private handlePointerMove(pointer: Phaser.Input.Pointer) {
     const state = this.simulation.getState();
+
+    if (!this.gameplayInputEnabled || state.status !== "running") {
+      this.clearPointerTransients();
+      return;
+    }
 
     this.setWorldHoveredSelectedUnitId(
       pointer.leftButtonDown() || pointer.rightButtonDown()
@@ -673,6 +728,11 @@ export class MissionScene extends Phaser.Scene {
 
   private handlePointerUp(pointer: Phaser.Input.Pointer) {
     const state = this.simulation.getState();
+
+    if (!this.gameplayInputEnabled) {
+      this.clearPointerTransients();
+      return;
+    }
 
     if (this.rightDragStartScreen) {
       this.rightDragStartScreen = null;
@@ -979,7 +1039,7 @@ export class MissionScene extends Phaser.Scene {
   }
 
   private updateCameraFromKeyboard(deltaMs: number): void {
-    if (!this.cameraKeys || isTextInputActive()) {
+    if (!this.gameplayInputEnabled || !this.cameraKeys || isTextInputActive()) {
       return;
     }
 
@@ -1005,6 +1065,9 @@ export class MissionScene extends Phaser.Scene {
   }
 
   private panCameraBy(deltaX: number, deltaY: number): void {
+    if (!this.gameplayInputEnabled) {
+      return;
+    }
     this.cancelFocusCameraTween();
     const camera = this.cameras.main;
 
@@ -1162,6 +1225,41 @@ export class MissionScene extends Phaser.Scene {
       this.getSelectedUnit(state, this.focusedSelectedUnitId),
       state.elapsedMs,
     );
+  }
+
+  private resetCameraPresentation(): void {
+    this.cancelFocusCameraTween();
+    this.cameras.main.setZoom(this.tacticalCameraZoom);
+    this.setCameraScroll(this.initialCameraScrollX, this.initialCameraScrollY);
+  }
+
+  private setGameplayInputEnabled(enabled: boolean): void {
+    if (enabled === this.gameplayInputEnabled) return;
+    this.gameplayInputEnabled = enabled;
+    if (!enabled) {
+      this.clearPointerTransients();
+      this.setWorldHoveredSelectedUnitId(null);
+      this.panelHoveredSelectedUnitId = null;
+      this.publishSelectionPresentation();
+    }
+  }
+
+  private clearPointerTransients(): void {
+    this.leftDragStart = null;
+    this.leftDragCurrent = null;
+    this.rightDragStartScreen = null;
+    this.rightDragLastScreen = null;
+    this.rightDragMoved = false;
+  }
+
+  private publishCombatAudioEvent(event: GameAudioEvent): void {
+    if (typeof event.x === "number" && typeof event.y === "number") {
+      const onScreen = this.cameras.main.worldView.contains(event.x, event.y);
+      if (!onScreen && event.priority === 3) return;
+      this.bridge.publishAudioEvent(onScreen ? event : { ...event, offscreen: true });
+      return;
+    }
+    this.bridge.publishAudioEvent(event);
   }
 
   private syncSelectionPresentation(state: GameState): void {
@@ -2256,6 +2354,32 @@ function getThreatSummary(state: GameState): GameSnapshot["threatSummary"] {
           pathogenDefinitions[a.pathogenTypeId].targetPriority ||
         b.count - a.count,
     );
+}
+
+function getCommandAudioEvent(
+  commandType: GameCommand["type"],
+): GameAudioEventName | null {
+  if (commandType.startsWith("produce")) return "arrival";
+  if (commandType.startsWith("research") || commandType.startsWith("use")) {
+    return "special";
+  }
+  if (
+    commandType === "orderMove" ||
+    commandType === "orderGuardArea" ||
+    commandType === "orderHoldPosition" ||
+    commandType === "orderRetreat"
+  ) {
+    return "move";
+  }
+  if (
+    commandType === "orderAttack" ||
+    commandType === "orderAttackTissueCell"
+  ) {
+    return "engage";
+  }
+  if (commandType === "orderReturnToLymphNode") return "lymph";
+  if (commandType === "orderCollectDebris") return "dendritic";
+  return null;
 }
 
 function getImmuneUnitColor(kind: string): number {

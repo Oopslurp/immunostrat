@@ -96,7 +96,7 @@ export const scienceGlossaryEntries: ScienceGlossaryEntry[] = [
     title: "Parasites",
     gameplayDescription: "Mini-boss rares, tres robustes et inflammatoires.",
     scienceDescription: "Les parasites regroupent des organismes tres varies, souvent plus complexes que bacteries ou virus.",
-    simplificationNote: "V9 les represente par une seule menace massive, pas par une vraie immunologie antiparasitaire.",
+    simplificationNote: "Le jeu les représente par une seule menace massive, sans simuler toute l'immunologie antiparasitaire.",
   },
   {
     id: "cancerCell",
@@ -110,7 +110,7 @@ export const scienceGlossaryEntries: ScienceGlossaryEntry[] = [
     title: "Pathogenes opportunistes",
     gameplayDescription: "Menaces secondaires qui profitent d'une zone affaiblie ou d'une crise mixte.",
     scienceDescription: "Un organisme affaibli ou un tissu perturbe peut devenir plus vulnerable a certains microbes.",
-    simplificationNote: "Le prototype les resume en vagues rapides de pression secondaire.",
+    simplificationNote: "Le jeu les résume en vagues rapides de pression secondaire.",
   },
   {
     id: "infectedCell",

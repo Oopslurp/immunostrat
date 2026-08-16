@@ -281,7 +281,7 @@ export function createGeneratedBodyMapState(
   }
 
   state.alerts.push(
-    "Chaque partie normale genere des foyers differents. Les menaces V9 apparaissent selon la difficulte.",
+    "Chaque partie normale génère des foyers différents. Les menaces avancées apparaissent selon la difficulté.",
   );
 
   return normalizeBodyMapState(state);

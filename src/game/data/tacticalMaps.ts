@@ -309,7 +309,7 @@ export const tacticalMapDefinitions: Record<TacticalMapId, TacticalMapDefinition
   skin_small_wound_fixed: expandTacticalMap({
     id: "skin_small_wound_fixed",
     name: "Plaie cutanee locale",
-    description: "Carte de campagne simple avec une entree vasculaire et un foyer bacterien.",
+    description: "Carte de campagne simple avec une entrée vasculaire et un foyer bactérien.",
     modeCompatibility: ["campaign"],
     regionType: "skin",
     recommendedThreats: ["bacterial", "wound"],
@@ -350,7 +350,7 @@ export const tacticalMapDefinitions: Record<TacticalMapId, TacticalMapDefinition
       lymph("skin-lymph-exit", "Sortie lymphatique locale", 350, 675, "skinNode"),
     ],
     combatSites: [
-      combatSite("skin-site-wound", "Foyer bacterien", 790, 405, 112, ["cocciRapid", "proliferatingBacillus"], ["macrophage"]),
+      combatSite("skin-site-wound", "Foyer bactérien", 790, 405, 112, ["cocciRapid", "proliferatingBacillus"], ["macrophage"]),
     ],
     pathogenSpawnZones: [
       spawnZone("skin-spawn-wound", "skin-site-wound", 1320, 400, 120, ["bacterium"], ["rapid"]),

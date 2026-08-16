@@ -158,7 +158,7 @@ describe("V7 body map strategy layer", () => {
     const progress = getBodyMapVictoryProgress(state);
 
     expect(progress.blockers).toEqual(
-      expect.arrayContaining([expect.stringContaining("Peau encore infecte")]),
+      expect.arrayContaining([expect.stringContaining("Peau encore infecté")]),
     );
     expect(canRegionLaunchBattle(state.regions.skin)).toBe(true);
   });

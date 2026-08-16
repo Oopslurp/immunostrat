@@ -1,0 +1,31 @@
+# Immunostrat V11.5 — Audio provenance
+
+All V11.5 sounds are original procedural synthesis generated locally at runtime
+by `src/audio/AudioDirector.ts`. No downloaded samples, music tracks, external
+sound libraries, or third-party audio assets are included.
+
+## Generator
+
+- Engine: Web Audio API
+- Source: oscillators, deterministic filtered-noise buffer, gain envelopes,
+  low-frequency modulation and restrained stereo panning
+- Noise seed: `0x1155`
+- Ownership: original Immunostrat project code
+- License: same repository license
+
+## Sound families
+
+- UI: hover, confirmation, back, invalid, pause, resume
+- Orders: selection, focus, movement, engagement, special action
+- Immune response: arrival, phagocytosis, NET, NK, T cytotoxic, antibody,
+  dendritic collection, lymphatic delivery
+- Threats: combat contact, infection, pathogen clearance, biofilm, wave alert
+- Results: victory and defeat
+- Continuous layers: microscopic ambience and minimal tactical pulse
+
+## Runtime safety
+
+The mix uses one lazily unlocked `AudioContext`, MASTER/MUSIC/AMBIENCE/SFX/UI
+gain groups, persistent normalized settings, visibility suspension, pause
+ducking, per-family cooldowns and a maximum of 16 transient voices. Phaser audio
+is disabled to prevent a second context.

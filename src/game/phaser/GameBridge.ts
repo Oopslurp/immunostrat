@@ -8,6 +8,7 @@ import type { InfiniteRunInfo } from "../data/infiniteMode";
 import type { TacticalMapGenerationSummary } from "../data/tacticalMaps";
 import type { ObjectiveStatus } from "../campaign/objectives";
 import type { EntityId } from "../types/shared";
+import type { GameAudioEvent } from "../../audio/audioEvents";
 
 export type ThreatSummaryItem = {
   pathogenTypeId: PathogenTypeId;
@@ -66,6 +67,14 @@ export type GameSnapshot = {
 
 type SnapshotListener = (snapshot: GameSnapshot) => void;
 type CommandListener = (command: GameCommand) => void;
+type AudioEventListener = (event: GameAudioEvent) => void;
+
+export type SessionPresentationState = Readonly<{
+  paused: boolean;
+  inputBlocked: boolean;
+}>;
+
+type SessionPresentationListener = (state: SessionPresentationState) => void;
 
 export type SelectionPresentationState = Readonly<{
   hoveredSelectedUnitId: EntityId | null;
@@ -94,6 +103,11 @@ const EMPTY_SELECTION_PRESENTATION: SelectionPresentationState = {
   focusedSelectedUnitId: null,
 };
 
+const ACTIVE_SESSION_PRESENTATION: SessionPresentationState = {
+  paused: false,
+  inputBlocked: false,
+};
+
 export class GameBridge {
   private snapshotListeners = new Set<SnapshotListener>();
   private commandListeners = new Set<CommandListener>();
@@ -102,6 +116,9 @@ export class GameBridge {
   private selectionPresentationCommandListeners =
     new Set<SelectionPresentationCommandListener>();
   private selectionPresentation = EMPTY_SELECTION_PRESENTATION;
+  private audioEventListeners = new Set<AudioEventListener>();
+  private sessionPresentationListeners = new Set<SessionPresentationListener>();
+  private sessionPresentation = ACTIVE_SESSION_PRESENTATION;
 
   subscribeSnapshot(listener: SnapshotListener): () => void {
     this.snapshotListeners.add(listener);
@@ -117,6 +134,19 @@ export class GameBridge {
     return () => {
       this.commandListeners.delete(listener);
     };
+  }
+
+  subscribeAudioEvent(listener: AudioEventListener): () => void {
+    this.audioEventListeners.add(listener);
+    return () => this.audioEventListeners.delete(listener);
+  }
+
+  subscribeSessionPresentation(
+    listener: SessionPresentationListener,
+  ): () => void {
+    this.sessionPresentationListeners.add(listener);
+    listener(this.sessionPresentation);
+    return () => this.sessionPresentationListeners.delete(listener);
   }
 
   subscribeSelectionPresentation(
@@ -152,6 +182,29 @@ export class GameBridge {
     }
   }
 
+  publishAudioEvent(event: GameAudioEvent): void {
+    for (const listener of this.audioEventListeners) {
+      listener(event);
+    }
+  }
+
+  setSessionPresentation(state: SessionPresentationState): void {
+    if (
+      state.paused === this.sessionPresentation.paused &&
+      state.inputBlocked === this.sessionPresentation.inputBlocked
+    ) {
+      return;
+    }
+    this.sessionPresentation = state;
+    for (const listener of this.sessionPresentationListeners) {
+      listener(state);
+    }
+  }
+
+  isGameplayInputEnabled(): boolean {
+    return !this.sessionPresentation.paused && !this.sessionPresentation.inputBlocked;
+  }
+
   publishSelectionPresentation(state: SelectionPresentationState): void {
     if (
       state.hoveredSelectedUnitId ===
@@ -170,6 +223,9 @@ export class GameBridge {
   }
 
   dispatchSelectionPresentation(command: SelectionPresentationCommand): void {
+    if (!this.isGameplayInputEnabled()) {
+      return;
+    }
     for (const listener of this.selectionPresentationCommandListeners) {
       listener(command);
     }
