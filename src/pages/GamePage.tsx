@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { balanceValues } from "../game/data/balance";
 import {
   isMissionId,
@@ -21,6 +21,10 @@ import type {
 } from "../game/campaign/progress";
 import { GameBridge, type GameSnapshot } from "../game/phaser/GameBridge";
 import { PhaserGame } from "../game/phaser/PhaserGame";
+import {
+  getEntitySpriteDefinition,
+  type EntitySpriteDefinition,
+} from "../game/phaser/assets/entitySpriteManifest";
 import { isImmuneUnit, type ImmuneUnitEntity } from "../game/simulation/entities";
 import { Button } from "../ui/Button";
 import iconAg from "../assets/bodymap-control/icon-ag.png";
@@ -83,10 +87,9 @@ type SelectionCompositionItem = {
 };
 
 type UnitPortraitMeta = {
-  futureSpriteKey: string;
   label: string;
-  abbreviation: string;
   toneClass: string;
+  spriteDefinition: EntitySpriteDefinition;
 };
 
 export function GamePage({
@@ -532,7 +535,11 @@ export function GamePage({
         </div>
       </header>
 
-      <aside className="battle-selection-panel" aria-label="Escouade selectionnee">
+      <aside
+        className="battle-selection-panel"
+        aria-label="Escouade selectionnee"
+        onPointerLeave={() => bridge.setPresentationFocus(null)}
+      >
         <div className="battle-panel-title">
           <img alt="" src={iconSelection} />
           <span>Escouade</span>
@@ -545,7 +552,7 @@ export function GamePage({
           </strong>
           <span>{selectionStatus}</span>
         </div>
-        <div className="battle-squad-slots" aria-label="Slots de portraits futurs">
+        <div className="battle-squad-slots" aria-label="Portraits des unites selectionnees">
           {Array.from({ length: 6 }).map((_, index) => {
             const unit = selectedUnits[index] ?? null;
             const portrait = unit ? getUnitPortraitMeta(unit.unitTypeId) : null;
@@ -559,11 +566,15 @@ export function GamePage({
                 ]
                   .filter(Boolean)
                   .join(" ")}
-                data-future-sprite-key={portrait?.futureSpriteKey}
+                data-sprite-key={portrait?.spriteDefinition.textureKey}
                 key={index}
-                title={portrait?.label ?? "Slot de portrait futur"}
+                onPointerEnter={() =>
+                  bridge.setPresentationFocus(unit?.id ?? null)
+                }
+                onPointerLeave={() => bridge.setPresentationFocus(null)}
+                title={portrait?.label ?? "Slot vide"}
               >
-                {portrait ? <strong>{portrait.abbreviation}</strong> : null}
+                {portrait ? <UnitPortrait portrait={portrait} /> : null}
               </span>
             );
           })}
@@ -834,45 +845,70 @@ function getSelectionComposition(
 
 const unitPortraitMeta: Record<UnitTypeId, UnitPortraitMeta> = {
   macrophage: {
-    futureSpriteKey: "unit_macrophage_portrait",
     label: "Macrophage",
-    abbreviation: "M",
     toneClass: "unit-portrait-macrophage",
+    spriteDefinition: requireUnitSpriteDefinition("macrophage"),
   },
   neutrophil: {
-    futureSpriteKey: "unit_neutrophil_portrait",
     label: "Neutrophile",
-    abbreviation: "N",
     toneClass: "unit-portrait-neutrophil",
+    spriteDefinition: requireUnitSpriteDefinition("neutrophil"),
   },
   dendriticCell: {
-    futureSpriteKey: "unit_dendritic_cell_portrait",
     label: "Cellule dendritique",
-    abbreviation: "D",
     toneClass: "unit-portrait-dendritic",
+    spriteDefinition: requireUnitSpriteDefinition("dendriticCell"),
   },
   plasmocyte: {
-    futureSpriteKey: "unit_plasmocyte_portrait",
     label: "Plasmocyte",
-    abbreviation: "B",
     toneClass: "unit-portrait-plasmocyte",
+    spriteDefinition: requireUnitSpriteDefinition("plasmocyte"),
   },
   nkCell: {
-    futureSpriteKey: "unit_nk_cell_portrait",
     label: "Cellule NK",
-    abbreviation: "NK",
     toneClass: "unit-portrait-nk",
+    spriteDefinition: requireUnitSpriteDefinition("nkCell"),
   },
   cytotoxicT: {
-    futureSpriteKey: "unit_t_cytotoxic_portrait",
     label: "T cytotoxique",
-    abbreviation: "T",
     toneClass: "unit-portrait-cytotoxic",
+    spriteDefinition: requireUnitSpriteDefinition("cytotoxicT"),
   },
 };
 
 function getUnitPortraitMeta(unitTypeId: UnitTypeId): UnitPortraitMeta {
   return unitPortraitMeta[unitTypeId];
+}
+
+function requireUnitSpriteDefinition(
+  unitTypeId: UnitTypeId,
+): EntitySpriteDefinition {
+  const definition = getEntitySpriteDefinition(unitTypeId);
+
+  if (!definition) {
+    throw new Error(`Missing canonical sprite definition for ${unitTypeId}`);
+  }
+
+  return definition;
+}
+
+function UnitPortrait({ portrait }: { portrait: UnitPortraitMeta }) {
+  const { spriteDefinition } = portrait;
+  const style: CSSProperties = {
+    aspectRatio: `${spriteDefinition.frameWidth} / ${spriteDefinition.frameHeight}`,
+    backgroundImage: `url("${spriteDefinition.path}")`,
+    backgroundPosition: "0 0",
+    backgroundRepeat: "no-repeat",
+    backgroundSize: `${spriteDefinition.columns * 100}% ${spriteDefinition.rows * 100}%`,
+  };
+
+  return (
+    <span
+      aria-hidden="true"
+      className="battle-squad-portrait"
+      style={style}
+    />
+  );
 }
 
 function getTreatmentIcon(treatmentId: TreatmentId): string {

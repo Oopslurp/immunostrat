@@ -3320,13 +3320,34 @@
   aspect-ratio: 2 / 3;
   min-height: 0;
   padding: 1.08rem 1.78rem 1.38rem;
+  overflow: visible;
+  isolation: isolate;
+  background: url("../assets/battle-hud/hud-squad-panel-clean.png") center / 100% 100% no-repeat;
+  backdrop-filter: none;
+  filter:
+    drop-shadow(0 16px 18px rgba(0, 0, 0, 0.34))
+    drop-shadow(0 0 8px rgba(98, 211, 200, 0.12));
+}
+
+.battle-selection-panel::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 5.3% 13.1% 4.8%;
+  border-radius: 0.55rem;
   overflow: hidden;
-  background:
-    linear-gradient(180deg, rgba(3, 8, 15, 0.58), rgba(3, 8, 15, 0.36)),
-    url("../assets/battle-hud/hud-squad-panel-clean.png") center / 100% 100% no-repeat;
-  box-shadow:
-    0 16px 34px rgba(0, 0, 0, 0.34),
-    0 0 18px rgba(98, 211, 200, 0.12);
+  background: linear-gradient(
+    180deg,
+    rgba(3, 8, 15, 0.64),
+    rgba(3, 8, 15, 0.44)
+  );
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.battle-selection-panel > * {
+  position: relative;
+  z-index: 1;
 }
 
 .battle-objective-panel {
@@ -3417,16 +3438,14 @@
   pointer-events: none;
 }
 
-.battle-squad-slot strong {
+.battle-squad-portrait {
   position: relative;
   z-index: 1;
-  color: #eafffb;
-  font-size: clamp(0.72rem, 1.1vw, 0.9rem);
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  text-shadow:
-    0 0 8px rgba(98, 211, 200, 0.55),
-    0 1px 0 rgba(0, 0, 0, 0.7);
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  pointer-events: none;
 }
 
 .battle-squad-slots .battle-slot-empty {
@@ -3438,6 +3457,14 @@
   box-shadow:
     inset 0 0 0 2px rgba(3, 8, 15, 0.58),
     0 0 14px rgba(98, 211, 200, 0.2);
+}
+
+.battle-squad-slots .battle-slot-active:hover {
+  border-color: rgba(255, 199, 107, 0.78);
+  box-shadow:
+    inset 0 0 0 2px rgba(3, 8, 15, 0.58),
+    0 0 0 1px rgba(255, 199, 107, 0.28),
+    0 0 12px rgba(255, 199, 107, 0.18);
 }
 
 .battle-squad-slot.unit-portrait-macrophage {
@@ -3867,8 +3894,9 @@
   }
 
   .battle-selection-panel {
+    width: min(100%, 420px);
     height: auto;
-    aspect-ratio: auto;
+    aspect-ratio: 2 / 3;
     overflow: visible;
   }
 
