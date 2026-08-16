@@ -66,12 +66,42 @@ export type GameSnapshot = {
 
 type SnapshotListener = (snapshot: GameSnapshot) => void;
 type CommandListener = (command: GameCommand) => void;
-type PresentationFocusListener = (entityId: EntityId | null) => void;
+
+export type SelectionPresentationState = Readonly<{
+  hoveredSelectedUnitId: EntityId | null;
+  focusedSelectedUnitId: EntityId | null;
+}>;
+
+export type SelectionPresentationCommand =
+  | Readonly<{
+      type: "hoverSelectedUnit";
+      entityId: EntityId | null;
+    }>
+  | Readonly<{
+      type: "toggleFocusedSelectedUnit";
+      entityId: EntityId;
+    }>;
+
+type SelectionPresentationListener = (
+  state: SelectionPresentationState,
+) => void;
+type SelectionPresentationCommandListener = (
+  command: SelectionPresentationCommand,
+) => void;
+
+const EMPTY_SELECTION_PRESENTATION: SelectionPresentationState = {
+  hoveredSelectedUnitId: null,
+  focusedSelectedUnitId: null,
+};
 
 export class GameBridge {
   private snapshotListeners = new Set<SnapshotListener>();
   private commandListeners = new Set<CommandListener>();
-  private presentationFocusListeners = new Set<PresentationFocusListener>();
+  private selectionPresentationListeners =
+    new Set<SelectionPresentationListener>();
+  private selectionPresentationCommandListeners =
+    new Set<SelectionPresentationCommandListener>();
+  private selectionPresentation = EMPTY_SELECTION_PRESENTATION;
 
   subscribeSnapshot(listener: SnapshotListener): () => void {
     this.snapshotListeners.add(listener);
@@ -89,11 +119,24 @@ export class GameBridge {
     };
   }
 
-  subscribePresentationFocus(listener: PresentationFocusListener): () => void {
-    this.presentationFocusListeners.add(listener);
+  subscribeSelectionPresentation(
+    listener: SelectionPresentationListener,
+  ): () => void {
+    this.selectionPresentationListeners.add(listener);
+    listener(this.selectionPresentation);
 
     return () => {
-      this.presentationFocusListeners.delete(listener);
+      this.selectionPresentationListeners.delete(listener);
+    };
+  }
+
+  subscribeSelectionPresentationCommand(
+    listener: SelectionPresentationCommandListener,
+  ): () => void {
+    this.selectionPresentationCommandListeners.add(listener);
+
+    return () => {
+      this.selectionPresentationCommandListeners.delete(listener);
     };
   }
 
@@ -109,9 +152,26 @@ export class GameBridge {
     }
   }
 
-  setPresentationFocus(entityId: EntityId | null): void {
-    for (const listener of this.presentationFocusListeners) {
-      listener(entityId);
+  publishSelectionPresentation(state: SelectionPresentationState): void {
+    if (
+      state.hoveredSelectedUnitId ===
+        this.selectionPresentation.hoveredSelectedUnitId &&
+      state.focusedSelectedUnitId ===
+        this.selectionPresentation.focusedSelectedUnitId
+    ) {
+      return;
+    }
+
+    this.selectionPresentation = state;
+
+    for (const listener of this.selectionPresentationListeners) {
+      listener(state);
+    }
+  }
+
+  dispatchSelectionPresentation(command: SelectionPresentationCommand): void {
+    for (const listener of this.selectionPresentationCommandListeners) {
+      listener(command);
     }
   }
 }

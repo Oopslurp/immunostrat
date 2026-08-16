@@ -19,13 +19,21 @@ import type {
   MissionResultSummary,
   MissionRunResultSummary,
 } from "../game/campaign/progress";
-import { GameBridge, type GameSnapshot } from "../game/phaser/GameBridge";
+import {
+  GameBridge,
+  type GameSnapshot,
+  type SelectionPresentationState,
+} from "../game/phaser/GameBridge";
 import { PhaserGame } from "../game/phaser/PhaserGame";
 import {
   getEntitySpriteDefinition,
   type EntitySpriteDefinition,
 } from "../game/phaser/assets/entitySpriteManifest";
-import { isImmuneUnit, type ImmuneUnitEntity } from "../game/simulation/entities";
+import type { ImmuneUnitEntity } from "../game/simulation/entities";
+import {
+  getSelectedImmuneUnits,
+  getUnitHealthRatio,
+} from "../game/phaser/rendering/selectionHudModel";
 import { Button } from "../ui/Button";
 import iconAg from "../assets/bodymap-control/icon-ag.png";
 import iconAlert from "../assets/bodymap-control/icon-alert.png";
@@ -106,19 +114,32 @@ export function GamePage({
 }: GamePageProps) {
   const bridge = useMemo(() => new GameBridge(), []);
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
+  const [selectionPresentation, setSelectionPresentation] =
+    useState<SelectionPresentationState>({
+      hoveredSelectedUnitId: null,
+      focusedSelectedUnitId: null,
+    });
   const completedMissionRef = useRef<string | null>(null);
   const mission = missionDefinitions[missionId];
   const nextMissionId = mission.nextMissionId;
   const playableNextMissionId =
     nextMissionId && isMissionId(nextMissionId) ? nextMissionId : null;
-  const selectedUnits =
-    snapshot?.entities.filter(
-      (entity): entity is ImmuneUnitEntity =>
-        snapshot.selectedEntityIds.includes(entity.id) &&
-        isImmuneUnit(entity),
-    ) ?? [];
+  const selectedUnits = useMemo(
+    () =>
+      snapshot
+        ? getSelectedImmuneUnits(
+            snapshot.entities,
+            snapshot.selectedEntityIds,
+          )
+        : [],
+    [snapshot],
+  );
 
   useEffect(() => bridge.subscribeSnapshot(setSnapshot), [bridge]);
+  useEffect(
+    () => bridge.subscribeSelectionPresentation(setSelectionPresentation),
+    [bridge],
+  );
   useEffect(() => {
     completedMissionRef.current = null;
   }, [missionId]);
@@ -288,7 +309,7 @@ export function GamePage({
   const selectedLead = selectedUnits[0] ?? null;
   const selectionStatus = selectedLead
     ? formatTacticalState(selectedLead.tacticalState)
-    : "aucune selection";
+    : "aucune sélection";
   const waveLabel = snapshot?.infinite
     ? `V${snapshot.infinite.wave} / C${snapshot.infinite.cycle}`
     : `${snapshot ? Math.min(snapshot.currentWave, snapshot.totalWaves) : 0}/${
@@ -537,8 +558,13 @@ export function GamePage({
 
       <aside
         className="battle-selection-panel"
-        aria-label="Escouade selectionnee"
-        onPointerLeave={() => bridge.setPresentationFocus(null)}
+        aria-label="Escouade sélectionnée"
+        onPointerLeave={() =>
+          bridge.dispatchSelectionPresentation({
+            type: "hoverSelectedUnit",
+            entityId: null,
+          })
+        }
       >
         <div className="battle-panel-title">
           <img alt="" src={iconSelection} />
@@ -547,42 +573,49 @@ export function GamePage({
         <div className="battle-selection-summary">
           <strong>
             {selectedUnits.length
-              ? `${selectedUnits.length} unite${selectedUnits.length > 1 ? "s" : ""} selectionnee${selectedUnits.length > 1 ? "s" : ""}`
-              : "Aucune selection"}
+              ? `${selectedUnits.length} unité${selectedUnits.length > 1 ? "s" : ""} sélectionnée${selectedUnits.length > 1 ? "s" : ""}`
+              : "Aucune sélection"}
           </strong>
           <span>{selectionStatus}</span>
         </div>
-        <div className="battle-squad-slots" aria-label="Portraits des unites selectionnees">
-          {Array.from({ length: 6 }).map((_, index) => {
-            const unit = selectedUnits[index] ?? null;
-            const portrait = unit ? getUnitPortraitMeta(unit.unitTypeId) : null;
+        <div
+          className="battle-squad-slots"
+          aria-label="Portraits des unités sélectionnées"
+        >
+          {Array.from({ length: Math.max(6, selectedUnits.length) }).map(
+            (_, index) => {
+              const unit = selectedUnits[index] ?? null;
+              const portrait = unit
+                ? getUnitPortraitMeta(unit.unitTypeId)
+                : null;
 
-            return (
-              <span
-                className={[
-                  "battle-squad-slot",
-                  portrait ? "battle-slot-active" : "battle-slot-empty",
-                  portrait?.toneClass ?? "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                data-sprite-key={portrait?.spriteDefinition.textureKey}
-                key={index}
-                onPointerEnter={() =>
-                  bridge.setPresentationFocus(unit?.id ?? null)
-                }
-                onPointerLeave={() => bridge.setPresentationFocus(null)}
-                title={portrait?.label ?? "Slot vide"}
-              >
-                {portrait ? <UnitPortrait portrait={portrait} /> : null}
-              </span>
-            );
-          })}
+              return unit && portrait ? (
+                <SquadUnitCard
+                  bridge={bridge}
+                  focused={
+                    selectionPresentation.focusedSelectedUnitId === unit.id
+                  }
+                  hovered={
+                    selectionPresentation.hoveredSelectedUnitId === unit.id
+                  }
+                  key={unit.id}
+                  portrait={portrait}
+                  unit={unit}
+                />
+              ) : (
+                <span
+                  className="battle-squad-slot battle-slot-empty"
+                  key={`empty-${index}`}
+                  title="Emplacement vide"
+                />
+              );
+            },
+          )}
         </div>
         {selectedUnits.length ? (
           <>
             <Gauge
-              label="Sante moyenne"
+              label="Santé moyenne"
               max={100}
               tone="health"
               value={averageSelectedHealth}
@@ -603,12 +636,12 @@ export function GamePage({
           <>
             <div className="battle-composition-list">
               <span className="battle-composition-empty">
-                Selection
+                Sélection
                 <strong>vide</strong>
               </span>
             </div>
             <p className="battle-selection-note">
-              Clique gauche ou rectangle pour selectionner une cellule.
+              Clique gauche ou rectangle pour sélectionner une cellule.
             </p>
           </>
         )}
@@ -908,6 +941,77 @@ function UnitPortrait({ portrait }: { portrait: UnitPortraitMeta }) {
       className="battle-squad-portrait"
       style={style}
     />
+  );
+}
+
+type SquadUnitCardProps = {
+  bridge: GameBridge;
+  focused: boolean;
+  hovered: boolean;
+  portrait: UnitPortraitMeta;
+  unit: ImmuneUnitEntity;
+};
+
+function SquadUnitCard({
+  bridge,
+  focused,
+  hovered,
+  portrait,
+  unit,
+}: SquadUnitCardProps) {
+  const healthRatio = getUnitHealthRatio(unit);
+  const healthPercent = Math.round(healthRatio * 100);
+  const healthTone =
+    healthRatio <= 0.4
+      ? "battle-unit-health-low"
+      : healthRatio <= 0.7
+        ? "battle-unit-health-injured"
+        : "battle-unit-health-stable";
+
+  return (
+    <button
+      aria-label={`${portrait.label}, santé ${Math.ceil(unit.health)} sur ${Math.ceil(unit.maxHealth)}. ${focused ? "Unité focalisée, cliquer pour arrêter le focus." : "Cliquer pour focaliser cette unité."}`}
+      aria-pressed={focused}
+      className={[
+        "battle-squad-slot",
+        "battle-slot-active",
+        portrait.toneClass,
+        hovered ? "battle-slot-hovered" : "",
+        focused ? "battle-slot-focused" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      data-entity-id={unit.id}
+      data-sprite-key={portrait.spriteDefinition.textureKey}
+      onClick={() =>
+        bridge.dispatchSelectionPresentation({
+          type: "toggleFocusedSelectedUnit",
+          entityId: unit.id,
+        })
+      }
+      onPointerEnter={() =>
+        bridge.dispatchSelectionPresentation({
+          type: "hoverSelectedUnit",
+          entityId: unit.id,
+        })
+      }
+      onPointerLeave={() =>
+        bridge.dispatchSelectionPresentation({
+          type: "hoverSelectedUnit",
+          entityId: null,
+        })
+      }
+      title={`${portrait.label} — Santé ${Math.ceil(unit.health)}/${Math.ceil(unit.maxHealth)}`}
+      type="button"
+    >
+      <UnitPortrait portrait={portrait} />
+      <span aria-hidden="true" className={`battle-unit-health ${healthTone}`}>
+        <span style={{ width: `${healthPercent}%` }} />
+      </span>
+      {focused ? (
+        <span aria-hidden="true" className="battle-squad-focus-marker" />
+      ) : null}
+    </button>
   );
 }
 

@@ -8,16 +8,14 @@ export const RANGE_OVERLAY_WIDTH = 1;
 
 type PresentedRangeInput = Readonly<{
   selectedEntityIds: readonly EntityId[];
-  focusedEntityId: EntityId | null;
-  worldHoveredEntityId: EntityId | null;
-  panelHoveredEntityId: EntityId | null;
+  hoveredSelectedUnitId: EntityId | null;
+  focusedSelectedUnitId: EntityId | null;
 }>;
 
 export function resolvePresentedRangeEntityId({
   selectedEntityIds,
-  focusedEntityId,
-  worldHoveredEntityId,
-  panelHoveredEntityId,
+  hoveredSelectedUnitId,
+  focusedSelectedUnitId,
 }: PresentedRangeInput): EntityId | null {
   if (selectedEntityIds.length === 0) {
     return null;
@@ -27,13 +25,10 @@ export function resolvePresentedRangeEntityId({
     return selectedEntityIds[0];
   }
 
-  return (
-    firstSelected(
-      selectedEntityIds,
-      panelHoveredEntityId,
-      worldHoveredEntityId,
-      focusedEntityId,
-    ) ?? selectedEntityIds.at(-1) ?? null
+  return firstSelected(
+    selectedEntityIds,
+    hoveredSelectedUnitId,
+    focusedSelectedUnitId,
   );
 }
 

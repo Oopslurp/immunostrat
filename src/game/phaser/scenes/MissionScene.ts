@@ -35,13 +35,17 @@ import { createVesselLayer } from "../../mapVisuals/VesselLayerRenderer";
 import { createLymphLayer } from "../../mapVisuals/LymphLayerRenderer";
 import { CombatSiteLayerRenderer } from "../../mapVisuals/CombatSiteLayerRenderer";
 import { InflammationFieldRenderer } from "../../mapVisuals/InflammationFieldRenderer";
-import type { GameBridge, GameSnapshot } from "../GameBridge";
+import type {
+  GameBridge,
+  GameSnapshot,
+  SelectionPresentationCommand,
+} from "../GameBridge";
 import { Simulation } from "../../simulation/core/Simulation";
 import type { GameCommand } from "../../simulation/core/commands";
 import type { GameState } from "../../simulation/core/GameState";
 import { getRuntimeMapBalance } from "../../simulation/systems/runtimeMapBalance";
 import { getResourceIncomeRates } from "../../simulation/systems/resourceSystem";
-import { distanceSquared } from "../../types/shared";
+import { distanceSquared, type EntityId } from "../../types/shared";
 import {
   isBacterium,
   isAdvancedThreat,
@@ -55,6 +59,7 @@ import {
   isNeutrophil,
   isPlasmocyte,
   isVirus,
+  type ImmuneUnitEntity,
 } from "../../simulation/entities";
 import { MacrophageVisualController } from "../rendering/MacrophageVisualController";
 import { MacrophageDebugViewer } from "../rendering/MacrophageDebugViewer";
@@ -77,6 +82,12 @@ import { PathogenExitVisualController } from "../rendering/PathogenExitVisualCon
 import { PathogenMotionVisualTracker } from "../rendering/PathogenMotionVisualTracker";
 import { CombatVfxController } from "../vfx/CombatVfxController";
 import { BiofilmVisualController } from "../rendering/BiofilmVisualController";
+import { SelectionInspectionVisualController } from "../rendering/SelectionInspectionVisualController";
+import {
+  FOCUS_CAMERA_EASE,
+  FOCUS_CAMERA_TWEEN_DURATION_MS,
+  getFocusCameraTarget,
+} from "../rendering/focusCameraPresentation";
 import {
   getPresentedAttackRangeRadius,
   getSelectionRingAlpha,
@@ -126,12 +137,13 @@ export class MissionScene extends Phaser.Scene {
   private pathogenMotionVisualTracker?: PathogenMotionVisualTracker;
   private combatVfxController?: CombatVfxController;
   private biofilmVisualController?: BiofilmVisualController;
+  private selectionInspectionVisualController?: SelectionInspectionVisualController;
   private combatSiteRenderer?: CombatSiteLayerRenderer;
   private inflammationFieldRenderer?: InflammationFieldRenderer;
   private diapedesisMarkers = new Map<string, Phaser.GameObjects.Image>();
   private lymphaticExitMarkers = new Map<string, Phaser.GameObjects.Image>();
   private bridgeUnsubscribe?: () => void;
-  private bridgePresentationFocusUnsubscribe?: () => void;
+  private bridgeSelectionPresentationUnsubscribe?: () => void;
   private snapshotElapsedMs = 0;
   private lastPublishedStatus: GameState["status"] | null = null;
   private leftDragStart: { x: number; y: number } | null = null;
@@ -140,10 +152,11 @@ export class MissionScene extends Phaser.Scene {
   private rightDragLastScreen: { x: number; y: number } | null = null;
   private rightDragMoved = false;
   private cameraKeys?: CameraKeys;
-  private focusedSelectedEntityId: string | null = null;
-  private worldHoveredSelectedEntityId: string | null = null;
-  private panelHoveredSelectedEntityId: string | null = null;
-  private selectionSignature = "";
+  private focusedSelectedUnitId: EntityId | null = null;
+  private worldHoveredSelectedUnitId: EntityId | null = null;
+  private panelHoveredSelectedUnitId: EntityId | null = null;
+  private tacticalCameraZoom = 1;
+  private focusCameraTween?: Phaser.Tweens.Tween;
 
   constructor(
     private readonly bridge: GameBridge,
@@ -176,6 +189,13 @@ export class MissionScene extends Phaser.Scene {
     this.dynamicLayer = this.add.graphics().setDepth(0);
     this.macrophageOverlayLayer = this.add.graphics().setDepth(2);
     this.createPresentationControllers();
+    this.selectionInspectionVisualController =
+      new SelectionInspectionVisualController(
+        this,
+        map.worldWidth,
+        map.worldHeight,
+      );
+    this.tacticalCameraZoom = this.cameras.main.zoom;
     this.macrophageDebugViewer = new MacrophageDebugViewer(this);
     this.tissueCellDebugViewer = new TissueCellDebugViewer(this);
     this.dendriticDebugViewer = new DendriticDebugViewer(this);
@@ -202,7 +222,7 @@ export class MissionScene extends Phaser.Scene {
         map.width / 2,
         72,
         mission.tutorialHints?.[0]?.text ??
-          "Left click selects and orders. Right drag or WASD/ZQSD moves camera.",
+          "Clic gauche : sélectionner ou ordonner. Clic droit-glissé ou ZQSD/WASD : déplacer la caméra.",
         {
           color: "#a8c0cc",
           fontFamily: "monospace",
@@ -221,7 +241,7 @@ export class MissionScene extends Phaser.Scene {
       this.handlePointerUp(pointer),
     );
     this.input.on("gameout", () => {
-      this.worldHoveredSelectedEntityId = null;
+      this.setWorldHoveredSelectedUnitId(null);
     });
     this.cameraKeys = this.createCameraKeys();
     this.setupNeutrophilDebugControls();
@@ -229,11 +249,12 @@ export class MissionScene extends Phaser.Scene {
     this.bridgeUnsubscribe = this.bridge.subscribeCommand((command) => {
       this.handleCommand(command);
     });
-    this.bridgePresentationFocusUnsubscribe =
-      this.bridge.subscribePresentationFocus((entityId) => {
-        this.panelHoveredSelectedEntityId = entityId;
+    this.bridgeSelectionPresentationUnsubscribe =
+      this.bridge.subscribeSelectionPresentationCommand((command) => {
+        this.handleSelectionPresentationCommand(command);
       });
 
+    this.publishSelectionPresentation();
     this.publishSnapshot();
   }
 
@@ -260,17 +281,22 @@ export class MissionScene extends Phaser.Scene {
   private cleanupBridge() {
     this.bridgeUnsubscribe?.();
     this.bridgeUnsubscribe = undefined;
-    this.bridgePresentationFocusUnsubscribe?.();
-    this.bridgePresentationFocusUnsubscribe = undefined;
+    this.bridgeSelectionPresentationUnsubscribe?.();
+    this.bridgeSelectionPresentationUnsubscribe = undefined;
     this.leftDragStart = null;
     this.leftDragCurrent = null;
     this.rightDragStartScreen = null;
     this.rightDragLastScreen = null;
     this.rightDragMoved = false;
-    this.focusedSelectedEntityId = null;
-    this.worldHoveredSelectedEntityId = null;
-    this.panelHoveredSelectedEntityId = null;
-    this.selectionSignature = "";
+    this.focusCameraTween?.stop();
+    this.focusCameraTween = undefined;
+    this.focusedSelectedUnitId = null;
+    this.worldHoveredSelectedUnitId = null;
+    this.panelHoveredSelectedUnitId = null;
+    this.bridge.publishSelectionPresentation({
+      hoveredSelectedUnitId: null,
+      focusedSelectedUnitId: null,
+    });
     this.combatSiteRenderer?.destroy();
     this.combatSiteRenderer = undefined;
     this.inflammationFieldRenderer?.destroy();
@@ -294,6 +320,8 @@ export class MissionScene extends Phaser.Scene {
     this.macrophageOverlayLayer = undefined;
     this.rangeOverlayLayer?.destroy();
     this.rangeOverlayLayer = undefined;
+    this.selectionInspectionVisualController?.destroy();
+    this.selectionInspectionVisualController = undefined;
     this.diapedesisMarkers.clear();
     this.lymphaticExitMarkers.clear();
   }
@@ -445,10 +473,117 @@ export class MissionScene extends Phaser.Scene {
 
     if (command.type === "restart") {
       this.resetPresentationControllers(nextState);
+      this.resetSelectionPresentation();
     } else if (nextState !== previousState) {
       this.combatVfxController?.acknowledgeCommand(command, nextState);
     }
     this.publishSnapshot();
+  }
+
+  private handleSelectionPresentationCommand(
+    command: SelectionPresentationCommand,
+  ): void {
+    const state = this.simulation.getState();
+
+    if (state.status !== "running") {
+      return;
+    }
+
+    if (command.type === "hoverSelectedUnit") {
+      const entityId = command.entityId
+        ? this.getSelectedUnit(state, command.entityId)?.id ?? null
+        : null;
+
+      if (entityId === this.panelHoveredSelectedUnitId) {
+        return;
+      }
+
+      this.panelHoveredSelectedUnitId = entityId;
+      if (entityId) {
+        this.worldHoveredSelectedUnitId = null;
+      }
+      this.publishSelectionPresentation();
+      return;
+    }
+
+    const unit = this.getSelectedUnit(state, command.entityId);
+
+    if (!unit) {
+      return;
+    }
+
+    if (this.focusedSelectedUnitId === unit.id) {
+      this.clearFocusedSelectedUnit(true);
+    } else {
+      this.focusSelectedUnit(unit, state);
+    }
+
+    this.publishSelectionPresentation();
+  }
+
+  private focusSelectedUnit(unit: ImmuneUnitEntity, state: GameState): void {
+    this.focusedSelectedUnitId = unit.id;
+    this.selectionInspectionVisualController?.setFocusActive(true);
+    this.animateCameraFocus(unit, state);
+  }
+
+  private clearFocusedSelectedUnit(animate: boolean): void {
+    if (!this.focusedSelectedUnitId) {
+      return;
+    }
+
+    this.focusedSelectedUnitId = null;
+    this.selectionInspectionVisualController?.setFocusActive(false, animate);
+    this.animateCameraToTacticalZoom(animate);
+  }
+
+  private resetSelectionPresentation(): void {
+    this.cancelFocusCameraTween();
+    this.focusedSelectedUnitId = null;
+    this.worldHoveredSelectedUnitId = null;
+    this.panelHoveredSelectedUnitId = null;
+    this.cameras.main.setZoom(this.tacticalCameraZoom);
+    this.setCameraScroll(
+      this.cameras.main.scrollX,
+      this.cameras.main.scrollY,
+    );
+    this.selectionInspectionVisualController?.reset();
+    this.publishSelectionPresentation();
+  }
+
+  private getSelectedUnit(
+    state: GameState,
+    entityId: EntityId | null,
+  ): ImmuneUnitEntity | null {
+    if (!entityId || !state.selectedEntityIds.includes(entityId)) {
+      return null;
+    }
+
+    const entity = state.entities[entityId];
+
+    return entity && isControllableImmuneUnit(entity) ? entity : null;
+  }
+
+  private getHoveredSelectedUnitId(): EntityId | null {
+    return (
+      this.panelHoveredSelectedUnitId ?? this.worldHoveredSelectedUnitId
+    );
+  }
+
+  private setWorldHoveredSelectedUnitId(entityId: EntityId | null): void {
+    if (entityId === this.worldHoveredSelectedUnitId) {
+      return;
+    }
+
+    this.worldHoveredSelectedUnitId = entityId;
+    this.publishSelectionPresentation();
+  }
+
+  private publishSelectionPresentation(): void {
+    this.bridge.publishSelectionPresentation({
+      hoveredSelectedUnitId: this.getHoveredSelectedUnitId(),
+      focusedSelectedUnitId: this.focusedSelectedUnitId,
+    });
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer) {
@@ -477,15 +612,20 @@ export class MissionScene extends Phaser.Scene {
   private handlePointerMove(pointer: Phaser.Input.Pointer) {
     const state = this.simulation.getState();
 
-    this.worldHoveredSelectedEntityId =
+    this.setWorldHoveredSelectedUnitId(
       pointer.leftButtonDown() || pointer.rightButtonDown()
         ? null
         : this.findSelectedImmuneUnitAtPosition(state, {
             x: pointer.worldX,
             y: pointer.worldY,
-          });
+          }),
+    );
 
-    if (this.rightDragStartScreen && this.rightDragLastScreen && pointer.rightButtonDown()) {
+    if (
+      this.rightDragStartScreen &&
+      this.rightDragLastScreen &&
+      pointer.rightButtonDown()
+    ) {
       const dx = pointer.x - this.rightDragLastScreen.x;
       const dy = pointer.y - this.rightDragLastScreen.y;
       const totalDx = pointer.x - this.rightDragStartScreen.x;
@@ -865,9 +1005,92 @@ export class MissionScene extends Phaser.Scene {
   }
 
   private panCameraBy(deltaX: number, deltaY: number): void {
+    this.cancelFocusCameraTween();
     const camera = this.cameras.main;
 
     this.setCameraScroll(camera.scrollX + deltaX, camera.scrollY + deltaY);
+  }
+
+  private animateCameraFocus(
+    unit: ImmuneUnitEntity,
+    state: GameState,
+  ): void {
+    const camera = this.cameras.main;
+    const target = getFocusCameraTarget({
+      unitPosition: unit.position,
+      cameraScroll: { x: camera.scrollX, y: camera.scrollY },
+      cameraZoom: camera.zoom,
+      tacticalZoom: this.tacticalCameraZoom,
+      viewportWidth: camera.width,
+      viewportHeight: camera.height,
+      worldWidth: state.tacticalMap.worldWidth,
+      worldHeight: state.tacticalMap.worldHeight,
+    });
+    const startZoom = camera.zoom;
+    const startScrollX = camera.scrollX;
+    const startScrollY = camera.scrollY;
+
+    this.cancelFocusCameraTween();
+    const tween = this.tweens.addCounter({
+      from: 0,
+      to: 1,
+      duration: FOCUS_CAMERA_TWEEN_DURATION_MS,
+      ease: FOCUS_CAMERA_EASE,
+      onUpdate: (activeTween) => {
+        const progress = activeTween.getValue() ?? 1;
+        camera.setZoom(Phaser.Math.Linear(startZoom, target.zoom, progress));
+        this.setCameraScroll(
+          Phaser.Math.Linear(startScrollX, target.scrollX, progress),
+          Phaser.Math.Linear(startScrollY, target.scrollY, progress),
+        );
+      },
+      onComplete: () => {
+        if (this.focusCameraTween === tween) {
+          this.focusCameraTween = undefined;
+        }
+      },
+    });
+    this.focusCameraTween = tween;
+  }
+
+  private animateCameraToTacticalZoom(animate: boolean): void {
+    const camera = this.cameras.main;
+    const startZoom = camera.zoom;
+    const scrollX = camera.scrollX;
+    const scrollY = camera.scrollY;
+
+    this.cancelFocusCameraTween();
+
+    if (!animate || Math.abs(startZoom - this.tacticalCameraZoom) < 0.001) {
+      camera.setZoom(this.tacticalCameraZoom);
+      this.setCameraScroll(scrollX, scrollY);
+      return;
+    }
+
+    const tween = this.tweens.addCounter({
+      from: 0,
+      to: 1,
+      duration: FOCUS_CAMERA_TWEEN_DURATION_MS,
+      ease: FOCUS_CAMERA_EASE,
+      onUpdate: (activeTween) => {
+        const progress = activeTween.getValue() ?? 1;
+        camera.setZoom(
+          Phaser.Math.Linear(startZoom, this.tacticalCameraZoom, progress),
+        );
+        this.setCameraScroll(scrollX, scrollY);
+      },
+      onComplete: () => {
+        if (this.focusCameraTween === tween) {
+          this.focusCameraTween = undefined;
+        }
+      },
+    });
+    this.focusCameraTween = tween;
+  }
+
+  private cancelFocusCameraTween(): void {
+    this.focusCameraTween?.stop();
+    this.focusCameraTween = undefined;
   }
 
   private setCameraScroll(scrollX: number, scrollY: number): void {
@@ -895,7 +1118,7 @@ export class MissionScene extends Phaser.Scene {
     graphics.clear();
     this.rangeOverlayLayer?.clear();
     this.macrophageOverlayLayer?.clear();
-    this.syncFocusedSelection(state);
+    this.syncSelectionPresentation(state);
     this.drawRangeOverlay(state);
     this.pathogenMotionVisualTracker?.update(state, deltaMs);
     this.macrophageVisualController?.update(state, deltaMs);
@@ -934,24 +1157,42 @@ export class MissionScene extends Phaser.Scene {
     this.drawEntities(graphics, state);
     this.drawAntibodyProjectiles(graphics, state);
     this.drawSelectionRectangle(graphics);
+    this.selectionInspectionVisualController?.update(
+      this.getSelectedUnit(state, this.getHoveredSelectedUnitId()),
+      this.getSelectedUnit(state, this.focusedSelectedUnitId),
+      state.elapsedMs,
+    );
   }
 
-  private syncFocusedSelection(state: GameState): void {
-    const nextSignature = state.selectedEntityIds.join("|");
-
-    if (nextSignature === this.selectionSignature) {
-      return;
-    }
-
-    this.selectionSignature = nextSignature;
-    this.focusedSelectedEntityId = state.selectedEntityIds.at(-1) ?? null;
-    this.worldHoveredSelectedEntityId = null;
+  private syncSelectionPresentation(state: GameState): void {
+    let changed = false;
 
     if (
-      this.panelHoveredSelectedEntityId &&
-      !state.selectedEntityIds.includes(this.panelHoveredSelectedEntityId)
+      this.focusedSelectedUnitId &&
+      !this.getSelectedUnit(state, this.focusedSelectedUnitId)
     ) {
-      this.panelHoveredSelectedEntityId = null;
+      this.clearFocusedSelectedUnit(true);
+      changed = true;
+    }
+
+    if (
+      this.worldHoveredSelectedUnitId &&
+      !this.getSelectedUnit(state, this.worldHoveredSelectedUnitId)
+    ) {
+      this.worldHoveredSelectedUnitId = null;
+      changed = true;
+    }
+
+    if (
+      this.panelHoveredSelectedUnitId &&
+      !this.getSelectedUnit(state, this.panelHoveredSelectedUnitId)
+    ) {
+      this.panelHoveredSelectedUnitId = null;
+      changed = true;
+    }
+
+    if (changed) {
+      this.publishSelectionPresentation();
     }
   }
 
@@ -959,9 +1200,8 @@ export class MissionScene extends Phaser.Scene {
     const graphics = this.rangeOverlayLayer;
     const entityId = resolvePresentedRangeEntityId({
       selectedEntityIds: state.selectedEntityIds,
-      focusedEntityId: this.focusedSelectedEntityId,
-      worldHoveredEntityId: this.worldHoveredSelectedEntityId,
-      panelHoveredEntityId: this.panelHoveredSelectedEntityId,
+      hoveredSelectedUnitId: this.getHoveredSelectedUnitId(),
+      focusedSelectedUnitId: this.focusedSelectedUnitId,
     });
 
     if (!graphics || !entityId) {
@@ -1361,6 +1601,15 @@ export class MissionScene extends Phaser.Scene {
             Math.round(entity.position.y),
             entity.radius + SELECTION_RING_RADIUS_PADDING,
           );
+
+          if (entity.id === this.focusedSelectedUnitId) {
+            drawFocusedSelectionNotches(
+              overlayGraphics,
+              Math.round(entity.position.x),
+              Math.round(entity.position.y),
+              entity.radius + SELECTION_RING_RADIUS_PADDING + 3,
+            );
+          }
         }
 
         if (transitAlpha >= 0.85 && entity.targetPosition) {
@@ -1859,6 +2108,25 @@ export class MissionScene extends Phaser.Scene {
     this.bridge.publishSnapshot(snapshot);
     this.lastPublishedStatus = state.status;
   }
+}
+
+function drawFocusedSelectionNotches(
+  graphics: Phaser.GameObjects.Graphics,
+  x: number,
+  y: number,
+  extent: number,
+): void {
+  const notchLength = 4;
+
+  graphics.lineStyle(1, 0xffc76b, 0.96);
+  graphics.lineBetween(x - extent, y - extent, x - extent + notchLength, y - extent);
+  graphics.lineBetween(x - extent, y - extent, x - extent, y - extent + notchLength);
+  graphics.lineBetween(x + extent, y - extent, x + extent - notchLength, y - extent);
+  graphics.lineBetween(x + extent, y - extent, x + extent, y - extent + notchLength);
+  graphics.lineBetween(x - extent, y + extent, x - extent + notchLength, y + extent);
+  graphics.lineBetween(x - extent, y + extent, x - extent, y + extent - notchLength);
+  graphics.lineBetween(x + extent, y + extent, x + extent - notchLength, y + extent);
+  graphics.lineBetween(x + extent, y + extent, x + extent, y + extent - notchLength);
 }
 
 function drawDashedRangeCircle(
