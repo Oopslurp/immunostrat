@@ -76,6 +76,17 @@ import { drawProceduralPathogen } from "../rendering/drawProceduralPathogen";
 import { PathogenExitVisualController } from "../rendering/PathogenExitVisualController";
 import { PathogenMotionVisualTracker } from "../rendering/PathogenMotionVisualTracker";
 import { CombatVfxController } from "../vfx/CombatVfxController";
+import { BiofilmVisualController } from "../rendering/BiofilmVisualController";
+import {
+  getPresentedAttackRangeRadius,
+  getSelectionRingAlpha,
+  RANGE_OVERLAY_COLOR,
+  RANGE_OVERLAY_WIDTH,
+  resolvePresentedRangeEntityId,
+  SELECTION_RING_COLOR,
+  SELECTION_RING_RADIUS_PADDING,
+  SELECTION_RING_WIDTH,
+} from "../rendering/selectionPresentation";
 
 type CameraKeys = {
   upW: Phaser.Input.Keyboard.Key;
@@ -92,6 +103,7 @@ export class MissionScene extends Phaser.Scene {
   private layerBVessels?: Phaser.GameObjects.RenderTexture;
   private layerCLymph?: Phaser.GameObjects.RenderTexture;
   private mapLayer?: Phaser.GameObjects.Graphics;
+  private rangeOverlayLayer?: Phaser.GameObjects.Graphics;
   private dynamicLayer?: Phaser.GameObjects.Graphics;
   private macrophageOverlayLayer?: Phaser.GameObjects.Graphics;
   private macrophageVisualController?: MacrophageVisualController;
@@ -113,11 +125,13 @@ export class MissionScene extends Phaser.Scene {
   private pathogenExitVisualController?: PathogenExitVisualController;
   private pathogenMotionVisualTracker?: PathogenMotionVisualTracker;
   private combatVfxController?: CombatVfxController;
+  private biofilmVisualController?: BiofilmVisualController;
   private combatSiteRenderer?: CombatSiteLayerRenderer;
   private inflammationFieldRenderer?: InflammationFieldRenderer;
   private diapedesisMarkers = new Map<string, Phaser.GameObjects.Image>();
   private lymphaticExitMarkers = new Map<string, Phaser.GameObjects.Image>();
   private bridgeUnsubscribe?: () => void;
+  private bridgePresentationFocusUnsubscribe?: () => void;
   private snapshotElapsedMs = 0;
   private lastPublishedStatus: GameState["status"] | null = null;
   private leftDragStart: { x: number; y: number } | null = null;
@@ -126,6 +140,10 @@ export class MissionScene extends Phaser.Scene {
   private rightDragLastScreen: { x: number; y: number } | null = null;
   private rightDragMoved = false;
   private cameraKeys?: CameraKeys;
+  private focusedSelectedEntityId: string | null = null;
+  private worldHoveredSelectedEntityId: string | null = null;
+  private panelHoveredSelectedEntityId: string | null = null;
+  private selectionSignature = "";
 
   constructor(
     private readonly bridge: GameBridge,
@@ -154,6 +172,7 @@ export class MissionScene extends Phaser.Scene {
     this.mapLayer = this.add.graphics().setDepth(-72);
     this.inflammationFieldRenderer = new InflammationFieldRenderer(this, map);
     this.combatSiteRenderer = new CombatSiteLayerRenderer(this, map);
+    this.rangeOverlayLayer = this.add.graphics().setDepth(-2);
     this.dynamicLayer = this.add.graphics().setDepth(0);
     this.macrophageOverlayLayer = this.add.graphics().setDepth(2);
     this.createPresentationControllers();
@@ -201,12 +220,19 @@ export class MissionScene extends Phaser.Scene {
     this.input.on("pointerup", (pointer: Phaser.Input.Pointer) =>
       this.handlePointerUp(pointer),
     );
+    this.input.on("gameout", () => {
+      this.worldHoveredSelectedEntityId = null;
+    });
     this.cameraKeys = this.createCameraKeys();
     this.setupNeutrophilDebugControls();
 
     this.bridgeUnsubscribe = this.bridge.subscribeCommand((command) => {
       this.handleCommand(command);
     });
+    this.bridgePresentationFocusUnsubscribe =
+      this.bridge.subscribePresentationFocus((entityId) => {
+        this.panelHoveredSelectedEntityId = entityId;
+      });
 
     this.publishSnapshot();
   }
@@ -234,11 +260,17 @@ export class MissionScene extends Phaser.Scene {
   private cleanupBridge() {
     this.bridgeUnsubscribe?.();
     this.bridgeUnsubscribe = undefined;
+    this.bridgePresentationFocusUnsubscribe?.();
+    this.bridgePresentationFocusUnsubscribe = undefined;
     this.leftDragStart = null;
     this.leftDragCurrent = null;
     this.rightDragStartScreen = null;
     this.rightDragLastScreen = null;
     this.rightDragMoved = false;
+    this.focusedSelectedEntityId = null;
+    this.worldHoveredSelectedEntityId = null;
+    this.panelHoveredSelectedEntityId = null;
+    this.selectionSignature = "";
     this.combatSiteRenderer?.destroy();
     this.combatSiteRenderer = undefined;
     this.inflammationFieldRenderer?.destroy();
@@ -260,6 +292,8 @@ export class MissionScene extends Phaser.Scene {
     this.antibodyDebugViewer = undefined;
     this.macrophageOverlayLayer?.destroy();
     this.macrophageOverlayLayer = undefined;
+    this.rangeOverlayLayer?.destroy();
+    this.rangeOverlayLayer = undefined;
     this.diapedesisMarkers.clear();
     this.lymphaticExitMarkers.clear();
   }
@@ -278,6 +312,7 @@ export class MissionScene extends Phaser.Scene {
     this.pathogenExitVisualController = new PathogenExitVisualController(this);
     this.pathogenMotionVisualTracker = new PathogenMotionVisualTracker();
     this.combatVfxController = new CombatVfxController(this);
+    this.biofilmVisualController = new BiofilmVisualController(this);
   }
 
   private destroyPresentationControllers(): void {
@@ -305,6 +340,8 @@ export class MissionScene extends Phaser.Scene {
     this.pathogenMotionVisualTracker = undefined;
     this.combatVfxController?.destroy();
     this.combatVfxController = undefined;
+    this.biofilmVisualController?.destroy();
+    this.biofilmVisualController = undefined;
   }
 
   private resetPresentationControllers(state: GameState): void {
@@ -438,6 +475,16 @@ export class MissionScene extends Phaser.Scene {
   }
 
   private handlePointerMove(pointer: Phaser.Input.Pointer) {
+    const state = this.simulation.getState();
+
+    this.worldHoveredSelectedEntityId =
+      pointer.leftButtonDown() || pointer.rightButtonDown()
+        ? null
+        : this.findSelectedImmuneUnitAtPosition(state, {
+            x: pointer.worldX,
+            y: pointer.worldY,
+          });
+
     if (this.rightDragStartScreen && this.rightDragLastScreen && pointer.rightButtonDown()) {
       const dx = pointer.x - this.rightDragLastScreen.x;
       const dy = pointer.y - this.rightDragLastScreen.y;
@@ -619,6 +666,27 @@ export class MissionScene extends Phaser.Scene {
       if (
         isControllableImmuneUnit(entity) &&
         distanceSquared(entity.position, position) <= entity.radius * entity.radius
+      ) {
+        return entity.id;
+      }
+    }
+
+    return null;
+  }
+
+  private findSelectedImmuneUnitAtPosition(
+    state: GameState,
+    position: { x: number; y: number },
+  ): string | null {
+    for (let index = state.selectedEntityIds.length - 1; index >= 0; index -= 1) {
+      const entityId = state.selectedEntityIds[index];
+      const entity = state.entities[entityId];
+
+      if (
+        entity &&
+        isControllableImmuneUnit(entity) &&
+        distanceSquared(entity.position, position) <=
+          (entity.radius + SELECTION_RING_RADIUS_PADDING) ** 2
       ) {
         return entity.id;
       }
@@ -825,7 +893,10 @@ export class MissionScene extends Phaser.Scene {
 
     mapGraphics.clear();
     graphics.clear();
+    this.rangeOverlayLayer?.clear();
     this.macrophageOverlayLayer?.clear();
+    this.syncFocusedSelection(state);
+    this.drawRangeOverlay(state);
     this.pathogenMotionVisualTracker?.update(state, deltaMs);
     this.macrophageVisualController?.update(state, deltaMs);
     this.pathogenExitVisualController?.update(
@@ -845,6 +916,7 @@ export class MissionScene extends Phaser.Scene {
     this.nkVisualController?.update(state);
     this.cytotoxicTVisualController?.update(state);
     this.antibodyProjectileVisualController?.update(state);
+    this.biofilmVisualController?.update(state);
     this.combatVfxController?.update(state, deltaMs, {
       isEffectCovered: (effect) =>
         effect.kind === "antibodyImpact" &&
@@ -857,12 +929,68 @@ export class MissionScene extends Phaser.Scene {
     this.combatSiteRenderer?.update(state, deltaMs);
     this.drawTissueCells(graphics, state);
     this.drawAntiviralZone(graphics, state);
-    this.drawBiofilms(graphics, state);
     this.drawNetTraps(graphics, state);
     this.drawDebris(graphics, state);
     this.drawEntities(graphics, state);
     this.drawAntibodyProjectiles(graphics, state);
     this.drawSelectionRectangle(graphics);
+  }
+
+  private syncFocusedSelection(state: GameState): void {
+    const nextSignature = state.selectedEntityIds.join("|");
+
+    if (nextSignature === this.selectionSignature) {
+      return;
+    }
+
+    this.selectionSignature = nextSignature;
+    this.focusedSelectedEntityId = state.selectedEntityIds.at(-1) ?? null;
+    this.worldHoveredSelectedEntityId = null;
+
+    if (
+      this.panelHoveredSelectedEntityId &&
+      !state.selectedEntityIds.includes(this.panelHoveredSelectedEntityId)
+    ) {
+      this.panelHoveredSelectedEntityId = null;
+    }
+  }
+
+  private drawRangeOverlay(state: GameState): void {
+    const graphics = this.rangeOverlayLayer;
+    const entityId = resolvePresentedRangeEntityId({
+      selectedEntityIds: state.selectedEntityIds,
+      focusedEntityId: this.focusedSelectedEntityId,
+      worldHoveredEntityId: this.worldHoveredSelectedEntityId,
+      panelHoveredEntityId: this.panelHoveredSelectedEntityId,
+    });
+
+    if (!graphics || !entityId) {
+      return;
+    }
+
+    const entity = state.entities[entityId];
+
+    if (!entity || !isControllableImmuneUnit(entity)) {
+      return;
+    }
+
+    const radius = getPresentedAttackRangeRadius(entity.attackRange);
+
+    if (radius === null) {
+      return;
+    }
+
+    graphics.lineStyle(
+      RANGE_OVERLAY_WIDTH,
+      RANGE_OVERLAY_COLOR,
+      state.selectedEntityIds.length === 1 ? 0.32 : 0.25,
+    );
+    drawDashedRangeCircle(
+      graphics,
+      Math.round(entity.position.x),
+      Math.round(entity.position.y),
+      radius,
+    );
   }
 
   private drawMap(graphics: Phaser.GameObjects.Graphics, state: GameState) {
@@ -1223,19 +1351,16 @@ export class MissionScene extends Phaser.Scene {
         }
 
         if (transitAlpha >= 0.85 && state.selectedEntityIds.includes(entity.id)) {
-          overlayGraphics.lineStyle(4, 0xffc76b, 0.95);
-          overlayGraphics.strokeCircle(entity.position.x, entity.position.y, entity.radius + 10);
-
-          if (entity.orderAnchor) {
-            overlayGraphics.lineStyle(2, 0xffc76b, 0.32);
-            overlayGraphics.strokeCircle(
-              isPlasmocyte(entity) ? entity.position.x : entity.orderAnchor.x,
-              isPlasmocyte(entity) ? entity.position.y : entity.orderAnchor.y,
-              isPlasmocyte(entity)
-                ? entity.attackRange
-                : (entity.engagementRadius ?? entity.attackRange),
-            );
-          }
+          overlayGraphics.lineStyle(
+            SELECTION_RING_WIDTH,
+            SELECTION_RING_COLOR,
+            getSelectionRingAlpha(state.selectedEntityIds.length),
+          );
+          overlayGraphics.strokeCircle(
+            Math.round(entity.position.x),
+            Math.round(entity.position.y),
+            entity.radius + SELECTION_RING_RADIUS_PADDING,
+          );
         }
 
         if (transitAlpha >= 0.85 && entity.targetPosition) {
@@ -1575,17 +1700,6 @@ export class MissionScene extends Phaser.Scene {
     );
   }
 
-  private drawBiofilms(graphics: Phaser.GameObjects.Graphics, state: GameState) {
-    for (const zone of state.biofilmZones) {
-      graphics.fillStyle(0x7cbf72, 0.16);
-      graphics.fillCircle(zone.position.x, zone.position.y, zone.radius);
-      graphics.lineStyle(3, 0x9ee08a, 0.44);
-      graphics.strokeCircle(zone.position.x, zone.position.y, zone.radius);
-      graphics.lineStyle(1, 0xf5fbff, 0.18);
-      graphics.strokeCircle(zone.position.x, zone.position.y, zone.radius * 0.72);
-    }
-  }
-
   private drawHealthBar(
     graphics: Phaser.GameObjects.Graphics,
     x: number,
@@ -1744,6 +1858,27 @@ export class MissionScene extends Phaser.Scene {
 
     this.bridge.publishSnapshot(snapshot);
     this.lastPublishedStatus = state.status;
+  }
+}
+
+function drawDashedRangeCircle(
+  graphics: Phaser.GameObjects.Graphics,
+  x: number,
+  y: number,
+  radius: number,
+): void {
+  const dashCount = Phaser.Math.Clamp(
+    Math.round((Math.PI * 2 * radius) / 16),
+    18,
+    72,
+  );
+  const step = (Math.PI * 2) / dashCount;
+
+  for (let index = 0; index < dashCount; index += 1) {
+    const startAngle = index * step;
+    graphics.beginPath();
+    graphics.arc(x, y, radius, startAngle, startAngle + step * 0.58);
+    graphics.strokePath();
   }
 }
 

@@ -7,6 +7,7 @@ import type { TreatmentId } from "../data/treatments";
 import type { InfiniteRunInfo } from "../data/infiniteMode";
 import type { TacticalMapGenerationSummary } from "../data/tacticalMaps";
 import type { ObjectiveStatus } from "../campaign/objectives";
+import type { EntityId } from "../types/shared";
 
 export type ThreatSummaryItem = {
   pathogenTypeId: PathogenTypeId;
@@ -65,10 +66,12 @@ export type GameSnapshot = {
 
 type SnapshotListener = (snapshot: GameSnapshot) => void;
 type CommandListener = (command: GameCommand) => void;
+type PresentationFocusListener = (entityId: EntityId | null) => void;
 
 export class GameBridge {
   private snapshotListeners = new Set<SnapshotListener>();
   private commandListeners = new Set<CommandListener>();
+  private presentationFocusListeners = new Set<PresentationFocusListener>();
 
   subscribeSnapshot(listener: SnapshotListener): () => void {
     this.snapshotListeners.add(listener);
@@ -86,6 +89,14 @@ export class GameBridge {
     };
   }
 
+  subscribePresentationFocus(listener: PresentationFocusListener): () => void {
+    this.presentationFocusListeners.add(listener);
+
+    return () => {
+      this.presentationFocusListeners.delete(listener);
+    };
+  }
+
   publishSnapshot(snapshot: GameSnapshot): void {
     for (const listener of this.snapshotListeners) {
       listener(snapshot);
@@ -95,6 +106,12 @@ export class GameBridge {
   dispatch(command: GameCommand): void {
     for (const listener of this.commandListeners) {
       listener(command);
+    }
+  }
+
+  setPresentationFocus(entityId: EntityId | null): void {
+    for (const listener of this.presentationFocusListeners) {
+      listener(entityId);
     }
   }
 }
