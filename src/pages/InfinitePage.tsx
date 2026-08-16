@@ -16,6 +16,7 @@ import infiniteIconTrophy from "../assets/infinite/infinite-icon-trophy.png";
 import infiniteIconWarning from "../assets/infinite/infinite-icon-warning.png";
 import infiniteIconWave from "../assets/infinite/infinite-icon-wave.png";
 import { Button } from "../ui/Button";
+import { ConfirmDialog } from "../ui/ConfirmDialog";
 
 type InfinitePageProps = {
   progress: InfiniteProgress;
@@ -31,6 +32,7 @@ export function InfinitePage({
   onBackHome,
 }: InfinitePageProps) {
   const [difficulty, setDifficulty] = useState<InfiniteDifficulty>("normal");
+  const [confirmReset, setConfirmReset] = useState(false);
   const selectedBest = progress.bestRuns[difficulty];
   const selectedSettings = infiniteDifficultySettings[difficulty];
 
@@ -43,41 +45,41 @@ export function InfinitePage({
             <img src={infiniteIconInfinity} alt="" />
           </div>
           <div>
-            <span className="eyebrow">V9 - Mode infini</span>
+            <span className="eyebrow">V11.5 · Mode infini</span>
             <h1>Survie immunitaire</h1>
             <p>
-              Affrontez des vagues evolutives. Adaptez vos defenses. Tenez le
+              Affrontez des vagues évolutives. Adaptez vos défenses. Tenez le
               plus longtemps possible pendant que la contamination s'intensifie.
             </p>
           </div>
         </div>
         <div className="mode-actions">
-          <Button className="mode-secondary-button mode-secondary-button-danger" onClick={onBackHome}>
+          <Button className="mode-secondary-button mode-secondary-button-danger" data-audio="back" onClick={onBackHome}>
             <img src={infiniteIconHome} alt="" />
             Retour menu
           </Button>
-          <Button className="mode-secondary-button mode-secondary-button-danger" onClick={onReset}>
+          <Button className="mode-secondary-button mode-secondary-button-danger" onClick={() => setConfirmReset(true)}>
             <img src={infiniteIconReset} alt="" />
-            Reinitialiser records
+            Réinitialiser les records
           </Button>
         </div>
       </header>
 
-      <section className="mode-grid" aria-label="Preparation mode infini">
+      <section className="mode-grid" aria-label="Préparation mode infini">
         <article className="mode-card mode-card-primary mode-card-danger">
           <div className="mode-card-heading">
             <img src={infiniteIconBiohazard} alt="" />
             <div>
-              <span>Run de survie</span>
+              <span>Session de survie</span>
               <h2>Nouvelle partie infinie</h2>
             </div>
           </div>
           <p>
-            Campagne et carte du corps restent separees. Ici, l'objectif est de
+            Campagne et carte du corps restent séparées. Ici, l'objectif est de
             survivre, faire monter le score et tenir un maximum de cycles.
           </p>
           <label className="mode-select mode-select-danger">
-            <span>Difficulte</span>
+            <span>Difficulté</span>
             <select
               value={difficulty}
               onChange={(event) =>
@@ -85,8 +87,8 @@ export function InfinitePage({
               }
             >
               <option value="normal">Normal - score x1</option>
-              <option value="hard">Difficile - score x1.5</option>
-              <option value="nightmare">Nightmare - score x2</option>
+              <option value="hard">Difficile · score x1,5</option>
+              <option value="nightmare">Extrême · score x2</option>
             </select>
           </label>
           <div className="mode-stat-grid mode-stat-grid-danger">
@@ -136,11 +138,11 @@ export function InfinitePage({
                 <span>Cycle {selectedBest.cycle}</span>
                 <span>Vague {selectedBest.wave}</span>
                 <span>Phase {selectedBest.phase}</span>
-                <span>{new Date(selectedBest.completedAt).toLocaleDateString()}</span>
+                <span>{new Date(selectedBest.completedAt).toLocaleDateString("fr-FR")}</span>
               </div>
             </div>
           ) : (
-            <p>Aucun record pour cette difficulte.</p>
+            <p>Aucun record pour cette difficulté.</p>
           )}
           <div className="mode-record-list mode-record-list-danger">
             {(["normal", "hard", "nightmare"] as InfiniteDifficulty[]).map(
@@ -172,16 +174,28 @@ export function InfinitePage({
           </div>
           <ol className="mode-phase-list">
             <li><span>01</span>Contamination simple</li>
-            <li><span>02</span>Expansion bacterienne</li>
-            <li><span>03</span>Resistance</li>
+            <li><span>02</span>Expansion bactérienne</li>
+            <li><span>03</span>Résistance</li>
             <li><span>04</span>Infection virale</li>
             <li><span>05</span>Infection mixte</li>
             <li><span>06</span>Mutation</li>
-            <li><span>07</span>Crise systemique</li>
-            <li><span>08</span>Nightmare : champignons, parasites, opportunistes et cellules anormales</li>
+            <li><span>07</span>Crise systémique</li>
+            <li><span>08</span>Extrême : champignons, parasites, opportunistes et cellules anormales</li>
           </ol>
         </article>
       </section>
+      {confirmReset ? (
+        <ConfirmDialog
+          confirmLabel="Réinitialiser"
+          description="Tous les meilleurs scores du mode infini seront supprimés."
+          onCancel={() => setConfirmReset(false)}
+          onConfirm={() => {
+            onReset();
+            setConfirmReset(false);
+          }}
+          title="Effacer les records ?"
+        />
+      ) : null}
     </div>
   );
 }

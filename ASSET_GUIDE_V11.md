@@ -360,7 +360,9 @@ silhouette (capside à pointes anguleuse vs cellule ronde à membrane lisse), pa
 
 ### 11.1 Dossiers d'assets existants
 - `src/assets/sprites/placeholders/` — existe, **vide**.
-- `src/assets/audio/` — existe, **vide**.
+- `src/assets/audio/` — reste vide : V11.5 utilise une synthèse Web Audio
+  procédurale originale, sans fichier téléchargé. Inventaire et provenance :
+  `docs/V11_5_AUDIO_PROVENANCE.md`.
 - `public/` — contient seulement `favicon.svg`.
 - `src/game/render/` — dossier existe, **vide**, non utilisé actuellement.
 - `src/game/scenes/` — dossier existe, **vide**, non utilisé actuellement (distinct de

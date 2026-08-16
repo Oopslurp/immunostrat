@@ -35,6 +35,14 @@ import {
   getUnitHealthRatio,
 } from "../game/phaser/rendering/selectionHudModel";
 import { Button } from "../ui/Button";
+import { ConfirmDialog } from "../ui/ConfirmDialog";
+import { Modal } from "../ui/Modal";
+import { SettingsPanel } from "../ui/SettingsPanel";
+import { audioDirector } from "../audio/AudioDirector";
+import {
+  canRetryBattleResult,
+  getResultProcessingKey,
+} from "../game/presentation/resultLifecycle";
 import iconAg from "../assets/bodymap-control/icon-ag.png";
 import iconAlert from "../assets/bodymap-control/icon-alert.png";
 import iconAtp from "../assets/bodymap-control/icon-atp.png";
@@ -100,6 +108,8 @@ type UnitPortraitMeta = {
   spriteDefinition: EntitySpriteDefinition;
 };
 
+type GameModal = "pause" | "settings" | "confirmRestart" | "confirmExit" | null;
+
 export function GamePage({
   battleSource = "campaign",
   missionId,
@@ -119,7 +129,11 @@ export function GamePage({
       hoveredSelectedUnitId: null,
       focusedSelectedUnitId: null,
     });
+  const [gameModal, setGameModal] = useState<GameModal>(null);
+  const [sessionGeneration, setSessionGeneration] = useState(0);
   const completedMissionRef = useRef<string | null>(null);
+  const lastWaveAudioRef = useRef<string | null>(null);
+  const restartInFlightRef = useRef(false);
   const mission = missionDefinitions[missionId];
   const nextMissionId = mission.nextMissionId;
   const playableNextMissionId =
@@ -140,26 +154,100 @@ export function GamePage({
     () => bridge.subscribeSelectionPresentation(setSelectionPresentation),
     [bridge],
   );
+  useEffect(
+    () => bridge.subscribeAudioEvent((event) => audioDirector.playGame(event)),
+    [bridge],
+  );
   useEffect(() => {
     completedMissionRef.current = null;
+    lastWaveAudioRef.current = null;
+    restartInFlightRef.current = false;
+    setSnapshot(null);
+    setGameModal(null);
+    setSessionGeneration((generation) => generation + 1);
   }, [missionId]);
   useEffect(() => {
-    if (!snapshot) {
+    const status = snapshot?.status;
+    const modalOpen = gameModal !== null;
+    bridge.setSessionPresentation({
+      paused: status === "running" && modalOpen,
+      inputBlocked: modalOpen || (status !== undefined && status !== "running"),
+    });
+
+    if (status && status !== "running") {
+      audioDirector.setScene("result");
+    } else if (modalOpen) {
+      audioDirector.setScene("paused");
+    } else {
+      audioDirector.setScene("game");
+    }
+  }, [bridge, gameModal, snapshot?.status]);
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (
+        event.key !== "Escape" ||
+        gameModal !== null ||
+        snapshot?.status !== "running"
+      ) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      audioDirector.playUi("pause");
+      setGameModal("pause");
+    };
+    const handleVisibility = () => {
+      if (document.hidden && snapshot?.status === "running") {
+        setGameModal("pause");
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape, true);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.removeEventListener("keydown", handleEscape, true);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [gameModal, snapshot?.status]);
+  useEffect(() => {
+    if (!snapshot?.waveAlert || snapshot.status !== "running") return;
+    const waveKey = `${snapshot.missionId}-${sessionGeneration}-${snapshot.currentWave}`;
+    if (lastWaveAudioRef.current === waveKey) return;
+    lastWaveAudioRef.current = waveKey;
+    audioDirector.playGame({ name: "wave", priority: 1 });
+  }, [sessionGeneration, snapshot]);
+  useEffect(() => {
+    if (!snapshot || snapshot.missionId !== missionId) {
       return;
     }
 
     if (snapshot.status === "running") {
+      restartInFlightRef.current = false;
       completedMissionRef.current = null;
       return;
     }
 
-    const resultKey = `${snapshot.missionId}-${snapshot.status}`;
+    if (restartInFlightRef.current) {
+      return;
+    }
 
-    if (completedMissionRef.current === resultKey) {
+    const resultKey = getResultProcessingKey(
+      snapshot.missionId,
+      missionId,
+      sessionGeneration,
+      snapshot.status,
+    );
+
+    if (!resultKey || completedMissionRef.current === resultKey) {
       return;
     }
 
     completedMissionRef.current = resultKey;
+    audioDirector.stopTransientVoices();
+    audioDirector.playGame({
+      name: snapshot.status === "victory" ? "victory" : "defeat",
+      priority: 1,
+    });
 
     const result = {
       missionId: snapshot.missionId,
@@ -201,7 +289,24 @@ export function GamePage({
     if (battleSource === "infinite" && snapshot.status === "defeat") {
       onInfiniteComplete?.(result);
     }
-  }, [battleSource, onBodyBattleComplete, onInfiniteComplete, onMissionComplete, snapshot]);
+  }, [battleSource, missionId, onBodyBattleComplete, onInfiniteComplete, onMissionComplete, sessionGeneration, snapshot]);
+
+  const restartBattle = () => {
+    restartInFlightRef.current = true;
+    lastWaveAudioRef.current = null;
+    audioDirector.resetSession();
+    setSessionGeneration((generation) => generation + 1);
+    setGameModal(null);
+    bridge.dispatch({ type: "restart" });
+    bridge.setSessionPresentation({ paused: false, inputBlocked: false });
+    audioDirector.setScene("game");
+  };
+
+  const leaveBattle = () => {
+    setGameModal(null);
+    audioDirector.stopTransientVoices();
+    onBackToCampaign();
+  };
 
   const canProduceMacrophage =
     snapshot?.status === "running" &&
@@ -418,7 +523,7 @@ export function GamePage({
         isResearchUnlocked(missionId, "bacterialAnalysis")
           ? {
               id: "bacterialAnalysis",
-              label: "Analyse bacterienne",
+              label: "Analyse bactérienne",
               cost: `${balanceValues.adaptive.bacterialAnalysisAntigenCost} AG`,
               icon: cmdBacterialAnalysis,
               disabled: !canResearch,
@@ -439,7 +544,7 @@ export function GamePage({
         isAbilityUnlocked(missionId, "interferons")
           ? {
               id: "interferons",
-              label: "Interferons",
+              label: "Interférons",
               cost:
                 snapshot && snapshot.antiviralActiveMs > 0
                   ? `actif ${formatCooldown(snapshot.antiviralActiveMs)}`
@@ -475,10 +580,10 @@ export function GamePage({
         <div className="game-topbar-brand">
           <span className="eyebrow">
             {battleSource === "infinite"
-              ? "Mode infini V9"
+              ? "Mode infini"
               : battleSource === "bodyMap"
-                ? "Carte du corps V9"
-                : "Campagne V6"}
+                ? "Carte du corps"
+                : "Campagne"}
           </span>
           <h1>{mission.title}</h1>
         </div>
@@ -541,17 +646,14 @@ export function GamePage({
       <header className="game-header">
         <BattleCommandBar groups={commandGroups} />
         <div className="battle-system-actions">
-          {canRestartBattle ? (
-            <Button onClick={() => bridge.dispatch({ type: "restart" })}>
-              Recommencer
-            </Button>
-          ) : null}
-          <Button onClick={onBackToCampaign}>
-            {battleSource === "infinite"
-              ? "Retour mode infini"
-              : battleSource === "bodyMap"
-                ? "Retour carte"
-                : "Retour missions"}
+          <Button
+            aria-label="Mettre la partie en pause"
+            onClick={() => {
+              audioDirector.playUi("pause");
+              setGameModal("pause");
+            }}
+          >
+            Pause
           </Button>
         </div>
       </header>
@@ -675,7 +777,7 @@ export function GamePage({
           </span>
           {snapshot && snapshot.infectedTissueCells > 0 ? (
             <span className="battle-threat-item battle-threat-warning">
-              Cellules infectees
+              Cellules infectées
               <strong>x{snapshot.infectedTissueCells}</strong>
             </span>
           ) : null}
@@ -701,7 +803,7 @@ export function GamePage({
           ) : null}
         </div>
         <details className="battle-details-panel">
-          <summary>Details tactiques</summary>
+          <summary>Détails tactiques</summary>
           <div>
             {snapshot?.infinite ? (
               <>
@@ -711,28 +813,28 @@ export function GamePage({
                   Prochaine:{" "}
                   {snapshot.infinite.nextPhaseAtCycle
                     ? `cycle ${snapshot.infinite.nextPhaseAtCycle}`
-                    : "Nightmare"}
+                    : "phase extrême"}
                 </span>
               </>
             ) : null}
-            <span>Bacteries: {bacteriaCount}</span>
-            <span>Virus: {virusCount}</span>
-            <span>Avancees: {advancedThreatCount}</span>
-            <span>Debris: {snapshot?.debrisCount ?? 0}</span>
-            <span>Biofilm: {snapshot?.biofilmCount ?? 0}</span>
+            <span>Bactéries : {bacteriaCount}</span>
+            <span>Virus : {virusCount}</span>
+            <span>Menaces avancées : {advancedThreatCount}</span>
+            <span>Débris : {snapshot?.debrisCount ?? 0}</span>
+            <span>Biofilm : {snapshot?.biofilmCount ?? 0}</span>
             <span>
-              Cellules: {snapshot?.healthyTissueCells ?? 0} saines /{" "}
-              {snapshot?.infectedTissueCells ?? 0} infectees
+              Cellules : {snapshot?.healthyTissueCells ?? 0} saines /{" "}
+              {snapshot?.infectedTissueCells ?? 0} infectées
             </span>
-            <span>Tissu: {formatTissueRepair(snapshot)}</span>
+            <span>Tissu : {formatTissueRepair(snapshot)}</span>
             <span>
-              Analyse bacterienne:{" "}
-              {snapshot?.bacterialAnalysisComplete ? "complete" : "non"}
+              Analyse bactérienne :{" "}
+              {snapshot?.bacterialAnalysisComplete ? "complète" : "non"}
             </span>
             <span>
-              Analyse virale: {snapshot?.viralAnalysisComplete ? "complete" : "non"}
+              Analyse virale : {snapshot?.viralAnalysisComplete ? "complète" : "non"}
             </span>
-            <span>Neutrophile: {formatCooldown(snapshot?.neutrophilCooldownMs)}</span>
+            <span>Neutrophile : {formatCooldown(snapshot?.neutrophilCooldownMs)}</span>
             <span>
               Adaptatif: {formatCooldown(snapshot?.massiveNeutralizationCooldownMs)}
             </span>
@@ -758,14 +860,14 @@ export function GamePage({
             ))}
             <p>
               {mission.memoryHintProfiles?.length
-                ? `Memoire: ${mission.memoryHintProfiles
+                ? `Mémoire : ${mission.memoryHintProfiles
                     .map((profile) =>
                       progress.immuneMemory.knownProfiles.includes(profile)
                         ? `${profile} connu`
-                        : `${profile} a apprendre`,
+                        : `${profile} à apprendre`,
                     )
                     .join(" / ")}.`
-                : "Science inspiree et simplifiee pour le gameplay."}
+                : "Science inspirée et simplifiée pour le gameplay."}
             </p>
           </div>
         </details>
@@ -773,6 +875,13 @@ export function GamePage({
 
       <section className="game-frame" aria-label="Canvas du jeu Immunostrat">
         <PhaserGame bridge={bridge} missionId={missionId} preparation={preparation} />
+        {!snapshot ? (
+          <div className="game-loading-overlay" role="status">
+            <span className="bio-loader" aria-hidden="true" />
+            <strong>Synchronisation immunitaire</strong>
+            <em>Préparation du tissu...</em>
+          </div>
+        ) : null}
         {snapshot?.waveAlert && snapshot.status === "running" ? (
           <div className="wave-alert-overlay" role="status">
             <strong>{snapshot.waveAlert.message}</strong>
@@ -780,51 +889,234 @@ export function GamePage({
           </div>
         ) : null}
         {snapshot && snapshot.status !== "running" ? (
-          <div className="result-overlay">
-            <div className="result-title">
-              {snapshot.status === "victory" ? "Victoire" : "Defaite"}
-            </div>
-            <div className="result-score">
-              {snapshot.infinite
-                ? `Score infini ${snapshot.infinite.score} - Cycle ${snapshot.infinite.cycle} - Phase ${snapshot.infinite.phase.id}`
-                : `Score ${snapshot.score} - Rang ${snapshot.rank}`}
-            </div>
-            <div className="result-objectives">
-              {snapshot.objectives.map((objective) => (
-                <span key={objective.id}>
-                  {objective.complete ? "[x]" : "[ ]"} {objective.label}
-                </span>
-              ))}
-            </div>
-            {canRestartBattle ? (
-              <Button onClick={() => bridge.dispatch({ type: "restart" })}>
-                Recommencer
-              </Button>
-            ) : null}
-            <Button onClick={onBackToCampaign}>
-              {battleSource === "infinite"
-                ? "Retour mode infini"
-                : battleSource === "bodyMap"
-                  ? "Retour carte du corps"
-                  : "Retour missions"}
-            </Button>
-            {battleSource === "campaign" &&
-            snapshot.status === "victory" &&
-            playableNextMissionId ? (
-              <Button
-                disabled={!progress.unlockedMissionIds.includes(playableNextMissionId)}
-                onClick={() => onPlayMission(playableNextMissionId)}
-                variant="primary"
-              >
-                Mission suivante
-              </Button>
-            ) : null}
-          </div>
+          <BattleResultOverlay
+            battleSource={battleSource}
+            canRetry={canRetryBattleResult(battleSource, canRestartBattle)}
+            nextMissionAvailable={Boolean(
+              playableNextMissionId &&
+                progress.unlockedMissionIds.includes(playableNextMissionId),
+            )}
+            onExit={leaveBattle}
+            onNext={
+              playableNextMissionId
+                ? () => {
+                    setSnapshot(null);
+                    audioDirector.resetSession();
+                    onPlayMission(playableNextMissionId);
+                  }
+                : undefined
+            }
+            onRetry={restartBattle}
+            snapshot={snapshot}
+          />
         ) : null}
       </section>
 
+      {gameModal === "pause" ? (
+        <Modal
+          className="pause-dialog"
+          label="Partie en pause"
+          onClose={() => {
+            audioDirector.playUi("resume");
+            setGameModal(null);
+          }}
+        >
+          <span className="modal-kicker">Simulation suspendue</span>
+          <h2>Pause</h2>
+          <p>Le tissu et les menaces restent figés pendant vos choix.</p>
+          <div className="pause-menu-actions">
+            <Button
+              onClick={() => {
+                audioDirector.playUi("resume");
+                setGameModal(null);
+              }}
+              variant="primary"
+            >
+              Reprendre
+            </Button>
+            <Button onClick={() => setGameModal("settings")}>Réglages</Button>
+            {canRestartBattle ? (
+              <Button onClick={() => setGameModal("confirmRestart")}>Recommencer</Button>
+            ) : null}
+            <Button className="button-danger-soft" onClick={() => setGameModal("confirmExit")}>
+              Quitter la bataille
+            </Button>
+          </div>
+          <details className="pause-help">
+            <summary>Aide tactique</summary>
+            <p>Clic gauche : sélectionner ou donner un ordre.</p>
+            <p>Clic droit-glissé ou ZQSD/WASD : déplacer la caméra.</p>
+            <p>Survolez une unité de l’escouade pour la repérer sur le terrain.</p>
+          </details>
+          <span className="pause-hint">Échap pour reprendre</span>
+        </Modal>
+      ) : null}
+      {gameModal === "settings" ? (
+        <Modal label="Réglages en jeu" onClose={() => setGameModal("pause")}>
+          <SettingsPanel onBack={() => setGameModal("pause")} title="Réglages en jeu" />
+        </Modal>
+      ) : null}
+      {gameModal === "confirmRestart" ? (
+        <ConfirmDialog
+          confirmLabel="Recommencer"
+          description="La progression de cette bataille sera perdue. Les règles et la carte resteront identiques."
+          onCancel={() => setGameModal("pause")}
+          onConfirm={restartBattle}
+          title="Recommencer la bataille ?"
+        />
+      ) : null}
+      {gameModal === "confirmExit" ? (
+        <ConfirmDialog
+          confirmLabel="Quitter"
+          description="La bataille en cours sera abandonnée et ne modifiera pas votre progression."
+          onCancel={() => setGameModal("pause")}
+          onConfirm={leaveBattle}
+          title="Quitter la bataille ?"
+        />
+      ) : null}
+
     </div>
   );
+}
+
+type BattleResultOverlayProps = {
+  battleSource: "campaign" | "bodyMap" | "infinite";
+  canRetry: boolean;
+  nextMissionAvailable: boolean;
+  onExit: () => void;
+  onNext?: () => void;
+  onRetry: () => void;
+  snapshot: GameSnapshot;
+};
+
+function BattleResultOverlay({
+  battleSource,
+  canRetry,
+  nextMissionAvailable,
+  onExit,
+  onNext,
+  onRetry,
+  snapshot,
+}: BattleResultOverlayProps) {
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const victory = snapshot.status === "victory";
+  const sourceLabel =
+    battleSource === "infinite"
+      ? "Survie immunitaire"
+      : battleSource === "bodyMap"
+        ? "Intervention régionale"
+        : "Opération de campagne";
+  const exitLabel =
+    battleSource === "infinite"
+      ? "Retour au mode infini"
+      : battleSource === "bodyMap"
+        ? "Retour à la carte du corps"
+        : "Retour aux missions";
+  const metrics = [
+    { label: "Score", value: snapshot.infinite?.score ?? snapshot.score },
+    { label: snapshot.infinite ? "Cycle" : "Rang", value: snapshot.infinite?.cycle ?? snapshot.rank },
+    { label: "Durée", value: formatResultDuration(snapshot.elapsedMs) },
+    {
+      label: "Tissu préservé",
+      value: `${Math.round((snapshot.tissueHealth / Math.max(1, snapshot.tissueMaxHealth)) * 100)}%`,
+    },
+    { label: "Cellules sauvées", value: snapshot.healthyTissueCells },
+    { label: "Inflammation max.", value: Math.round(snapshot.peakInflammation) },
+  ];
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    const firstAction = dialog?.querySelector<HTMLElement>("button:not(:disabled)");
+    firstAction?.focus();
+
+    const trapResultFocus = (event: KeyboardEvent) => {
+      if (event.key !== "Tab" || !dialog) return;
+      const actions = Array.from(
+        dialog.querySelectorAll<HTMLElement>("button:not(:disabled)"),
+      );
+      if (!actions.length) return;
+      const first = actions[0];
+      const last = actions.at(-1) ?? first;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", trapResultFocus, true);
+    return () => document.removeEventListener("keydown", trapResultFocus, true);
+  }, []);
+
+  return (
+    <div
+      aria-label={victory ? "Résultat : victoire" : "Résultat : défaite"}
+      aria-modal="true"
+      className={`result-overlay result-overlay-${victory ? "victory" : "defeat"}`}
+      ref={dialogRef}
+      role="dialog"
+    >
+      <div className="result-panel">
+        <div className="result-emblem" aria-hidden="true">
+          <span />
+        </div>
+        <div className="result-heading">
+          <span className="modal-kicker">{sourceLabel}</span>
+          <h2>{victory ? "Victoire" : "Défaite"}</h2>
+          <p>
+            {victory
+              ? "Le foyer infectieux est contenu. L’organisme peut poursuivre sa réponse."
+              : "La pression infectieuse a dépassé les défenses locales. Réorganisez la réponse."}
+          </p>
+        </div>
+
+        <div className="result-metrics" aria-label="Bilan de la bataille">
+          {metrics.map((metric) => (
+            <span key={metric.label}>
+              <em>{metric.label}</em>
+              <strong>{metric.value}</strong>
+            </span>
+          ))}
+        </div>
+
+        <div className="result-objectives">
+          <strong>Objectifs</strong>
+          {snapshot.objectives.map((objective) => (
+            <span
+              className={objective.complete ? "result-objective-complete" : "result-objective-incomplete"}
+              key={objective.id}
+            >
+              <i aria-hidden="true">{objective.complete ? "✓" : "·"}</i>
+              {objective.label}
+            </span>
+          ))}
+        </div>
+
+        <div className="result-actions">
+          {battleSource === "campaign" && victory && onNext ? (
+            <Button disabled={!nextMissionAvailable} onClick={onNext} variant="primary">
+              Mission suivante
+            </Button>
+          ) : null}
+          {canRetry ? (
+            <Button onClick={onRetry} variant={!victory ? "primary" : "secondary"}>
+              {victory ? "Rejouer" : "Réessayer"}
+            </Button>
+          ) : null}
+          <Button data-audio="back" onClick={onExit}>{exitLabel}</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function formatResultDuration(elapsedMs: number): string {
+  const totalSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 function isUnitUnlocked(missionId: MissionId, unitTypeId: UnitTypeId): boolean {
@@ -1182,8 +1474,8 @@ function formatTissueRepair(snapshot: GameSnapshot | null): string {
 
 function formatTacticalState(state: string | undefined): string {
   const labels: Record<string, string> = {
-    idle: "idle",
-    movingToPoint: "deplacement",
+    idle: "en attente",
+    movingToPoint: "déplacement",
     movingToSite: "site",
     guardingArea: "garde locale",
     engagingNearbyTarget: "engagement",

@@ -1,6 +1,8 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { AppShell } from "./app/AppShell";
 import { routes, type AppRoute } from "./app/routes";
+import { audioDirector } from "./audio/AudioDirector";
+import { useGlobalAudioInteractions } from "./audio/useAudioDirector";
 import {
   applyBodyBattleOutcome,
   isBodyMapUnlocked,
@@ -44,6 +46,9 @@ import { GamePage } from "./pages/GamePage";
 import { HomePage } from "./pages/HomePage";
 import { InfinitePage } from "./pages/InfinitePage";
 import { NormalGamePage } from "./pages/NormalGamePage";
+import { CreditsPanel } from "./ui/CreditsPanel";
+import { Modal } from "./ui/Modal";
+import { SettingsPanel } from "./ui/SettingsPanel";
 
 const SpriteLabPage = lazy(() =>
   import("./pages/SpriteLabPage").then((module) => ({
@@ -52,7 +57,14 @@ const SpriteLabPage = lazy(() =>
 );
 
 export default function App() {
-  const [route, setRoute] = useState<AppRoute>(routes.home);
+  useGlobalAudioInteractions();
+  const [route, setRoute] = useState<AppRoute>(() =>
+    import.meta.env.DEV &&
+    new URLSearchParams(window.location.search).get("spriteLab") === "1"
+      ? routes.spriteLab
+      : routes.home,
+  );
+  const [appModal, setAppModal] = useState<"settings" | "credits" | null>(null);
   const [progress, setProgress] = useState(() => loadCampaignProgress());
   const [bodyMapState, setBodyMapState] = useState(() => loadBodyMapState());
   const [hasActiveBodyMapRun, setHasActiveBodyMapRun] = useState(() =>
@@ -74,6 +86,10 @@ export default function App() {
   const [selectedPreparation, setSelectedPreparation] =
     useState<MissionPreparation>({});
   const bodyMapUnlocked = isBodyMapUnlocked(progress);
+
+  useEffect(() => {
+    audioDirector.setScene(route === routes.game ? "game" : "menu");
+  }, [route]);
 
   const playMission = (missionId: MissionId, vaccinationId?: string | null) => {
     setSelectedMissionId(missionId);
@@ -223,19 +239,21 @@ export default function App() {
     !activeBodyBattleRegion || activeBodyBattleRegion.status !== "lost";
 
   return (
+    <>
     <AppShell
       bodyMapUnlocked={bodyMapUnlocked}
       currentRoute={route}
       onNavigate={setRoute}
+      onOpenSettings={() => setAppModal("settings")}
     >
       {route === routes.home ? (
         <HomePage
           bodyMapUnlocked={bodyMapUnlocked}
-          onOpenBodyMap={() => setRoute(routes.bodyMap)}
           onOpenInfinite={() => setRoute(routes.infinite)}
+          onOpenCredits={() => setAppModal("credits")}
+          onOpenSettings={() => setAppModal("settings")}
           onStartNormalGame={() => setRoute(routes.normal)}
           onPlay={() => setRoute(routes.campaign)}
-          onOpenSpriteLab={() => setRoute(routes.spriteLab)}
         />
       ) : null}
       {route === routes.normal ? (
@@ -306,5 +324,16 @@ export default function App() {
         </Suspense>
       ) : null}
     </AppShell>
+    {appModal === "settings" ? (
+      <Modal label="Réglages" onClose={() => setAppModal(null)}>
+        <SettingsPanel onBack={() => setAppModal(null)} />
+      </Modal>
+    ) : null}
+    {appModal === "credits" ? (
+      <Modal label="Crédits" onClose={() => setAppModal(null)}>
+        <CreditsPanel onBack={() => setAppModal(null)} />
+      </Modal>
+    ) : null}
+    </>
   );
 }

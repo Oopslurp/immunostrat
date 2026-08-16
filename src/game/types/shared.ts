@@ -1,4 +1,4 @@
-export type SceneKey = "BootScene" | "PreloadScene" | "MissionScene" | "UIScene";
+export type SceneKey = "BootScene" | "PreloadScene" | "MissionScene";
 
 export type EntityId = string;
 

@@ -6,7 +6,6 @@ import { BootScene } from "./scenes/BootScene";
 import type { GameBridge } from "./GameBridge";
 import { MissionScene } from "./scenes/MissionScene";
 import { PreloadScene } from "./scenes/PreloadScene";
-import { UIScene } from "./scenes/UIScene";
 
 export function createPhaserConfig(
   parent: HTMLElement,
@@ -30,11 +29,11 @@ export function createPhaserConfig(
     width: Math.min(map.width, viewportWidth),
     height: Math.min(map.height, viewportHeight),
     backgroundColor: "#101820",
+    audio: { noAudio: true },
     scene: [
       new BootScene(),
       new PreloadScene(map),
       new MissionScene(bridge, missionId, preparation),
-      new UIScene(),
     ],
     scale: {
       mode: Phaser.Scale.FIT,

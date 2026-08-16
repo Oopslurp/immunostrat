@@ -1376,7 +1376,7 @@ export const pathogenDefinitions: Record<PathogenTypeId, PathogenDefinition> = {
     realLifeInspiration: "Inspire de comportements invasifs de cellules anormales, traite comme archetype tactique.",
     archetype: "late invasion",
     scienceDescription: "Certaines cellules anormales peuvent envahir d'autres tissus, notion ici tres abstraite.",
-    gameplayDescription: "Rare, solide, prioritaire sur la carte du corps et en mode infini Nightmare.",
+    gameplayDescription: "Rare, solide, prioritaire sur la carte du corps et dans les phases extrêmes du mode infini.",
     simplificationNote: "L'invasion devient une menace de propagation strategique, pas une simulation medicale.",
     antigenProfileId: "tumorInvasive",
     maxHealth: 118,

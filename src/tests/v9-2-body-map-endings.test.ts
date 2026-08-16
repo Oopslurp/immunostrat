@@ -30,7 +30,7 @@ describe("V9.2 body map endings", () => {
     state = advanceStrategicTurn(state);
 
     expect(state.runStatus).toBe("victory");
-    expect(state.finalSummary?.title).toBe("Organisme stabilise");
+    expect(state.finalSummary?.title).toBe("Organisme stabilisé");
     expect(state.finalSummary?.score).toBeGreaterThan(0);
   });
 
@@ -41,7 +41,7 @@ describe("V9.2 body map endings", () => {
     state = advanceStrategicTurn(state);
 
     expect(state.runStatus).toBe("defeat");
-    expect(state.finalSummary?.cause).toBe("Sante globale effondree");
+    expect(state.finalSummary?.cause).toBe("Santé globale effondrée");
   });
 
   it("stops strategic actions after global victory or defeat", () => {

@@ -6,6 +6,7 @@ type AppShellProps = {
   currentRoute: AppRoute;
   bodyMapUnlocked?: boolean;
   onNavigate: (route: AppRoute) => void;
+  onOpenSettings: () => void;
 };
 
 export function AppShell({
@@ -13,13 +14,16 @@ export function AppShell({
   currentRoute,
   bodyMapUnlocked = false,
   onNavigate,
+  onOpenSettings,
 }: AppShellProps) {
+  const isGameplay = currentRoute === routes.game;
+
   return (
-    <div className="app-shell">
-      <header className="top-bar">
+    <div className={`app-shell ${isGameplay ? "app-shell-game" : ""}`.trim()}>
+      {!isGameplay ? <header className="top-bar">
         <div className="brand">
           <span className="brand-title">Immunostrat</span>
-          <span className="brand-subtitle">RTS immunitaire 2D</span>
+          <span className="brand-subtitle">Stratégie immunitaire 2D</span>
         </div>
         <nav className="top-nav" aria-label="Navigation principale">
           <button
@@ -50,7 +54,7 @@ export function AppShell({
             title={
               bodyMapUnlocked
                 ? "Ouvrir la partie normale"
-                : "Debloque apres la mission 7"
+                : "Débloqué après la mission 7"
             }
             type="button"
             onClick={() => onNavigate(routes.normal)}
@@ -66,17 +70,12 @@ export function AppShell({
           >
             Mode infini
           </button>
-          <button
-            className={`nav-button ${
-              currentRoute === routes.spriteLab ? "nav-button-active" : ""
-            }`}
-            type="button"
-            onClick={() => onNavigate(routes.spriteLab)}
-          >
-            Laboratoire
+          <button className="nav-button nav-button-settings" type="button" onClick={onOpenSettings}>
+            Réglages
           </button>
         </nav>
-      </header>
+        <span className="version-chip">V11.5</span>
+      </header> : null}
       <main>{children}</main>
     </div>
   );

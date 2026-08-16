@@ -3,32 +3,31 @@ import { Panel } from "../ui/Panel";
 import campaignIcon from "../assets/home/home-icon-campaign.png";
 import bodyMapIcon from "../assets/home/home-icon-bodymap.png";
 import infiniteIcon from "../assets/home/home-icon-infinite.png";
-import scienceIcon from "../assets/home/home-icon-science.png";
 import immunityEmblem from "../assets/home/home-emblem-immunity.png";
 import heroChipIcon from "../assets/home/home-chip-cell.png";
 
 type HomePageProps = {
   onPlay: () => void;
-  onOpenBodyMap: () => void;
   onStartNormalGame: () => void;
   onOpenInfinite: () => void;
-  onOpenSpriteLab: () => void;
+  onOpenSettings: () => void;
+  onOpenCredits: () => void;
   bodyMapUnlocked: boolean;
 };
 
 export function HomePage({
   onPlay,
-  onOpenBodyMap,
   onStartNormalGame,
   onOpenInfinite,
-  onOpenSpriteLab,
+  onOpenSettings,
+  onOpenCredits,
   bodyMapUnlocked,
 }: HomePageProps) {
   const modes = [
     {
       title: "Campagne",
-      subtitle: "Apprendre les defenses",
-      description: "Progresse mission par mission, des macrophages aux reponses adaptatives.",
+      subtitle: "Apprendre les défenses",
+      description: "Progresse mission par mission, des macrophages aux réponses adaptatives.",
       icon: campaignIcon,
       actionLabel: "Lancer",
       onClick: onPlay,
@@ -37,19 +36,10 @@ export function HomePage({
     {
       title: "Partie normale",
       subtitle: "Stabiliser le corps",
-      description: "Choisis les regions a sauver, envoie des renforts, accepte parfois une perte.",
+      description: "Choisis les régions à sauver, envoie des renforts, accepte parfois une perte.",
       icon: bodyMapIcon,
-      actionLabel: bodyMapUnlocked ? "Nouvelle partie" : "Verrouille",
+      actionLabel: bodyMapUnlocked ? "Nouvelle partie" : "Verrouillé",
       onClick: onStartNormalGame,
-      disabled: !bodyMapUnlocked,
-    },
-    {
-      title: "Carte du corps",
-      subtitle: "Reprendre une crise",
-      description: "Retourne sur la strategie globale et traite les foyers encore actifs.",
-      icon: scienceIcon,
-      actionLabel: bodyMapUnlocked ? "Continuer" : "Mission 7 requise",
-      onClick: onOpenBodyMap,
       disabled: !bodyMapUnlocked,
     },
     {
@@ -60,15 +50,6 @@ export function HomePage({
       actionLabel: "Survivre",
       onClick: onOpenInfinite,
     },
-    {
-      title: "Laboratoire sprites",
-      subtitle: "Debug visuel isole",
-      description:
-        "Glisse une unite vers un pathogene pour tester ses mouvements et ses attaques.",
-      icon: scienceIcon,
-      actionLabel: "Tester",
-      onClick: onOpenSpriteLab,
-    },
   ];
 
   return (
@@ -76,18 +57,22 @@ export function HomePage({
       <section className="hero-copy home-hero-panel" aria-labelledby="home-title">
         <div className="home-hero-chip">
           <img alt="" src={heroChipIcon} />
-          <span>Strategie immunitaire tactique</span>
+          <span>Stratégie immunitaire tactique</span>
         </div>
         <h1 className="hero-title" id="home-title">
           Immunostrat
         </h1>
         <p className="hero-text">
-          Deployez vos cellules. Contenez l'infection. Sauvez l'organisme.
+          Déployez vos cellules. Contenez l'infection. Sauvez l'organisme.
         </p>
-        <div className="home-hero-status" aria-label="Etat du prototype">
-          <span>Campagne jouable</span>
-          <span>Carte du corps</span>
-          <span>Mode infini</span>
+        <div className="home-hero-status" aria-label="Systèmes immunitaires actifs">
+          <span>Campagne</span>
+          <span>Organisme global</span>
+          <span>Survie infinie</span>
+        </div>
+        <div className="home-utility-actions">
+          <Button onClick={onOpenSettings}>Réglages</Button>
+          <Button onClick={onOpenCredits}>Crédits</Button>
         </div>
         <div className="home-actions" aria-label="Modes de jeu">
           {modes.map((mode) => (
@@ -113,11 +98,11 @@ export function HomePage({
           <img alt="" className="home-emblem" src={immunityEmblem} />
         </div>
         <div>
-          <span className="eyebrow">Etat de l'organisme</span>
+          <span className="eyebrow">État de l'organisme</span>
           <h2>Choisissez votre front</h2>
           <p>
-            Chaque mode reprend les memes regles de terrain : guider les cellules,
-            tenir les foyers infectieux, et garder l'inflammation sous controle.
+            Chaque mode reprend les mêmes règles de terrain : guider les cellules,
+            tenir les foyers infectieux et garder l'inflammation sous contrôle.
           </p>
         </div>
         <div className="stat-grid home-intel-grid">

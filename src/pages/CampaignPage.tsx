@@ -30,6 +30,7 @@ import unitPlasmocyte from "../assets/campaign/unit-plasmocyte.png";
 import unitTissue from "../assets/campaign/unit-tissue.png";
 import unitVirus from "../assets/campaign/unit-virus.png";
 import { Button } from "../ui/Button";
+import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { useState, type CSSProperties } from "react";
 
 type CampaignPageProps = {
@@ -46,6 +47,7 @@ export function CampaignPage({
   const [selectedVaccinations, setSelectedVaccinations] = useState<
     Partial<Record<MissionId, string>>
   >({});
+  const [confirmReset, setConfirmReset] = useState(false);
   const completedCount = campaignMissionOrder.filter(
     (missionId) => progress.completedMissions[missionId],
   ).length;
@@ -64,8 +66,8 @@ export function CampaignPage({
             <span className="eyebrow">Campagne immunitaire</span>
             <h1>Parcours immunitaire</h1>
             <p>
-              Huit operations tactiques pour apprendre a defendre l'organisme,
-              de la plaie cutanee jusqu'a l'infection mixte.
+              Huit opérations tactiques pour apprendre à défendre l'organisme,
+              de la plaie cutanée jusqu'à l'infection mixte.
             </p>
           </div>
         </div>
@@ -84,14 +86,14 @@ export function CampaignPage({
             <span>Rang global</span>
             <strong>{globalRank ?? "-"}</strong>
           </div>
-          <Button className="campaign-reset-button" onClick={onResetProgress}>
+          <Button className="campaign-reset-button" onClick={() => setConfirmReset(true)}>
             <img src={iconReset} alt="" />
-            Reinitialiser
+            Réinitialiser
           </Button>
         </div>
       </header>
 
-      <section className="campaign-v11-grid" aria-label="Selection de mission">
+      <section className="campaign-v11-grid" aria-label="Sélection de mission">
         {campaignMissionOrder.map((missionId, index) => {
           const mission = missionDefinitions[missionId];
           const unlocked = isMissionUnlocked(progress, missionId);
@@ -121,7 +123,7 @@ export function CampaignPage({
               </div>
 
               <div className="campaign-mission-copy">
-                <span className="campaign-mission-kicker">Operation {index + 1}</span>
+                <span className="campaign-mission-kicker">Opération {index + 1}</span>
                 <h2>{mission.displayName}</h2>
                 <p className="mission-subtitle">{mission.subtitle}</p>
                 <p className="campaign-mission-description">{mission.description}</p>
@@ -161,7 +163,7 @@ export function CampaignPage({
                 <div className="campaign-mission-memory">
                   <img src={iconStar} alt="" />
                   <span>
-                    Memoire:{" "}
+                    Mémoire :{" "}
                     {mission.memoryHintProfiles
                       .map((profile) =>
                         progress.immuneMemory.knownProfiles.includes(profile)
@@ -176,7 +178,7 @@ export function CampaignPage({
                 <label className="mission-vaccine">
                   <span>
                     <img src={iconVaccine} alt="" />
-                    Preparation
+                    Préparation
                   </span>
                   <select
                     disabled={!unlocked}
@@ -224,6 +226,18 @@ export function CampaignPage({
           );
         })}
       </section>
+      {confirmReset ? (
+        <ConfirmDialog
+          confirmLabel="Réinitialiser"
+          description="Toutes les missions terminées, les rangs et la mémoire immunitaire de campagne seront effacés."
+          onCancel={() => setConfirmReset(false)}
+          onConfirm={() => {
+            onResetProgress();
+            setConfirmReset(false);
+          }}
+          title="Réinitialiser la campagne ?"
+        />
+      ) : null}
     </div>
   );
 }
@@ -267,9 +281,9 @@ function getMissionStatus(unlocked: boolean, completed: boolean): MissionStatus 
 
 function getStatusLabel(status: MissionStatus): string {
   const labels: Record<MissionStatus, string> = {
-    complete: "terminee",
+    complete: "terminée",
     open: "disponible",
-    locked: "verrouillee",
+    locked: "verrouillée",
   };
 
   return labels[status];

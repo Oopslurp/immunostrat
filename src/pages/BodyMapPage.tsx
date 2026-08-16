@@ -78,6 +78,7 @@ import regionSpleenCritical from "../assets/bodymap-control/region-spleen-critic
 import regionSpleenHealthy from "../assets/bodymap-control/region-spleen-healthy.png";
 import selectionRing from "../assets/bodymap-control/ui-selection-ring.png";
 import { Button } from "../ui/Button";
+import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { Panel } from "../ui/Panel";
 
 type RegionVisualState = "healthy" | "alert" | "critical";
@@ -156,6 +157,7 @@ export function BodyMapPage({
   onBackHome,
 }: BodyMapPageProps) {
   const [difficulty, setDifficulty] = useState<BodyMapDifficulty>(state.difficulty);
+  const [confirmation, setConfirmation] = useState<"new" | "abandon" | null>(null);
   const selectedDefinition = bodyRegionDefinitions[selectedRegionId];
   const selectedRegion = state.regions[selectedRegionId];
   const selectedNodeId = selectedDefinition.regionalNodeId;
@@ -203,11 +205,11 @@ export function BodyMapPage({
         <div className="body-command-title">
           <img src={iconStabilization} alt="" />
           <div>
-            <span className="eyebrow">V9.2 - Partie normale</span>
-            <h1>Strategie globale</h1>
+            <span className="eyebrow">V11.5 · Partie normale</span>
+            <h1>Stratégie globale</h1>
             <p>
               Stabilise l'organisme plusieurs tours, surveille les foyers
-              regionaux et choisis ou engager les renforts immunitaires.
+              régionaux et choisis où engager les renforts immunitaires.
             </p>
           </div>
         </div>
@@ -215,7 +217,7 @@ export function BodyMapPage({
         <div className="body-command-actions">
           <label className="body-difficulty body-command-select">
             <img src={iconDifficulty} alt="" />
-            <span>Difficulte</span>
+            <span>Difficulté</span>
             <select
               value={difficulty}
               onChange={(event) =>
@@ -227,7 +229,7 @@ export function BodyMapPage({
               <option value="hard">Difficile</option>
             </select>
           </label>
-          <Button onClick={() => onNewBodyMapGame(difficulty)}>
+          <Button onClick={() => setConfirmation("new")}>
             Nouvelle partie
           </Button>
           <Button
@@ -238,13 +240,15 @@ export function BodyMapPage({
             <img src={iconTurn} alt="" />
             Avancer un tour
           </Button>
-          <Button onClick={onResetBodyMap}>Abandonner run</Button>
+          <Button className="button-danger-soft" onClick={() => setConfirmation("abandon")}>
+            Abandonner la partie
+          </Button>
         </div>
 
         <div className="body-command-metrics">
           <Metric
             icon={iconGlobalHealth}
-            label="Sante globale"
+            label="Santé globale"
             value={state.globalHealth}
             tone="health"
           />
@@ -256,7 +260,7 @@ export function BodyMapPage({
           />
           <Metric
             icon={iconGlobalInflammation}
-            label="Inflammation systemique"
+            label="Inflammation systémique"
             value={state.systemicInflammation}
             tone="inflammation"
           />
@@ -289,11 +293,11 @@ export function BodyMapPage({
             </span>
             <span>
               <img src={iconInfectedRegion} alt="" />
-              Regions infectees : {victoryProgress.infectedRegions}
+              Régions infectées : {victoryProgress.infectedRegions}
             </span>
             <span>
               <img src={iconCriticalRegion} alt="" />
-              Regions critiques : {victoryProgress.criticalRegions}
+              Régions critiques : {victoryProgress.criticalRegions}
             </span>
             <span>
               <img src={state.runStatus === "victory" ? iconStabilization : iconAlert} alt="" />
@@ -301,9 +305,9 @@ export function BodyMapPage({
               {state.runStatus === "victory"
                 ? "victoire globale"
                 : state.runStatus === "defeat"
-                  ? "defaite globale"
+                  ? "défaite globale"
                   : victoryProgress.ready
-                    ? "presque stabilise"
+                    ? "presque stabilisé"
                     : "en cours"}
             </span>
           </div>
@@ -426,7 +430,7 @@ export function BodyMapPage({
           <div className="body-stat-list">
             <Metric
               icon={iconGlobalHealth}
-              label="Sante locale"
+              label="Santé locale"
               value={selectedRegion.localHealth}
               tone="health"
             />
@@ -445,38 +449,38 @@ export function BodyMapPage({
           </div>
 
           <div className="body-info-grid body-tactical-grid">
-            <span><img src={iconAlert} alt="" />Menace: {formatThreat(selectedRegion.threat)}</span>
+            <span><img src={iconAlert} alt="" />Menace : {formatThreat(selectedRegion.threat)}</span>
             <span>
               <img src={iconMission} alt="" />
-              Mission locale: {missionDefinitions[selectedDefinition.linkedMissionId].displayName}
+              Mission locale : {missionDefinitions[selectedDefinition.linkedMissionId].displayName}
             </span>
             <span>
               <img src={iconMission} alt="" />
-              Preset actif:{" "}
+              Configuration active :{" "}
                   {missionDefinitions[
                 selectedRegion.activeBattleMissionId ??
                   selectedDefinition.linkedMissionId
               ].displayName}
             </span>
-            <span><img src={iconGanglion} alt="" />Ganglion: {selectedNodeDefinition.name}</span>
+            <span><img src={iconGanglion} alt="" />Ganglion : {selectedNodeDefinition.name}</span>
             <span>
               <img src={iconAg} alt="" />
-              Signaux antigeniques: {selectedNode.antigenSignalsDelivered}
+              Signaux antigéniques : {selectedNode.antigenSignalsDelivered}
             </span>
             <span>
               <img src={iconBattle} alt="" />
-              Tentatives locales: {selectedRegion.localDefeatStreak ?? 0}/3
+              Tentatives locales : {selectedRegion.localDefeatStreak ?? 0}/3
             </span>
           </div>
           {selectedRegion.status === "lost" ? (
             <div className="body-alert body-alert-danger">
-              Zone perdue : elle est abandonnee pour cette partie. Elle ne bloque
-              plus la progression, mais la sante globale a deja encaisse la perte.
+              Zone perdue : elle est abandonnée pour cette partie. Elle ne bloque
+              plus la progression, mais la santé globale a déjà encaissé la perte.
             </div>
           ) : null}
 
           <div className="threat-panel">
-            <strong><img src={iconPathogen} alt="" />Pathogenes</strong>
+            <strong><img src={iconPathogen} alt="" />Pathogènes</strong>
             {selectedRegion.pathogens.length ? (
               selectedRegion.pathogens.map((pathogenId) => {
                 const definition = pathogenDefinitions[pathogenId];
@@ -499,12 +503,12 @@ export function BodyMapPage({
                 );
               })
             ) : (
-              <span className="threat-empty">Aucun pathogene majeur</span>
+              <span className="threat-empty">Aucun pathogène majeur</span>
             )}
           </div>
 
           <div className="body-reinforcement-panel">
-            <strong><img src={iconReinforcements} alt="" />Renforts regionaux</strong>
+            <strong><img src={iconReinforcements} alt="" />Renforts régionaux</strong>
             <div className="body-loadout">
               {availableReinforcements.map((unitTypeId) => {
                 const cost = reinforcementCosts[unitTypeId];
@@ -529,7 +533,7 @@ export function BodyMapPage({
                           ),
                         )
                       }
-                      title={`Retirer un ${unitDefinitions[unitTypeId].displayName} et recuperer les ressources`}
+                      title={`Retirer un ${unitDefinitions[unitTypeId].displayName} et récupérer les ressources`}
                     >
                       -
                     </Button>
@@ -580,7 +584,7 @@ export function BodyMapPage({
         <section className="body-final-panel">
           <Panel className="body-alert-panel">
             <span className={`mission-status body-status-${state.runStatus}`}>
-              {state.finalSummary.status === "victory" ? "victoire" : "defaite"}
+              {state.finalSummary.status === "victory" ? "victoire" : "défaite"}
             </span>
             <h2>{state.finalSummary.title}</h2>
             <p>{state.finalSummary.cause}</p>
@@ -588,16 +592,16 @@ export function BodyMapPage({
               <span>Score : {state.finalSummary.score}</span>
               <span>Rang : {state.finalSummary.rank}</span>
               <span>Tour : {state.finalSummary.strategicTurn}</span>
-              <span>Sante globale : {state.finalSummary.globalHealth}%</span>
+              <span>Santé globale : {state.finalSummary.globalHealth}%</span>
               <span>Infection globale : {state.finalSummary.globalInfection}%</span>
               <span>
                 Inflammation : {state.finalSummary.systemicInflammation}%
               </span>
               <span>
-                Regions stabilisees : {state.finalSummary.stabilizedRegions}
+                Régions stabilisées : {state.finalSummary.stabilizedRegions}
               </span>
-              <span>Regions critiques : {state.finalSummary.criticalRegions}</span>
-              <span>Batailles gagnees : {state.finalSummary.battleStats.won}</span>
+              <span>Régions critiques : {state.finalSummary.criticalRegions}</span>
+              <span>Batailles gagnées : {state.finalSummary.battleStats.won}</span>
               <span>Batailles perdues : {state.finalSummary.battleStats.lost}</span>
             </div>
             <div className="body-action-row">
@@ -639,14 +643,38 @@ export function BodyMapPage({
         <Panel className="body-alert-panel">
           <div className="body-section-heading body-section-heading-small">
             <img src={iconHelp} alt="" />
-            <h2>Aide biologique simplifiee</h2>
+            <h2>Aide biologique simplifiée</h2>
           </div>
-          <p>Les ganglions regionaux coordonnent la reponse adaptative.</p>
+          <p>Les ganglions régionaux coordonnent la réponse adaptative.</p>
           <p>Le sang circule partout : utile aux renforts, dangereux pour la propagation.</p>
           <p>La moelle osseuse soutient la production de cellules immunitaires.</p>
-          <p>La lymphe transporte les signaux antigeniques vers les ganglions.</p>
+          <p>La lymphe transporte les signaux antigéniques vers les ganglions.</p>
         </Panel>
       </section>
+      {confirmation === "new" ? (
+        <ConfirmDialog
+          confirmLabel="Nouvelle partie"
+          description="La carte du corps actuelle et sa progression stratégique seront remplacées."
+          onCancel={() => setConfirmation(null)}
+          onConfirm={() => {
+            onNewBodyMapGame(difficulty);
+            setConfirmation(null);
+          }}
+          title="Générer une nouvelle carte ?"
+        />
+      ) : null}
+      {confirmation === "abandon" ? (
+        <ConfirmDialog
+          confirmLabel="Abandonner"
+          description="La carte active sera supprimée. Les records déjà enregistrés seront conservés."
+          onCancel={() => setConfirmation(null)}
+          onConfirm={() => {
+            onResetBodyMap();
+            setConfirmation(null);
+          }}
+          title="Abandonner la partie ?"
+        />
+      ) : null}
     </div>
   );
 }
@@ -698,15 +726,15 @@ function formatStatus(status: string): string {
   const labels: Record<string, string> = {
     healthy: "sain",
     alert: "alerte",
-    infected: "infecte",
-    highInflammation: "inflammation elevee",
+    infected: "infecté",
+    highInflammation: "inflammation élevée",
     inBattle: "en bataille",
-    controlled: "controle",
+    controlled: "contrôlé",
     weakened: "affaibli",
     critical: "critique",
     lost: "perdu",
     victory: "victoire",
-    defeat: "defaite",
+    defeat: "défaite",
   };
 
   return labels[status] ?? status;
@@ -715,7 +743,7 @@ function formatStatus(status: string): string {
 function formatThreat(threat: string): string {
   const labels: Record<string, string> = {
     none: "aucune",
-    bacterial: "bacterienne",
+    bacterial: "bactérienne",
     viral: "virale",
     fungal: "fongique",
     parasite: "parasitaire",

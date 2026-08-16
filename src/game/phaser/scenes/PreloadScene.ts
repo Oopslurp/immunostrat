@@ -46,6 +46,5 @@ export class PreloadScene extends Phaser.Scene {
     prepareCombatCoreTextures(this);
     registerEntityAnimations(this);
     this.scene.start("MissionScene");
-    this.scene.launch("UIScene");
   }
 }

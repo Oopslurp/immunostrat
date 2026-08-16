@@ -118,13 +118,13 @@ describe("V9.3 consolidation", () => {
     expect(progress.blockerDetails.some((blocker) => blocker.regionName === "Poumons"))
       .toBe(true);
     expect(progress.blockers).toContain(
-      `Poumons encore infecte : 28% > seuil ${bodyMapEndingRules.victoryMaxRegionInfection}%`,
+      `Poumons encore infecté : 28% > seuil ${bodyMapEndingRules.victoryMaxRegionInfection}%`,
     );
     expect(progress.blockers).toContain(
-      `Infection globale trop elevee : 22% > ${bodyMapEndingRules.victoryMaxGlobalInfection}%`,
+      `Infection globale trop élevée : 22% > ${bodyMapEndingRules.victoryMaxGlobalInfection}%`,
     );
     expect(progress.blockers).toContain(
-      `Sante globale trop basse : 35% < ${bodyMapEndingRules.victoryMinGlobalHealth}%`,
+      `Santé globale trop basse : 35% < ${bodyMapEndingRules.victoryMinGlobalHealth}%`,
     );
   });
 

@@ -85,7 +85,7 @@ export const infiniteDifficultySettings: Record<
     mutatorExtraFrequency: 1,
   },
   nightmare: {
-    label: "Nightmare",
+    label: "Extrême",
     scoreMultiplier: 2,
     waveCountMultiplier: 1.36,
     resourceMultiplier: 0.76,
@@ -98,13 +98,13 @@ export const infinitePhases: InfinitePhaseDefinition[] = [
   {
     id: 1,
     name: "Contamination simple",
-    description: "Bacteries faibles, installation de la defense.",
+    description: "Bactéries faibles, installation de la défense.",
     startsAtCycle: 1,
     threatPool: ["cocciRapid", "basicBacterium"],
   },
   {
     id: 2,
-    name: "Expansion bacterienne",
+    name: "Expansion bactérienne",
     description: "Groupes plus nombreux, cytokines et neutrophiles importants.",
     startsAtCycle: 3,
     threatPool: ["cocciRapid", "proliferatingBacillus"],
@@ -119,14 +119,14 @@ export const infinitePhases: InfinitePhaseDefinition[] = [
   {
     id: 4,
     name: "Infection virale",
-    description: "Virus respiratoire et cytolytique, cellules infectees, interferons.",
+    description: "Virus respiratoire et cytolytique, cellules infectées, interférons.",
     startsAtCycle: 7,
     threatPool: ["respiratoryVirus", "cytolyticVirus", "cocciRapid"],
   },
   {
     id: 5,
     name: "Infection mixte",
-    description: "Priorisation entre bacteries, virus et opportunistes simples.",
+    description: "Priorisation entre bactéries, virus et opportunistes simples.",
     startsAtCycle: 9,
     threatPool: [
       "respiratoryVirus",
@@ -151,7 +151,7 @@ export const infinitePhases: InfinitePhaseDefinition[] = [
   },
   {
     id: 7,
-    name: "Crise systemique",
+    name: "Crise systémique",
     description: "Inflammation, opportunistes et ressources deviennent instables.",
     startsAtCycle: 13,
     threatPool: [
@@ -168,8 +168,8 @@ export const infinitePhases: InfinitePhaseDefinition[] = [
   },
   {
     id: 8,
-    name: "Nightmare",
-    description: "Menaces combinees avec champignons, parasites et cellules anormales.",
+    name: "Extrême",
+    description: "Menaces combinées avec champignons, parasites et cellules anormales.",
     startsAtCycle: 15,
     threatPool: [
       "respiratoryVirus",
@@ -197,8 +197,8 @@ export const infinitePhases: InfinitePhaseDefinition[] = [
 export const infiniteMutators: InfiniteMutatorDefinition[] = [
   {
     id: "bacterialSpeedUp",
-    name: "Adaptation bacterienne : vitesse +",
-    description: "Les bacteries se deplacent plus vite.",
+    name: "Adaptation bactérienne : vitesse +",
+    description: "Les bactéries se déplacent plus vite.",
     phaseMin: 2,
     intensity: 0.14,
     weight: 8,
@@ -206,8 +206,8 @@ export const infiniteMutators: InfiniteMutatorDefinition[] = [
   },
   {
     id: "bacterialResistanceUp",
-    name: "Resistance bacterienne",
-    description: "Les bacteries ont plus de points de vie.",
+    name: "Résistance bactérienne",
+    description: "Les bactéries ont plus de points de vie.",
     phaseMin: 3,
     intensity: 0.18,
     weight: 7,
@@ -225,7 +225,7 @@ export const infiniteMutators: InfiniteMutatorDefinition[] = [
   {
     id: "biofilmStrengthUp",
     name: "Biofilm renforce",
-    description: "Les colonies protegent mieux les foyers bacteriens.",
+    description: "Les colonies protègent mieux les foyers bactériens.",
     phaseMin: 5,
     intensity: 0.15,
     weight: 5,
@@ -251,7 +251,7 @@ export const infiniteMutators: InfiniteMutatorDefinition[] = [
   },
   {
     id: "tissueFragilityUp",
-    name: "Tissu fragilise",
+    name: "Tissu fragilisé",
     description: "Les erreurs coutent plus cher en sante du tissu.",
     phaseMin: 7,
     intensity: 0.14,
