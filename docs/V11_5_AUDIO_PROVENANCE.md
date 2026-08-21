@@ -7,7 +7,8 @@ sound libraries, or third-party audio assets are included.
 ## Generator
 
 - Engine: Web Audio API
-- Source: oscillators, deterministic filtered-noise buffer, gain envelopes,
+- Source: square, triangle and saw oscillators; deterministic filtered-noise
+  buffer; quantized wave shaping; stepped pitch; micro-crackle envelopes;
   low-frequency modulation and restrained stereo panning
 - Noise seed: `0x1155`
 - Ownership: original Immunostrat project code
@@ -21,7 +22,7 @@ sound libraries, or third-party audio assets are included.
   dendritic collection, lymphatic delivery
 - Threats: combat contact, infection, pathogen clearance, biofilm, wave alert
 - Results: victory and defeat
-- Continuous layers: microscopic ambience and minimal tactical pulse
+- Continuous layers: low biological drone and short quantized tactical pulse
 
 ## Runtime safety
 

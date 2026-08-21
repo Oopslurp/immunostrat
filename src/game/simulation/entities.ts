@@ -37,6 +37,7 @@ export type ImmuneUnitEntity = {
   engagementRadius?: number;
   leashRadius?: number;
   guardRadius?: number;
+  orderAreaRadius?: number | null;
   explicitTargetEntityId?: EntityId | null;
   lastOrderFeedback?: string;
   lifeRemainingMs?: number;

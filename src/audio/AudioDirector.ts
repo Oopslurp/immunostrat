@@ -28,41 +28,45 @@ type SoundRecipe = Readonly<{
   wave?: OscillatorType;
   noise?: number;
   filter?: number;
+  pitchSteps?: number;
+  crushSteps?: number;
+  crackle?: number;
+  harmonicRatio?: number;
 }>;
 
 const MAX_TRANSIENT_VOICES = 16;
 
 const GAME_RECIPES: Record<GameAudioEventName, SoundRecipe> = {
-  selection: { frequency: 320, endFrequency: 430, duration: 0.08, gain: 0.11 },
-  focus: { frequency: 460, endFrequency: 610, duration: 0.12, gain: 0.13 },
-  move: { frequency: 170, endFrequency: 250, duration: 0.11, gain: 0.15, noise: 0.1 },
-  engage: { frequency: 115, endFrequency: 82, duration: 0.15, gain: 0.18, noise: 0.18 },
-  special: { frequency: 260, endFrequency: 520, duration: 0.24, gain: 0.2, wave: "triangle" },
-  arrival: { frequency: 145, endFrequency: 330, duration: 0.28, gain: 0.17, noise: 0.12 },
-  combat: { frequency: 92, endFrequency: 62, duration: 0.09, gain: 0.12, noise: 0.3, filter: 1150 },
-  antibody: { frequency: 690, endFrequency: 470, duration: 0.11, gain: 0.1, wave: "sine" },
-  phagocytosis: { frequency: 124, endFrequency: 68, duration: 0.34, gain: 0.19, noise: 0.22, filter: 760 },
-  net: { frequency: 210, endFrequency: 82, duration: 0.42, gain: 0.21, noise: 0.36, filter: 1700 },
-  nk: { frequency: 105, endFrequency: 72, duration: 0.16, gain: 0.18, wave: "square", filter: 800 },
-  cytotoxicT: { frequency: 380, endFrequency: 155, duration: 0.14, gain: 0.16, wave: "triangle" },
-  infection: { frequency: 78, endFrequency: 54, duration: 0.4, gain: 0.19, noise: 0.12, filter: 520 },
-  clearance: { frequency: 260, endFrequency: 580, duration: 0.18, gain: 0.14, wave: "sine" },
-  dendritic: { frequency: 420, endFrequency: 650, duration: 0.14, gain: 0.12 },
-  lymph: { frequency: 290, endFrequency: 760, duration: 0.32, gain: 0.18, wave: "sine" },
-  biofilm: { frequency: 64, endFrequency: 48, duration: 0.58, gain: 0.18, noise: 0.2, filter: 430 },
-  wave: { frequency: 155, endFrequency: 310, duration: 0.46, gain: 0.2, wave: "triangle" },
-  victory: { frequency: 330, endFrequency: 660, duration: 0.72, gain: 0.23, wave: "sine" },
-  defeat: { frequency: 130, endFrequency: 48, duration: 0.78, gain: 0.22, wave: "triangle", noise: 0.08 },
-  restart: { frequency: 230, endFrequency: 120, duration: 0.2, gain: 0.16, noise: 0.08 },
+  selection: { frequency: 420, endFrequency: 680, duration: 0.055, gain: 0.14, wave: "square", noise: 0.08, pitchSteps: 3, crushSteps: 16, crackle: 0.5 },
+  focus: { frequency: 510, endFrequency: 820, duration: 0.085, gain: 0.15, wave: "triangle", noise: 0.07, pitchSteps: 4, crushSteps: 20, crackle: 0.4, harmonicRatio: 2 },
+  move: { frequency: 230, endFrequency: 135, duration: 0.075, gain: 0.17, wave: "square", noise: 0.13, pitchSteps: 3, crushSteps: 14, crackle: 0.65 },
+  engage: { frequency: 150, endFrequency: 72, duration: 0.11, gain: 0.21, wave: "sawtooth", noise: 0.22, filter: 1450, pitchSteps: 4, crushSteps: 12, crackle: 0.8 },
+  special: { frequency: 280, endFrequency: 620, duration: 0.2, gain: 0.23, wave: "square", noise: 0.12, pitchSteps: 6, crushSteps: 18, crackle: 0.45, harmonicRatio: 1.5 },
+  arrival: { frequency: 170, endFrequency: 390, duration: 0.2, gain: 0.2, wave: "triangle", noise: 0.18, pitchSteps: 5, crushSteps: 18, crackle: 0.55 },
+  combat: { frequency: 118, endFrequency: 54, duration: 0.065, gain: 0.17, wave: "square", noise: 0.42, filter: 1750, pitchSteps: 3, crushSteps: 9, crackle: 1 },
+  antibody: { frequency: 860, endFrequency: 430, duration: 0.075, gain: 0.13, wave: "square", noise: 0.12, filter: 4200, pitchSteps: 5, crushSteps: 18, crackle: 0.65 },
+  phagocytosis: { frequency: 142, endFrequency: 52, duration: 0.27, gain: 0.23, wave: "sawtooth", noise: 0.34, filter: 1050, pitchSteps: 7, crushSteps: 12, crackle: 0.7, harmonicRatio: 0.5 },
+  net: { frequency: 260, endFrequency: 68, duration: 0.32, gain: 0.24, wave: "square", noise: 0.48, filter: 2400, pitchSteps: 8, crushSteps: 10, crackle: 1 },
+  nk: { frequency: 132, endFrequency: 58, duration: 0.12, gain: 0.22, wave: "square", noise: 0.28, filter: 1200, pitchSteps: 4, crushSteps: 9, crackle: 0.9, harmonicRatio: 2 },
+  cytotoxicT: { frequency: 460, endFrequency: 130, duration: 0.1, gain: 0.2, wave: "square", noise: 0.18, filter: 2800, pitchSteps: 5, crushSteps: 12, crackle: 0.75 },
+  infection: { frequency: 92, endFrequency: 43, duration: 0.31, gain: 0.22, wave: "sawtooth", noise: 0.24, filter: 720, pitchSteps: 6, crushSteps: 11, crackle: 0.5, harmonicRatio: 0.5 },
+  clearance: { frequency: 330, endFrequency: 740, duration: 0.13, gain: 0.17, wave: "square", noise: 0.1, pitchSteps: 5, crushSteps: 16, crackle: 0.45 },
+  dendritic: { frequency: 470, endFrequency: 760, duration: 0.1, gain: 0.15, wave: "triangle", noise: 0.09, pitchSteps: 4, crushSteps: 18, crackle: 0.4 },
+  lymph: { frequency: 310, endFrequency: 880, duration: 0.24, gain: 0.21, wave: "square", noise: 0.12, pitchSteps: 7, crushSteps: 20, crackle: 0.4, harmonicRatio: 1.5 },
+  biofilm: { frequency: 72, endFrequency: 38, duration: 0.46, gain: 0.22, wave: "sawtooth", noise: 0.34, filter: 620, pitchSteps: 8, crushSteps: 10, crackle: 0.55, harmonicRatio: 0.5 },
+  wave: { frequency: 170, endFrequency: 360, duration: 0.34, gain: 0.23, wave: "square", noise: 0.14, pitchSteps: 7, crushSteps: 16, crackle: 0.45 },
+  victory: { frequency: 330, endFrequency: 790, duration: 0.54, gain: 0.25, wave: "triangle", noise: 0.08, pitchSteps: 9, crushSteps: 22, crackle: 0.3, harmonicRatio: 1.5 },
+  defeat: { frequency: 146, endFrequency: 39, duration: 0.58, gain: 0.24, wave: "sawtooth", noise: 0.18, filter: 960, pitchSteps: 9, crushSteps: 12, crackle: 0.45, harmonicRatio: 0.5 },
+  restart: { frequency: 270, endFrequency: 105, duration: 0.14, gain: 0.19, wave: "square", noise: 0.14, pitchSteps: 4, crushSteps: 14, crackle: 0.55 },
 };
 
 const UI_RECIPES: Record<UiAudioEvent, SoundRecipe> = {
-  hover: { frequency: 520, endFrequency: 560, duration: 0.045, gain: 0.045 },
-  confirm: { frequency: 380, endFrequency: 610, duration: 0.09, gain: 0.09 },
-  back: { frequency: 360, endFrequency: 210, duration: 0.11, gain: 0.085 },
-  invalid: { frequency: 145, endFrequency: 118, duration: 0.16, gain: 0.1, wave: "triangle" },
-  pause: { frequency: 280, endFrequency: 170, duration: 0.16, gain: 0.1 },
-  resume: { frequency: 210, endFrequency: 390, duration: 0.16, gain: 0.1 },
+  hover: { frequency: 760, endFrequency: 620, duration: 0.025, gain: 0.05, wave: "square", pitchSteps: 2, crushSteps: 12 },
+  confirm: { frequency: 440, endFrequency: 820, duration: 0.06, gain: 0.11, wave: "square", noise: 0.05, pitchSteps: 3, crushSteps: 16, crackle: 0.35 },
+  back: { frequency: 420, endFrequency: 190, duration: 0.07, gain: 0.1, wave: "square", noise: 0.05, pitchSteps: 3, crushSteps: 14, crackle: 0.35 },
+  invalid: { frequency: 180, endFrequency: 92, duration: 0.11, gain: 0.13, wave: "sawtooth", noise: 0.09, pitchSteps: 4, crushSteps: 10, crackle: 0.45 },
+  pause: { frequency: 320, endFrequency: 145, duration: 0.1, gain: 0.13, wave: "square", pitchSteps: 3, crushSteps: 14 },
+  resume: { frequency: 190, endFrequency: 460, duration: 0.1, gain: 0.13, wave: "square", pitchSteps: 4, crushSteps: 14 },
 };
 
 export class AudioDirector {
@@ -311,13 +315,17 @@ export class AudioDirector {
     const output = context.createGain();
     const panner = context.createStereoPanner();
     const filter = context.createBiquadFilter();
+    const crusher = context.createWaveShaper();
     const oscillator = context.createOscillator();
-    const randomVariation = 0.985 + Math.random() * 0.03;
+    const randomVariation = 0.99 + Math.random() * 0.02;
     const duration = recipe.duration;
-    const attack = Math.min(0.025, duration * 0.2);
+    const attack = Math.min(0.004, duration * 0.12);
 
     filter.type = "lowpass";
-    filter.frequency.value = recipe.filter ?? 2600;
+    filter.frequency.value = recipe.filter ?? 3200;
+    filter.Q.value = 2.4;
+    crusher.curve = createQuantizedWaveCurve(recipe.crushSteps ?? 24);
+    crusher.oversample = "none";
     panner.pan.value = pan;
     output.gain.setValueAtTime(0.0001, now);
     output.gain.exponentialRampToValueAtTime(
@@ -326,26 +334,72 @@ export class AudioDirector {
     );
     output.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
-    oscillator.type = recipe.wave ?? "sine";
-    oscillator.frequency.setValueAtTime(recipe.frequency * randomVariation, now);
-    oscillator.frequency.exponentialRampToValueAtTime(
-      Math.max(20, (recipe.endFrequency ?? recipe.frequency) * randomVariation),
-      now + duration,
+    oscillator.type = recipe.wave ?? "square";
+    scheduleSteppedFrequency(
+      oscillator.frequency,
+      recipe.frequency * randomVariation,
+      (recipe.endFrequency ?? recipe.frequency) * randomVariation,
+      now,
+      duration,
+      recipe.pitchSteps ?? 4,
     );
-    oscillator.connect(filter);
+    oscillator.connect(crusher);
+    crusher.connect(filter);
     filter.connect(output);
     output.connect(panner);
     panner.connect(destination);
 
     const sources: AudioScheduledSourceNode[] = [oscillator];
+    const disconnectables: AudioNode[] = [output, panner, filter, crusher, oscillator];
+
+    if (recipe.harmonicRatio) {
+      const harmonic = context.createOscillator();
+      const harmonicGain = context.createGain();
+      harmonic.type = recipe.wave === "sawtooth" ? "square" : "triangle";
+      harmonicGain.gain.value = 0.24;
+      scheduleSteppedFrequency(
+        harmonic.frequency,
+        recipe.frequency * recipe.harmonicRatio * randomVariation,
+        (recipe.endFrequency ?? recipe.frequency) *
+          recipe.harmonicRatio *
+          randomVariation,
+        now,
+        duration,
+        recipe.pitchSteps ?? 4,
+      );
+      harmonic.connect(harmonicGain);
+      harmonicGain.connect(crusher);
+      sources.push(harmonic);
+      disconnectables.push(harmonic, harmonicGain);
+    }
+
     if (recipe.noise && this.noiseBuffer) {
       const noise = context.createBufferSource();
-      const noiseGain = context.createGain();
+      const bodyNoiseGain = context.createGain();
+      const crackleFilter = context.createBiquadFilter();
+      const crackleGain = context.createGain();
       noise.buffer = this.noiseBuffer;
-      noiseGain.gain.value = recipe.noise;
-      noise.connect(noiseGain);
-      noiseGain.connect(filter);
+      bodyNoiseGain.gain.value = recipe.noise * 0.18;
+      crackleFilter.type = "highpass";
+      crackleFilter.frequency.value = Math.min(
+        5200,
+        Math.max(950, (recipe.filter ?? 2600) * 0.72),
+      );
+      crackleFilter.Q.value = 1.6;
+      scheduleCrackleEnvelope(
+        crackleGain.gain,
+        now,
+        duration,
+        recipe.noise,
+        recipe.crackle ?? 0.35,
+      );
+      noise.connect(bodyNoiseGain);
+      bodyNoiseGain.connect(filter);
+      noise.connect(crackleFilter);
+      crackleFilter.connect(crackleGain);
+      crackleGain.connect(output);
       sources.push(noise);
+      disconnectables.push(noise, bodyNoiseGain, crackleFilter, crackleGain);
     }
 
     let stopped = false;
@@ -368,9 +422,9 @@ export class AudioDirector {
     this.voices.add(voice);
     oscillator.addEventListener("ended", () => {
       this.voices.delete(voice);
-      output.disconnect();
-      panner.disconnect();
-      filter.disconnect();
+      for (const node of disconnectables) {
+        node.disconnect();
+      }
     }, { once: true });
 
     for (const source of sources) {
@@ -416,7 +470,7 @@ export class AudioDirector {
     this.musicTimer = window.setInterval(() => {
       if (this.scene === "paused" || this.scene === "result") return;
       this.playTonalPulse();
-    }, this.scene === "menu" ? 7200 : 5600);
+    }, this.scene === "menu" ? 5200 : 3900);
     this.applySettings();
   }
 
@@ -428,20 +482,25 @@ export class AudioDirector {
     const oscillator = context.createOscillator();
     const gain = context.createGain();
     const filter = context.createBiquadFilter();
+    const crusher = context.createWaveShaper();
     const lfo = context.createOscillator();
     const lfoGain = context.createGain();
     const now = context.currentTime;
 
-    oscillator.type = "sine";
+    oscillator.type = group === "ambience" ? "triangle" : "square";
     oscillator.frequency.value = frequency;
     filter.type = "lowpass";
-    filter.frequency.value = 460;
+    filter.frequency.value = group === "ambience" ? 420 : 560;
+    filter.Q.value = 1.8;
+    crusher.curve = createQuantizedWaveCurve(group === "ambience" ? 32 : 24);
+    crusher.oversample = "none";
     gain.gain.value = gainValue;
     lfo.frequency.value = 0.11;
     lfoGain.gain.value = gainValue * 0.28;
     lfo.connect(lfoGain);
     lfoGain.connect(gain.gain);
-    oscillator.connect(filter);
+    oscillator.connect(crusher);
+    crusher.connect(filter);
     filter.connect(gain);
     gain.connect(destination);
     oscillator.start(now);
@@ -451,6 +510,7 @@ export class AudioDirector {
       try { oscillator.stop(); } catch { /* already stopped */ }
       try { lfo.stop(); } catch { /* already stopped */ }
       oscillator.disconnect();
+      crusher.disconnect();
       lfo.disconnect();
       lfoGain.disconnect();
       filter.disconnect();
@@ -459,37 +519,25 @@ export class AudioDirector {
   }
 
   private playTonalPulse(): void {
-    const context = this.context;
-    const destination = this.groupGains.music;
-    if (!context || !destination) return;
-
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    const now = context.currentTime;
     const frequency = this.scene === "menu" ? 196 : 146.83;
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(frequency, now);
-    oscillator.frequency.exponentialRampToValueAtTime(frequency * 1.5, now + 1.4);
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.035, now + 0.18);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
-    oscillator.connect(gain);
-    gain.connect(destination);
-    let stopped = false;
-    const stopPulse = () => {
-      if (stopped) return;
-      stopped = true;
-      try { oscillator.stop(); } catch { /* already stopped */ }
-    };
-    this.pulseStops.add(stopPulse);
-    oscillator.start(now);
-    oscillator.stop(now + 1.85);
-    oscillator.addEventListener("ended", () => {
-      stopped = true;
-      this.pulseStops.delete(stopPulse);
-      oscillator.disconnect();
-      gain.disconnect();
-    }, { once: true });
+    this.playRecipe(
+      "music.tissue-pulse",
+      {
+        frequency,
+        endFrequency: frequency * 1.5,
+        duration: 0.38,
+        gain: 0.045,
+        wave: "square",
+        noise: 0.06,
+        filter: 1500,
+        pitchSteps: 5,
+        crushSteps: 22,
+        crackle: 0.35,
+      },
+      "music",
+      3,
+      1000,
+    );
   }
 
   private stopLoops(): void {
@@ -518,6 +566,61 @@ function createNoiseBuffer(context: AudioContext): AudioBuffer {
     data[index] = ((seed / 0xffffffff) * 2 - 1) * 0.72;
   }
   return buffer;
+}
+
+function createQuantizedWaveCurve(stepCount: number): Float32Array<ArrayBuffer> {
+  const sampleCount = 1024;
+  const safeStepCount = Math.max(4, Math.round(stepCount));
+  const curve = new Float32Array(sampleCount);
+
+  for (let index = 0; index < sampleCount; index += 1) {
+    const normalized = (index / (sampleCount - 1)) * 2 - 1;
+    curve[index] = Math.round(normalized * safeStepCount) / safeStepCount;
+  }
+
+  return curve;
+}
+
+function scheduleSteppedFrequency(
+  parameter: AudioParam,
+  startFrequency: number,
+  endFrequency: number,
+  startTime: number,
+  duration: number,
+  stepCount: number,
+): void {
+  const safeStepCount = Math.max(2, Math.round(stepCount));
+
+  for (let index = 0; index < safeStepCount; index += 1) {
+    const progress = index / (safeStepCount - 1);
+    const frequency = startFrequency + (endFrequency - startFrequency) * progress;
+    parameter.setValueAtTime(
+      Math.max(20, frequency),
+      startTime + (duration * index) / safeStepCount,
+    );
+  }
+}
+
+function scheduleCrackleEnvelope(
+  parameter: AudioParam,
+  startTime: number,
+  duration: number,
+  amount: number,
+  density: number,
+): void {
+  const burstCount = Math.max(1, Math.round(2 + duration * 18 * density));
+  parameter.setValueAtTime(0.0001, startTime);
+
+  for (let index = 0; index < burstCount; index += 1) {
+    const burstTime = startTime + duration * ((index + 0.35) / (burstCount + 0.4));
+    const burstEnd = Math.min(startTime + duration, burstTime + 0.006);
+    parameter.setValueAtTime(0.0001, burstTime);
+    parameter.linearRampToValueAtTime(
+      Math.max(0.0002, amount * (0.72 + (index % 3) * 0.12)),
+      Math.min(burstEnd, burstTime + 0.0012),
+    );
+    parameter.exponentialRampToValueAtTime(0.0001, burstEnd);
+  }
 }
 
 function getGameCooldown(name: GameAudioEventName): number {
