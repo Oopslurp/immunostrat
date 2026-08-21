@@ -100,6 +100,10 @@ import {
 } from "../rendering/selectionPresentation";
 import { CombatAudioTracker } from "../../../audio/CombatAudioTracker";
 import type { GameAudioEvent, GameAudioEventName } from "../../../audio/audioEvents";
+import {
+  findSelectableUnitAtPoint,
+  findSelectableUnitsIntersectingRect,
+} from "../input/unitSelection";
 
 type CameraKeys = {
   upW: Phaser.Input.Keyboard.Key;
@@ -153,6 +157,8 @@ export class MissionScene extends Phaser.Scene {
   private lastPublishedStatus: GameState["status"] | null = null;
   private leftDragStart: { x: number; y: number } | null = null;
   private leftDragCurrent: { x: number; y: number } | null = null;
+  private leftDragStartScreen: { x: number; y: number } | null = null;
+  private leftDragCurrentScreen: { x: number; y: number } | null = null;
   private rightDragStartScreen: { x: number; y: number } | null = null;
   private rightDragLastScreen: { x: number; y: number } | null = null;
   private rightDragMoved = false;
@@ -252,6 +258,7 @@ export class MissionScene extends Phaser.Scene {
     this.input.on("gameout", () => {
       this.setWorldHoveredSelectedUnitId(null);
     });
+    window.addEventListener("pointerup", this.handleWindowPointerUp);
     this.cameraKeys = this.createCameraKeys();
     this.setupNeutrophilDebugControls();
 
@@ -313,6 +320,7 @@ export class MissionScene extends Phaser.Scene {
   }
 
   private cleanupBridge() {
+    window.removeEventListener("pointerup", this.handleWindowPointerUp);
     this.bridgeUnsubscribe?.();
     this.bridgeUnsubscribe = undefined;
     this.bridgeSelectionPresentationUnsubscribe?.();
@@ -656,6 +664,8 @@ export class MissionScene extends Phaser.Scene {
         y: pointer.worldY,
       };
       this.leftDragCurrent = { ...this.leftDragStart };
+      this.leftDragStartScreen = { x: pointer.x, y: pointer.y };
+      this.leftDragCurrentScreen = { ...this.leftDragStartScreen };
     }
   }
 
@@ -709,14 +719,17 @@ export class MissionScene extends Phaser.Scene {
       x: pointer.worldX,
       y: pointer.worldY,
     };
+    this.leftDragCurrentScreen = { x: pointer.x, y: pointer.y };
   }
 
   private recoverLostPointerRelease(): void {
     const pointer = this.input.activePointer;
 
     if (this.leftDragStart && !pointer.leftButtonDown()) {
-      this.leftDragStart = null;
-      this.leftDragCurrent = null;
+      this.commitLeftPointerGesture(
+        this.leftDragCurrent ?? { x: pointer.worldX, y: pointer.worldY },
+        this.leftDragCurrentScreen ?? { x: pointer.x, y: pointer.y },
+      );
     }
 
     if (this.rightDragStartScreen && !pointer.rightButtonDown()) {
@@ -727,8 +740,6 @@ export class MissionScene extends Phaser.Scene {
   }
 
   private handlePointerUp(pointer: Phaser.Input.Pointer) {
-    const state = this.simulation.getState();
-
     if (!this.gameplayInputEnabled) {
       this.clearPointerTransients();
       return;
@@ -742,25 +753,78 @@ export class MissionScene extends Phaser.Scene {
       return;
     }
 
-    if (!this.leftDragStart || state.status !== "running") {
-      this.leftDragStart = null;
-      this.leftDragCurrent = null;
-      return;
+    this.commitLeftPointerGesture(
+      { x: pointer.worldX, y: pointer.worldY },
+      { x: pointer.x, y: pointer.y },
+    );
+  }
+
+  private readonly handleWindowPointerUp = (event: PointerEvent): void => {
+    if (event.button === 0 && this.leftDragStart) {
+      const releasePosition = this.getWindowPointerPosition(event);
+      this.commitLeftPointerGesture(
+        releasePosition?.world ?? this.leftDragCurrent ?? this.leftDragStart,
+        releasePosition?.screen ??
+          this.leftDragCurrentScreen ??
+          this.leftDragStartScreen ?? { x: 0, y: 0 },
+      );
     }
 
-    const position = {
-      x: pointer.worldX,
-      y: pointer.worldY,
+    if (event.button === 2 && this.rightDragStartScreen) {
+      this.rightDragStartScreen = null;
+      this.rightDragLastScreen = null;
+      this.rightDragMoved = false;
+    }
+  };
+
+  private getWindowPointerPosition(event: PointerEvent): {
+    screen: { x: number; y: number };
+    world: { x: number; y: number };
+  } | null {
+    const bounds = this.game.canvas.getBoundingClientRect();
+    if (bounds.width <= 0 || bounds.height <= 0) {
+      return null;
+    }
+
+    const screen = {
+      x: (event.clientX - bounds.left) * (this.scale.width / bounds.width),
+      y: (event.clientY - bounds.top) * (this.scale.height / bounds.height),
     };
+    const world = this.cameras.main.getWorldPoint(screen.x, screen.y);
+
+    return {
+      screen,
+      world: { x: world.x, y: world.y },
+    };
+  }
+
+  private commitLeftPointerGesture(
+    position: { x: number; y: number },
+    screenPosition: { x: number; y: number },
+  ): void {
+    const state = this.simulation.getState();
     const dragStart = this.leftDragStart;
-    const dragWidth = Math.abs(position.x - dragStart.x);
-    const dragHeight = Math.abs(position.y - dragStart.y);
-    const isAreaSelection =
-      dragWidth >= balanceValues.dragAreaSelectionThresholdPx ||
-      dragHeight >= balanceValues.dragAreaSelectionThresholdPx;
+    const dragStartScreen = this.leftDragStartScreen;
 
     this.leftDragStart = null;
     this.leftDragCurrent = null;
+    this.leftDragStartScreen = null;
+    this.leftDragCurrentScreen = null;
+
+    if (
+      !dragStart ||
+      !dragStartScreen ||
+      !this.gameplayInputEnabled ||
+      state.status !== "running"
+    ) {
+      return;
+    }
+
+    const dragWidthPx = Math.abs(screenPosition.x - dragStartScreen.x);
+    const dragHeightPx = Math.abs(screenPosition.y - dragStartScreen.y);
+    const isAreaSelection =
+      dragWidthPx >= balanceValues.dragAreaSelectionThresholdPx ||
+      dragHeightPx >= balanceValues.dragAreaSelectionThresholdPx;
 
     if (isAreaSelection) {
       const selectedIds = this.findImmuneUnitsInRect(state, dragStart, position);
@@ -862,16 +926,11 @@ export class MissionScene extends Phaser.Scene {
     state: GameState,
     position: { x: number; y: number },
   ): string | null {
-    for (const entity of Object.values(state.entities)) {
-      if (
-        isControllableImmuneUnit(entity) &&
-        distanceSquared(entity.position, position) <= entity.radius * entity.radius
-      ) {
-        return entity.id;
-      }
-    }
-
-    return null;
+    return findSelectableUnitAtPoint(
+      Object.values(state.entities).filter(isControllableImmuneUnit),
+      position,
+      this.cameras.main.zoom,
+    );
   }
 
   private findSelectedImmuneUnitAtPosition(
@@ -900,21 +959,12 @@ export class MissionScene extends Phaser.Scene {
     start: { x: number; y: number },
     end: { x: number; y: number },
   ): string[] {
-    const minX = Math.min(start.x, end.x);
-    const maxX = Math.max(start.x, end.x);
-    const minY = Math.min(start.y, end.y);
-    const maxY = Math.max(start.y, end.y);
-
-    return Object.values(state.entities)
-      .filter(
-        (entity) =>
-          isControllableImmuneUnit(entity) &&
-          entity.position.x >= minX &&
-          entity.position.x <= maxX &&
-          entity.position.y >= minY &&
-          entity.position.y <= maxY,
-      )
-      .map((entity) => entity.id);
+    return findSelectableUnitsIntersectingRect(
+      Object.values(state.entities).filter(isControllableImmuneUnit),
+      start,
+      end,
+      this.cameras.main.zoom,
+    );
   }
 
   private findHostileAtPosition(
@@ -1247,6 +1297,8 @@ export class MissionScene extends Phaser.Scene {
   private clearPointerTransients(): void {
     this.leftDragStart = null;
     this.leftDragCurrent = null;
+    this.leftDragStartScreen = null;
+    this.leftDragCurrentScreen = null;
     this.rightDragStartScreen = null;
     this.rightDragLastScreen = null;
     this.rightDragMoved = false;
@@ -2129,8 +2181,12 @@ export class MissionScene extends Phaser.Scene {
     const height = Math.abs(this.leftDragCurrent.y - this.leftDragStart.y);
 
     if (
-      width < balanceValues.dragPreviewThresholdPx &&
-      height < balanceValues.dragPreviewThresholdPx
+      this.leftDragStartScreen &&
+      this.leftDragCurrentScreen &&
+      Math.abs(this.leftDragCurrentScreen.x - this.leftDragStartScreen.x) <
+        balanceValues.dragPreviewThresholdPx &&
+      Math.abs(this.leftDragCurrentScreen.y - this.leftDragStartScreen.y) <
+        balanceValues.dragPreviewThresholdPx
     ) {
       return;
     }

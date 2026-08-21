@@ -113,6 +113,7 @@ describe("V9.4 semi-guided RTS gameplay", () => {
 
       expect(unit.orderAnchor).toEqual(site.position);
       expect(unit.tacticalState).toBe("movingToSite");
+      expect(unit.orderAreaRadius).toBe(site.radius - unit.radius);
       expect(
         Math.hypot(
           (unit.targetPosition?.x ?? 0) - site.position.x,
@@ -139,8 +140,56 @@ describe("V9.4 semi-guided RTS gameplay", () => {
         Math.hypot(
           unit.position.x - site.position.x,
           unit.position.y - site.position.y,
-        ),
-      ).toBeLessThan(site.radius);
+        ) + unit.radius,
+      ).toBeLessThanOrEqual(site.radius);
+    }
+  });
+
+  it("never lets a site guard cross the site boundary while chasing", () => {
+    const state = createInitialState("persistentInfectionV3");
+    const site = state.tacticalMap.combatSites[0];
+    const macrophage = Object.values(state.entities).find(
+      (entity) => entity.kind === "macrophage",
+    );
+
+    if (!macrophage || !isImmuneUnit(macrophage)) {
+      throw new Error("Expected macrophage");
+    }
+
+    let ordered = applyCommand(state, {
+      type: "selectEntity",
+      entityId: macrophage.id,
+    });
+    ordered = applyCommand(ordered, {
+      type: "orderGuardArea",
+      position: site.position,
+      radius: site.radius,
+    });
+
+    const guard = ordered.entities[macrophage.id];
+    if (!isImmuneUnit(guard) || guard.orderAreaRadius === null || guard.orderAreaRadius === undefined) {
+      throw new Error("Expected constrained site guard");
+    }
+
+    guard.position = {
+      x: site.position.x + guard.orderAreaRadius - 1,
+      y: site.position.y,
+    };
+    guard.targetPosition = {
+      x: site.position.x + site.radius + 120,
+      y: site.position.y,
+    };
+    guard.tacticalState = "engagingNearbyTarget";
+
+    for (let elapsedMs = 0; elapsedMs < 10_000; elapsedMs += 50) {
+      ordered.elapsedMs = elapsedMs;
+      applyMovementSystem(ordered, 50);
+      expect(
+        Math.hypot(
+          guard.position.x - site.position.x,
+          guard.position.y - site.position.y,
+        ) + guard.radius,
+      ).toBeLessThanOrEqual(site.radius + 0.0001);
     }
   });
 

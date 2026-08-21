@@ -151,6 +151,7 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
         selected.orderAnchor = { ...selected.targetPosition };
         selected.guardRadius = unitDefinitions[selected.unitTypeId].guardRadius;
         selected.leashRadius = unitDefinitions[selected.unitTypeId].leashRadius;
+        selected.orderAreaRadius = null;
         selected.idleTargetPosition = null;
         selected.explicitTargetEntityId = null;
         selected.tacticalState = "movingToPoint";
@@ -187,6 +188,7 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
         command.radius * balanceValues.combatSiteOrders.formationRadiusRatio -
           selected.radius,
       );
+      const maximumUnitCenterRadius = Math.max(0, command.radius - selected.radius);
 
       selected.targetPosition = clampPositionAroundAnchor(
         formationPosition,
@@ -197,11 +199,16 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
       selected.guardRadius = Math.min(
         definition.guardRadius,
         command.radius * balanceValues.combatSiteOrders.patrolRadiusRatio,
+        maximumUnitCenterRadius,
       );
       selected.leashRadius = Math.max(
-        selected.attackRange + selected.radius,
-        command.radius * balanceValues.combatSiteOrders.leashRadiusRatio,
+        0,
+        Math.min(
+          maximumUnitCenterRadius,
+          command.radius * balanceValues.combatSiteOrders.leashRadiusRatio,
+        ),
       );
+      selected.orderAreaRadius = maximumUnitCenterRadius;
       selected.idleTargetPosition = null;
       selected.explicitTargetEntityId = null;
       selected.tacticalState = "movingToSite";
@@ -228,6 +235,7 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
         selected.attackDamage > 0
       ) {
         selected.orderAnchor = selected.orderAnchor ?? { ...selected.position };
+        selected.orderAreaRadius = null;
         selected.targetPosition = { ...target.position };
         selected.idleTargetPosition = null;
         selected.explicitTargetEntityId = target.id;
@@ -249,6 +257,7 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
     if (debris && dendritic && isDendriticCell(dendritic)) {
       dendritic.targetPosition = { ...debris.position };
       dendritic.orderAnchor = { ...debris.position };
+      dendritic.orderAreaRadius = null;
       dendritic.idleTargetPosition = null;
       dendritic.explicitTargetEntityId = null;
       dendritic.tacticalState = "collectingAntigen";
@@ -278,6 +287,7 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
       ) {
         selected.targetPosition = { ...cell.position };
         selected.orderAnchor = selected.orderAnchor ?? { ...selected.position };
+        selected.orderAreaRadius = null;
         selected.idleTargetPosition = null;
         selected.explicitTargetEntityId = null;
         selected.tacticalState = "engagingNearbyTarget";
@@ -309,6 +319,7 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
           y: lymphTarget.y,
         };
         selected.orderAnchor = { ...selected.targetPosition };
+        selected.orderAreaRadius = null;
         selected.idleTargetPosition = null;
         selected.explicitTargetEntityId = null;
         selected.tacticalState = "deliveringToLymph";
@@ -330,6 +341,7 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
         selected.idleTargetPosition = null;
         selected.explicitTargetEntityId = null;
         selected.orderAnchor = { ...selected.position };
+        selected.orderAreaRadius = null;
         selected.tacticalState = "holdingPosition";
         selected.lastOrderFeedback = "Position tenue";
       }
@@ -353,6 +365,7 @@ export function applyCommand(state: GameState, command: GameCommand): GameState 
 
         selected.targetPosition = { ...target };
         selected.orderAnchor = { ...target };
+        selected.orderAreaRadius = null;
         selected.idleTargetPosition = null;
         selected.explicitTargetEntityId = null;
         selected.tacticalState = "retreating";

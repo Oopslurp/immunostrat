@@ -50,13 +50,14 @@ export function applyMovementSystem(state: GameState, deltaMs: number): void {
       }
 
       if (entity.targetPosition) {
+        entity.targetPosition = constrainToOrderArea(entity, entity.targetPosition);
         const biofilmSlowMultiplier = getBiofilmSlowMultiplier(state, entity.position);
         const plasmocyteActiveMultiplier =
           isPlasmocyte(entity) && hasHostileInPlasmocyteRange(state, entity)
             ? balanceValues.adaptive.plasmocyteActiveMovementMultiplier
             : 1;
-        entity.position = moveToward(
-          entity.position,
+        entity.position = moveImmuneUnitToward(
+          entity,
           entity.targetPosition,
           entity.movementSpeed *
             mapBalance.unitTravelCompensation *
@@ -147,14 +148,65 @@ function applyIdleMovement(
       (stableHash(immuneUnit.id) % balanceValues.idleRetargetSpreadMs);
   }
 
-  immuneUnit.position = moveToward(
-    immuneUnit.position,
+  immuneUnit.idleTargetPosition = constrainToOrderArea(
+    immuneUnit,
+    immuneUnit.idleTargetPosition,
+  );
+  immuneUnit.position = moveImmuneUnitToward(
+    immuneUnit,
     immuneUnit.idleTargetPosition,
     immuneUnit.idleMovementSpeed *
       getRuntimeMapBalance(state).unitTravelCompensation *
       getBiofilmSlowMultiplier(state, immuneUnit.position) *
       maxMoveScale,
   );
+}
+
+function moveImmuneUnitToward(
+  immuneUnit: ImmuneUnitEntity,
+  target: Vector2,
+  maximumDistance: number,
+): Vector2 {
+  const anchor = immuneUnit.orderAnchor;
+  const orderAreaRadius = immuneUnit.orderAreaRadius;
+  const wasInsideOrderArea =
+    anchor && orderAreaRadius !== null && orderAreaRadius !== undefined
+      ? distance(immuneUnit.position, anchor) <= orderAreaRadius
+      : false;
+  const nextPosition = moveToward(
+    immuneUnit.position,
+    constrainToOrderArea(immuneUnit, target),
+    maximumDistance,
+  );
+
+  return wasInsideOrderArea
+    ? constrainToOrderArea(immuneUnit, nextPosition)
+    : nextPosition;
+}
+
+function constrainToOrderArea(
+  immuneUnit: ImmuneUnitEntity,
+  position: Vector2,
+): Vector2 {
+  const anchor = immuneUnit.orderAnchor;
+  const orderAreaRadius = immuneUnit.orderAreaRadius;
+
+  if (!anchor || orderAreaRadius === null || orderAreaRadius === undefined) {
+    return { ...position };
+  }
+
+  const dx = position.x - anchor.x;
+  const dy = position.y - anchor.y;
+  const currentDistance = Math.sqrt(dx * dx + dy * dy);
+
+  if (currentDistance <= orderAreaRadius || currentDistance === 0) {
+    return { ...position };
+  }
+
+  return {
+    x: anchor.x + (dx / currentDistance) * orderAreaRadius,
+    y: anchor.y + (dy / currentDistance) * orderAreaRadius,
+  };
 }
 
 function getNearestPathogenPressureTarget(
