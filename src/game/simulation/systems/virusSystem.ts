@@ -61,6 +61,41 @@ function moveVirusTowardHealthyCell(
   virus: VirusEntity,
   deltaMs: number,
 ): void {
+  const infiltratedTarget = virus.infiltrationTargetCellId
+    ? state.tissueCells.find((cell) => cell.id === virus.infiltrationTargetCellId)
+    : undefined;
+
+  if (infiltratedTarget?.status === "healthy") {
+    virus.position = { ...infiltratedTarget.position };
+
+    if ((virus.netMovementMultiplier ?? 1) <= 0) {
+      return;
+    }
+
+    const protectedByAntiviral =
+      infiltratedTarget.antiviralProtectedMs > 0 ||
+      isTreatmentActive(state, "antiviralDrug");
+    const progressMultiplier = protectedByAntiviral
+      ? balanceValues.antiviral.infiltrationProgressMultiplier
+      : 1;
+    virus.infiltrationRemainingMs = Math.max(
+      0,
+      (virus.infiltrationRemainingMs ??
+        balanceValues.virus.cellInfiltrationDurationMs) -
+        deltaMs *
+          progressMultiplier *
+          getRuntimeMapBalance(state).infectionRateMultiplier,
+    );
+
+    if (virus.infiltrationRemainingMs <= 0) {
+      infectCell(state, infiltratedTarget, virus);
+      delete state.entities[virus.id];
+    }
+    return;
+  }
+
+  virus.infiltrationTargetCellId = undefined;
+  virus.infiltrationRemainingMs = undefined;
   const target = findNearestHealthyCell(state, virus.position);
 
   if (!target) {
@@ -90,8 +125,9 @@ function moveVirusTowardHealthyCell(
       return;
     }
 
-    infectCell(state, target, virus);
-    delete state.entities[virus.id];
+    virus.infiltrationTargetCellId = target.id;
+    virus.infiltrationRemainingMs = balanceValues.virus.cellInfiltrationDurationMs;
+    virus.position = { ...target.position };
     return;
   }
 

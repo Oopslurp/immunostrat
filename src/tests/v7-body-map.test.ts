@@ -12,6 +12,7 @@ import {
   toMissionPreparation,
 } from "../game/bodyMap/bodyMapSystem";
 import { createGeneratedBodyMapState } from "../game/bodyMap/bodyMapGenerator";
+import { bodyRegionOrder } from "../game/bodyMap/bodyRegions";
 import { bodyBattleMissionOrder, campaignMissionOrder } from "../game/data/missions";
 import { completeMission, resetCampaignProgress } from "../game/campaign/progress";
 import { createInitialState } from "../game/simulation/core/createInitialState";
@@ -51,6 +52,11 @@ describe("V7 body map strategy layer", () => {
     });
 
     expect(next.regions.skin.infection).toBeLessThan(state.regions.skin.infection);
+    expect(next.regions.skin.infection).toBeLessThanOrEqual(
+      bodyMapEndingRules.victoryMaxRegionInfection,
+    );
+    expect(next.regions.skin.threat).toBe("none");
+    expect(next.regions.skin.activeBattleMissionId).toBeUndefined();
     expect(next.regionalNodes.skinNode.antigenSignalsDelivered).toBe(1);
     expect(next.strategicTurn).toBe(state.strategicTurn + 1);
   });
@@ -190,6 +196,63 @@ describe("V7 body map strategy layer", () => {
 
     expect(next.regions.blood.infection).toBeGreaterThan(0);
     expect(next.alerts[0]).toContain("Propagation");
+  });
+
+  it("protects a treated stable region from immediate reinfection", () => {
+    const state = createDefaultBodyMapState();
+
+    state.regions.skin.infection = 82;
+    state.regions.skin.threat = "viral";
+    state.regions.blood.infection = 0;
+    state.regions.blood.treatedCount = 1;
+    state.regions.blood.status = "controlled";
+
+    const next = advanceStrategicTurn(state);
+
+    expect(next.regions.blood.infection).toBe(0);
+  });
+
+  it("lets a normal body-map run converge after its infected regions are won", () => {
+    let state = createGeneratedBodyMapState("normal", "stabilizable-run");
+    const infectedRegions = bodyRegionOrder.filter(
+      (regionId) =>
+        state.regions[regionId].infection >
+        bodyMapEndingRules.victoryMaxRegionInfection,
+    );
+
+    for (const regionId of infectedRegions) {
+      const region = state.regions[regionId];
+      state = applyBodyBattleOutcome(state, {
+        regionId,
+        missionId: region.activeBattleMissionId ?? "skinBacterialSkirmish",
+        status: "victory",
+        score: 250,
+        tissueHealthRemaining: 85,
+        tissueMaxHealth: 100,
+        civilianCellsLost: 0,
+        enemiesRemaining: 0,
+        inflammationPeak: 42,
+      });
+    }
+
+    for (
+      let turn = 0;
+      turn < bodyMapEndingRules.victoryRequiredStableTurns + 2 &&
+      state.runStatus === "running";
+      turn += 1
+    ) {
+      state = advanceStrategicTurn(state);
+    }
+
+    expect(state.runStatus).toBe("victory");
+    expect(
+      bodyRegionOrder.filter(
+        (regionId) =>
+          state.regions[regionId].status !== "lost" &&
+          state.regions[regionId].infection >
+            bodyMapEndingRules.victoryMaxRegionInfection,
+      ),
+    ).toHaveLength(0);
   });
 
   it("generates normal body map games with regional battle presets", () => {

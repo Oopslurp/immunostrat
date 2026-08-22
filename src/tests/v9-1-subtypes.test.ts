@@ -6,9 +6,11 @@ import {
   type PathogenTypeId,
 } from "../game/data/pathogens";
 import { createGeneratedBodyMapState } from "../game/bodyMap/bodyMapGenerator";
+import { balanceValues } from "../game/data/balance";
 import { createInitialState } from "../game/simulation/core/createInitialState";
 import { spawnVirus } from "../game/simulation/pathogens/createVirus";
 import { applyVirusSystem } from "../game/simulation/systems/virusSystem";
+import { getRuntimeMapBalance } from "../game/simulation/systems/runtimeMapBalance";
 
 const expectedSubtypes: PathogenTypeId[] = [
   "cocciRapid",
@@ -72,6 +74,12 @@ describe("V9.1 pathogen subtypes and science metadata", () => {
     });
 
     applyVirusSystem(state, 32);
+    applyVirusSystem(
+      state,
+      balanceValues.virus.cellInfiltrationDurationMs /
+        getRuntimeMapBalance(state).infectionRateMultiplier +
+        1,
+    );
 
     expect(
       state.tissueCells.find((candidate) => candidate.id === cell.id)

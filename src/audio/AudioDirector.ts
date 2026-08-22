@@ -11,6 +11,10 @@ import type {
   GameAudioEventName,
   UiAudioEvent,
 } from "./audioEvents";
+import {
+  createCellularMusicPhrase,
+  type CellularMusicNote,
+} from "./proceduralMusic";
 
 type AudioScene = "menu" | "game" | "paused" | "result";
 type AudioGroup = "music" | "ambience" | "sfx" | "ui";
@@ -80,6 +84,7 @@ export class AudioDirector {
   private loopStops: Array<() => void> = [];
   private readonly pulseStops = new Set<() => void>();
   private musicTimer: number | null = null;
+  private musicPhraseIndex = 0;
   private scene: AudioScene = "menu";
   private unlocked = false;
   private hidden = false;
@@ -465,12 +470,18 @@ export class AudioDirector {
       this.startDrone(ambienceFrequency, "ambience", this.scene === "menu" ? 0.05 : 0.065),
     );
     this.loopStops.push(
-      this.startDrone(ambienceFrequency * 1.51, "music", this.scene === "menu" ? 0.025 : 0.035),
+      this.startMusicBed(this.scene === "menu" ? 73.42 : 65.41),
     );
+
+    const musicScene = this.scene === "menu" ? "menu" : "game";
+    const phrase = createCellularMusicPhrase(musicScene, this.musicPhraseIndex);
+    if (this.scene !== "paused" && this.scene !== "result") {
+      this.playCellularPhrase();
+    }
     this.musicTimer = window.setInterval(() => {
       if (this.scene === "paused" || this.scene === "result") return;
-      this.playTonalPulse();
-    }, this.scene === "menu" ? 5200 : 3900);
+      this.playCellularPhrase();
+    }, phrase.intervalMs);
     this.applySettings();
   }
 
@@ -518,26 +529,162 @@ export class AudioDirector {
     };
   }
 
-  private playTonalPulse(): void {
-    const frequency = this.scene === "menu" ? 196 : 146.83;
-    this.playRecipe(
-      "music.tissue-pulse",
-      {
-        frequency,
-        endFrequency: frequency * 1.5,
-        duration: 0.38,
-        gain: 0.045,
-        wave: "square",
-        noise: 0.06,
-        filter: 1500,
-        pitchSteps: 5,
-        crushSteps: 22,
-        crackle: 0.35,
-      },
-      "music",
-      3,
-      1000,
+  private startMusicBed(frequency: number): () => void {
+    const context = this.context;
+    const destination = this.groupGains.music;
+    if (!context || !destination) return () => undefined;
+
+    const oscillator = context.createOscillator();
+    const harmonic = context.createOscillator();
+    const harmonicGain = context.createGain();
+    const output = context.createGain();
+    const filter = context.createBiquadFilter();
+    const lfo = context.createOscillator();
+    const lfoGain = context.createGain();
+    const now = context.currentTime;
+
+    oscillator.type = "triangle";
+    oscillator.frequency.value = frequency;
+    harmonic.type = "square";
+    harmonic.frequency.value = frequency * 2;
+    harmonicGain.gain.value = 0.06;
+    filter.type = "lowpass";
+    filter.frequency.value = 520;
+    filter.Q.value = 1.2;
+    output.gain.value = this.scene === "menu" ? 0.052 : 0.044;
+    lfo.frequency.value = 0.08;
+    lfoGain.gain.value = 4.5;
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(oscillator.detune);
+    oscillator.connect(filter);
+    harmonic.connect(harmonicGain);
+    harmonicGain.connect(filter);
+    filter.connect(output);
+    output.connect(destination);
+    oscillator.start(now);
+    harmonic.start(now);
+    lfo.start(now);
+
+    return () => {
+      try { oscillator.stop(); } catch { /* already stopped */ }
+      try { harmonic.stop(); } catch { /* already stopped */ }
+      try { lfo.stop(); } catch { /* already stopped */ }
+      oscillator.disconnect();
+      harmonic.disconnect();
+      harmonicGain.disconnect();
+      lfo.disconnect();
+      lfoGain.disconnect();
+      filter.disconnect();
+      output.disconnect();
+    };
+  }
+
+  private playCellularPhrase(): void {
+    const scene = this.scene === "menu" ? "menu" : "game";
+    const phrase = createCellularMusicPhrase(scene, this.musicPhraseIndex);
+    this.musicPhraseIndex += 1;
+
+    for (const note of phrase.notes) {
+      this.scheduleMusicNote(note);
+    }
+  }
+
+  private scheduleMusicNote(note: CellularMusicNote): void {
+    const context = this.context;
+    const destination = this.groupGains.music;
+    if (!context || !destination || context.state !== "running") return;
+
+    const startTime = context.currentTime + note.offsetSeconds;
+    const endTime = startTime + note.durationSeconds;
+    const oscillator = context.createOscillator();
+    const harmonic = context.createOscillator();
+    const harmonicGain = context.createGain();
+    const output = context.createGain();
+    const filter = context.createBiquadFilter();
+    const crusher = context.createWaveShaper();
+    const panner = context.createStereoPanner();
+    const delay = context.createDelay(1.5);
+    const delayGain = context.createGain();
+    const feedback = context.createGain();
+    const lfo = context.createOscillator();
+    const lfoGain = context.createGain();
+
+    oscillator.type = note.timbre === "cell-bell" ? "triangle" : "sine";
+    oscillator.frequency.value = note.frequency;
+    harmonic.type = "square";
+    harmonic.frequency.value = note.frequency * (note.timbre === "cell-bell" ? 2 : 1.5);
+    harmonicGain.gain.value = note.timbre === "cell-bell" ? 0.09 : 0.035;
+    crusher.curve = createQuantizedWaveCurve(note.timbre === "cell-bell" ? 42 : 64);
+    crusher.oversample = "none";
+    filter.type = "lowpass";
+    filter.frequency.value = note.timbre === "cell-bell" ? 2700 : 760;
+    filter.Q.value = note.timbre === "cell-bell" ? 1.4 : 0.8;
+    panner.pan.value = note.pan;
+    delay.delayTime.value = note.timbre === "cell-bell" ? 0.31 : 0.43;
+    delayGain.gain.value = note.timbre === "cell-bell" ? 0.32 : 0.18;
+    feedback.gain.value = 0.16;
+    lfo.frequency.value = note.timbre === "cell-bell" ? 0.17 : 0.09;
+    lfoGain.gain.value = note.timbre === "cell-bell" ? 3.2 : 5.5;
+
+    output.gain.setValueAtTime(0.0001, startTime);
+    output.gain.exponentialRampToValueAtTime(note.gain, startTime + 0.045);
+    output.gain.exponentialRampToValueAtTime(
+      Math.max(0.0002, note.gain * 0.38),
+      startTime + Math.min(0.7, note.durationSeconds * 0.3),
     );
+    output.gain.exponentialRampToValueAtTime(0.0001, endTime);
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(oscillator.detune);
+    oscillator.connect(crusher);
+    harmonic.connect(harmonicGain);
+    harmonicGain.connect(crusher);
+    crusher.connect(filter);
+    filter.connect(output);
+    output.connect(panner);
+    panner.connect(destination);
+    panner.connect(delay);
+    delay.connect(delayGain);
+    delayGain.connect(destination);
+    delay.connect(feedback);
+    feedback.connect(delay);
+
+    const sources: AudioScheduledSourceNode[] = [oscillator, harmonic, lfo];
+    const nodes: AudioNode[] = [
+      oscillator,
+      harmonic,
+      harmonicGain,
+      output,
+      filter,
+      crusher,
+      panner,
+      delay,
+      delayGain,
+      feedback,
+      lfo,
+      lfoGain,
+    ];
+    let stopped = false;
+    const stop = () => {
+      if (stopped) return;
+      stopped = true;
+      for (const source of sources) {
+        try { source.stop(); } catch { /* already stopped */ }
+      }
+      this.pulseStops.delete(stop);
+    };
+
+    this.pulseStops.add(stop);
+    oscillator.addEventListener("ended", () => {
+      this.pulseStops.delete(stop);
+      for (const node of nodes) node.disconnect();
+    }, { once: true });
+
+    for (const source of sources) {
+      source.start(startTime);
+      source.stop(endTime + 0.75);
+    }
   }
 
   private stopLoops(): void {

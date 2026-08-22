@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   activateRegionalNode,
   advanceStrategicTurn,
-  applyPassiveBodyMapInfectionTick,
   assignReinforcement,
   canRegionLaunchBattle,
   getAvailableReinforcements,
@@ -167,24 +166,6 @@ export function BodyMapPage({
   const victoryProgress = getBodyMapVictoryProgress(state);
   const isRunFinished = state.runStatus !== "running";
   const canLaunchBattle = !isRunFinished && canRegionLaunchBattle(selectedRegion);
-  const stateRef = useRef(state);
-
-  useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
-
-  useEffect(() => {
-    if (isRunFinished) {
-      return;
-    }
-
-    const intervalId = window.setInterval(() => {
-      onUpdateState(applyPassiveBodyMapInfectionTick(stateRef.current));
-    }, 5000);
-
-    return () => window.clearInterval(intervalId);
-  }, [isRunFinished, onUpdateState]);
-
   const launchBattle = () => {
     const bodyPreparation = prepareBodyBattle(state, selectedRegionId);
 
@@ -208,8 +189,8 @@ export function BodyMapPage({
             <span className="eyebrow">V11.5 · Partie normale</span>
             <h1>Stratégie globale</h1>
             <p>
-              Stabilise l'organisme plusieurs tours, surveille les foyers
-              régionaux et choisis où engager les renforts immunitaires.
+              Stabilise l'organisme plusieurs tours. L'infection évolue quand tu
+              termines une bataille ou avances volontairement le tour.
             </p>
           </div>
         </div>
