@@ -109,6 +109,7 @@ export const balanceValues = {
     viralProductionMultiplier: 0.45,
     infectionRangeMultiplier: 0.72,
     virusSpeedMultiplier: 0.74,
+    infiltrationProgressMultiplier: 0.5,
     inflammationIncrease: 5,
   },
   tissueCells: {
@@ -120,8 +121,8 @@ export const balanceValues = {
     directHitTissueDamageMultiplier: 0.18,
     destroyedTissueDamage: 3,
     infectedTissueDamagePerSecond: 0.16,
-    infectedVirusProductionIntervalMs: 6200,
-    infectedInitialDelayMs: 3600,
+    infectedVirusProductionIntervalMs: 8000,
+    infectedInitialDelayMs: 6500,
     infectedVirusBurstCount: 1,
     infectionTissueDamage: 2,
     antiviralProtectionMs: 12000,
@@ -129,6 +130,7 @@ export const balanceValues = {
   },
   virus: {
     infectionRange: 24,
+    cellInfiltrationDurationMs: 2600,
     spawnJitterRadius: 26,
     freeLifetimeMs: 26000,
     noHealthyCellDecayPerSecond: 2.5,

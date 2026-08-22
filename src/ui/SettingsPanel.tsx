@@ -10,7 +10,7 @@ type SettingsPanelProps = {
 
 const sliders: Array<{ key: AudioVolumeKey; label: string; description: string }> = [
   { key: "master", label: "Volume général", description: "Ensemble du mix" },
-  { key: "music", label: "Musique", description: "Pulsation tactique" },
+  { key: "music", label: "Musique", description: "Mélodie cellulaire" },
   { key: "ambience", label: "Ambiance", description: "Respiration microscopique" },
   { key: "sfx", label: "Combat", description: "Cellules, menaces et signaux" },
   { key: "ui", label: "Interface", description: "Menus et confirmations" },

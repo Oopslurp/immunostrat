@@ -296,39 +296,6 @@ export function activateRegionalNode(
   return next;
 }
 
-export function applyPassiveBodyMapInfectionTick(
-  state: BodyMapState,
-): BodyMapState {
-  if (state.runStatus !== "running") {
-    return state;
-  }
-
-  const next = cloneBodyMapState(state);
-  let changed = false;
-
-  for (const regionId of bodyRegionOrder) {
-    const region = next.regions[regionId];
-
-    if (
-      region.status === "lost" ||
-      region.status === "controlled" ||
-      region.status === "healthy" ||
-      region.localHealth <= 0
-    ) {
-      continue;
-    }
-
-    region.infection = clamp(region.infection + 1, 0, 100);
-    changed = true;
-  }
-
-  if (!changed) {
-    return state;
-  }
-
-  return updateBodyMapEndState(recalculateGlobalMetrics(next));
-}
-
 export function canRegionLaunchBattle(region: BodyRegionState): boolean {
   if (region.status === "lost") {
     return false;
@@ -437,14 +404,13 @@ export function applyBodyBattleOutcome(
       outcome.tissueMaxHealth && outcome.tissueMaxHealth > 0
         ? (outcome.tissueHealthRemaining ?? 0) / outcome.tissueMaxHealth
         : 0.7;
-    const infectionDrop =
-      quality === "clean" ? 56 : quality === "strained" ? 36 : 20;
+    const residualInfection = quality === "clean" ? 0 : 6;
     const healthDelta = quality === "clean" ? 12 : tissueRatio >= 0.45 ? 4 : -7;
     const inflammationPeak = outcome.inflammationPeak ?? 0;
     const inflammationDelta =
       inflammationPeak >= 82 ? -4 : quality === "clean" ? -22 : -12;
 
-    region.infection = clamp(region.infection - infectionDrop, 0, 100);
+    region.infection = Math.min(region.infection, residualInfection);
     region.localDefeatStreak = 0;
     region.inflammation = clamp(region.inflammation + inflammationDelta, 0, 100);
     next.systemicInflammation = clamp(
@@ -458,6 +424,9 @@ export function applyBodyBattleOutcome(
       0,
       100,
     );
+    region.threat = "none";
+    region.pathogens = [];
+    region.activeBattleMissionId = undefined;
     region.status = getRegionStatus(region);
     node.antigenSignalsDelivered += Math.max(1, outcome.lymphSignalsDelivered ?? 0);
     node.activation = clamp(
@@ -526,21 +495,29 @@ export function applyBodyBattleOutcome(
     );
   }
 
-  return advanceStrategicTurn(next);
+  return advanceStrategicTurn(next, { allowSpread: outcome.status !== "victory" });
 }
 
-export function advanceStrategicTurn(state: BodyMapState): BodyMapState {
+export function advanceStrategicTurn(
+  state: BodyMapState,
+  options: { allowSpread?: boolean } = {},
+): BodyMapState {
   if (state.runStatus !== "running") {
     return state;
   }
 
   const next = cloneBodyMapState(state);
   const spreadAlerts: string[] = [];
+  let spreadOccurred = false;
 
   next.strategicTurn += 1;
 
   for (const regionId of bodyRegionOrder) {
     const region = next.regions[regionId];
+
+    if (region.status === "lost") {
+      continue;
+    }
 
     if (region.infection <= 0) {
       region.inflammation = clamp(region.inflammation - 2, 0, 100);
@@ -549,6 +526,21 @@ export function advanceStrategicTurn(state: BodyMapState): BodyMapState {
     }
 
     const node = next.regionalNodes[bodyRegionDefinitions[regionId].regionalNodeId];
+    if (region.infection <= bodyMapEndingRules.victoryMaxRegionInfection) {
+      const recovery = node.active ? 4 : 2;
+
+      region.infection = clamp(region.infection - recovery, 0, 100);
+      region.inflammation = clamp(region.inflammation - recovery * 0.75, 0, 100);
+      region.localHealth = clamp(region.localHealth + recovery * 0.3, 0, 100);
+      if (region.infection <= 0 && (region.treatedCount ?? 0) > 0) {
+        region.threat = "none";
+        region.pathogens = [];
+        region.activeBattleMissionId = undefined;
+      }
+      region.status = getRegionStatus(region);
+      continue;
+    }
+
     const nodeReduction = node.active ? 0.72 : 1;
     const recentOutcomeFactor =
       region.lastBattleQuality === "clean"
@@ -565,7 +557,11 @@ export function advanceStrategicTurn(state: BodyMapState): BodyMapState {
     region.inflammation = clamp(region.inflammation + growth * 0.45, 0, 100);
     region.localHealth = clamp(region.localHealth - growth * 0.18, 0, 100);
 
-    if (shouldAttemptSpread(next, regionId)) {
+    if (
+      options.allowSpread !== false &&
+      !spreadOccurred &&
+      shouldAttemptSpread(next, regionId)
+    ) {
       const targetId = findSpreadTarget(next, regionId);
 
       if (targetId) {
@@ -587,6 +583,7 @@ export function advanceStrategicTurn(state: BodyMapState): BodyMapState {
         );
         target.activeBattleMissionId =
           target.activeBattleMissionId ?? bodyRegionDefinitions[targetId].linkedMissionId;
+        spreadOccurred = true;
         spreadAlerts.push(
           `Propagation ${formatThreat(region.threat)} detectee : ${sourceDefinition.name} vers ${targetDefinition.name}.`,
         );
@@ -873,8 +870,16 @@ function findSpreadTarget(
   const source = bodyRegionDefinitions[sourceRegionId];
   const candidates = source.connections.filter((targetId) => {
     const target = state.regions[targetId];
+    const stabilizedByTreatment =
+      (target.treatedCount ?? 0) > 0 &&
+      target.infection <= bodyMapEndingRules.victoryMaxRegionInfection;
 
-    return target.infection < 45 && target.localHealth > 0;
+    return (
+      !stabilizedByTreatment &&
+      target.status !== "lost" &&
+      target.infection < 45 &&
+      target.localHealth > 0
+    );
   });
 
   return candidates[0] ?? null;

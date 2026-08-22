@@ -9,6 +9,7 @@ import type { GameState } from "../game/simulation/core/GameState";
 import { stepSimulation } from "../game/simulation/core/stepSimulation";
 import { spawnBacterium } from "../game/simulation/pathogens/createBacterium";
 import { spawnVirus } from "../game/simulation/pathogens/createVirus";
+import { getRuntimeMapBalance } from "../game/simulation/systems/runtimeMapBalance";
 
 describe("V5 viral infection and tissue cells", () => {
   it("starts with tissue cells and an initial immune force", () => {
@@ -44,7 +45,7 @@ describe("V5 viral infection and tissue cells", () => {
     ).toBe(true);
   });
 
-  it("free viruses infect healthy tissue cells and reduce tissue health", () => {
+  it("requires viruses to infiltrate a tissue cell before infection", () => {
     const initial = createInitialState("viralInfectionV6");
     const targetCell = initial.tissueCells[0];
     const state: GameState = {
@@ -61,13 +62,71 @@ describe("V5 viral infection and tissue cells", () => {
       y: targetCell.position.y,
     });
 
-    const infected = stepSimulation(state, 100);
+    const infiltrating = stepSimulation(state, 100);
+    const infiltratingVirus = Object.values(infiltrating.entities).find(
+      (entity) => entity.kind === "virus",
+    );
 
+    expect(infiltrating.tissueCells[0].status).toBe("healthy");
+    expect(infiltrating.tissue.health).toBe(initial.tissue.health);
+    expect(infiltratingVirus).toMatchObject({
+      kind: "virus",
+      infiltrationTargetCellId: targetCell.id,
+      infiltrationRemainingMs: balanceValues.virus.cellInfiltrationDurationMs,
+    });
+    const infiltrationDurationMs =
+      balanceValues.virus.cellInfiltrationDurationMs /
+      getRuntimeMapBalance(infiltrating).infectionRateMultiplier;
+
+    const almostInfected = stepSimulation(
+      infiltrating,
+      infiltrationDurationMs - 10,
+    );
+    expect(almostInfected.tissueCells[0].status).toBe("healthy");
+
+    const infected = stepSimulation(almostInfected, 20);
     expect(infected.tissueCells[0].status).toBe("infected");
     expect(infected.tissue.health).toBeLessThan(initial.tissue.health);
     expect(
       Object.values(infected.entities).some((entity) => entity.kind === "virus"),
     ).toBe(false);
+  });
+
+  it("delays the first viral release after a cell becomes infected", () => {
+    const initial = createInitialState("viralInfectionV6");
+    const state: GameState = {
+      ...initial,
+      entities: {},
+      waves: {
+        currentWaveIndex: missionDefinitions.viralInfectionV6.waves.length,
+        spawnedInCurrentWave: 0,
+      },
+      tissueCells: initial.tissueCells.map((cell, index) =>
+        index === 0
+          ? {
+              ...cell,
+              status: "infected",
+              infectedElapsedMs: 0,
+              nextVirusBurstMs: balanceValues.tissueCells.infectedInitialDelayMs,
+            }
+          : cell,
+      ),
+    };
+
+    const waiting = stepSimulation(
+      state,
+      balanceValues.tissueCells.infectedInitialDelayMs /
+        getRuntimeMapBalance(state).spreadRateMultiplier -
+        10,
+    );
+    expect(
+      Object.values(waiting.entities).filter((entity) => entity.kind === "virus"),
+    ).toHaveLength(0);
+
+    const released = stepSimulation(waiting, 20);
+    expect(
+      Object.values(released.entities).filter((entity) => entity.kind === "virus"),
+    ).toHaveLength(balanceValues.tissueCells.infectedVirusBurstCount);
   });
 
   it("infected tissue cells produce new viruses over time", () => {

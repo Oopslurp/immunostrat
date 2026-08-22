@@ -4,6 +4,7 @@ import {
   normalizeAudioSettings,
 } from "../audio/audioSettings";
 import { CombatAudioTracker } from "../audio/CombatAudioTracker";
+import { createCellularMusicPhrase } from "../audio/proceduralMusic";
 import { GameBridge } from "../game/phaser/GameBridge";
 import { cloneState } from "../game/simulation/core/cloneState";
 import { createInitialState } from "../game/simulation/core/createInitialState";
@@ -13,6 +14,21 @@ import {
 } from "../game/presentation/resultLifecycle";
 
 describe("V11.5 final production polish", () => {
+  it("builds audible deterministic cellular music phrases", () => {
+    const first = createCellularMusicPhrase("game", 0);
+    const repeated = createCellularMusicPhrase("game", 0);
+    const next = createCellularMusicPhrase("game", 1);
+
+    expect(first).toEqual(repeated);
+    expect(first.notes).toHaveLength(6);
+    expect(first.intervalMs).toBeGreaterThan(7000);
+    expect(first.notes.every((note) => note.frequency >= 60)).toBe(true);
+    expect(first.notes.every((note) => note.gain >= 0.07)).toBe(true);
+    expect(next.notes.map((note) => note.frequency)).not.toEqual(
+      first.notes.map((note) => note.frequency),
+    );
+  });
+
   it("normalizes old or invalid audio settings without unsafe values", () => {
     expect(normalizeAudioSettings(null)).toEqual(DEFAULT_AUDIO_SETTINGS);
     expect(

@@ -22,7 +22,13 @@ sound libraries, or third-party audio assets are included.
   dendritic collection, lymphatic delivery
 - Threats: combat contact, infection, pathogen clearance, biofilm, wave alert
 - Results: victory and defeat
-- Continuous layers: low biological drone and short quantized tactical pulse
+- Continuous layers: low biological drone, original minor-pentatonic ambient
+  phrases, cell-bell voices, membrane bass and restrained resonant echoes
+
+The ambient score uses original deterministic motifs written for Immunostrat.
+Its spacious pacing evokes calm exploration music, while its notes and melodic
+phrases do not reproduce any third-party composition. Quantized harmonics and a
+slow membrane modulation keep the score pixel-like and biological.
 
 ## Runtime safety
 

@@ -140,6 +140,8 @@ export type VirusEntity = NetAffectedPathogenFields & {
   debrisDropChance: number;
   targetPriority: number;
   lifeRemainingMs: number;
+  infiltrationTargetCellId?: string;
+  infiltrationRemainingMs?: number;
 };
 
 export type AdvancedThreatEntity = NetAffectedPathogenFields & {
