@@ -1,0 +1,1315 @@
+.app-shell-game {
+  grid-template-rows: 1fr;
+}
+
+.nav-link-external,
+.home-github-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.top-nav {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.home-public-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.home-mode-label {
+  margin-bottom: -0.65rem;
+  color: var(--v11-ui-text-faint);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.home-method-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.home-method-card {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  border: 1px solid rgba(98, 211, 200, 0.16);
+  border-radius: 6px;
+  padding: 0.85rem;
+  background: rgba(8, 13, 21, 0.52);
+}
+
+.home-method-card > span {
+  color: var(--v11-ui-accent-cyan);
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.home-method-card strong {
+  color: #fff;
+  font-size: 0.86rem;
+}
+
+.home-method-card p {
+  margin: 0;
+  color: var(--v11-ui-text-faint);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.home-science-links {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.home-science-links button {
+  display: grid;
+  gap: 0.2rem;
+  border: 1px solid rgba(182, 156, 255, 0.2);
+  border-radius: 6px;
+  padding: 0.8rem 1rem;
+  color: var(--v11-ui-text);
+  background: linear-gradient(90deg, rgba(182, 156, 255, 0.09), transparent);
+  text-align: left;
+}
+
+.home-science-links button:focus-visible,
+.family-pulse-card:focus-visible,
+.encyclopedia-card:focus-visible,
+.encyclopedia-filters button:focus-visible,
+.related-dossier-links button:focus-visible,
+.encyclopedia-back:focus-visible,
+.nav-link-external:focus-visible,
+.home-github-link:focus-visible,
+.encyclopedia-search input:focus-visible {
+  outline: 3px solid var(--v11-ui-accent-cyan);
+  outline-offset: 3px;
+}
+
+.home-science-links span {
+  color: var(--v11-ui-accent-violet);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-science-links strong {
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.home-dev-intel {
+  margin-top: 0;
+}
+
+.encyclopedia-page,
+.encyclopedia-entry-page,
+.science-gameplay-page {
+  --archive-panel: rgba(8, 13, 21, 0.78);
+  --archive-panel-strong: rgba(8, 13, 21, 0.94);
+  --archive-line: rgba(98, 211, 200, 0.2);
+  position: relative;
+  width: min(1380px, calc(100vw - 2rem));
+}
+
+.encyclopedia-page::before,
+.encyclopedia-entry-page::before,
+.science-gameplay-page::before {
+  content: "";
+  position: fixed;
+  inset: 64px 0 0;
+  z-index: -1;
+  opacity: 0.64;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(98, 211, 200, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(98, 211, 200, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 12% 18%, rgba(98, 211, 200, 0.14), transparent 28rem),
+    radial-gradient(circle at 86% 38%, rgba(182, 156, 255, 0.13), transparent 30rem);
+  background-size: 28px 28px, 28px 28px, auto, auto;
+}
+
+.encyclopedia-hero,
+.science-gameplay-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(2rem, 6vw, 6rem);
+  min-height: 360px;
+  border: 1px solid rgba(98, 211, 200, 0.28);
+  border-radius: 12px;
+  padding: clamp(2rem, 6vw, 5rem);
+  background:
+    linear-gradient(110deg, rgba(5, 15, 26, 0.98), rgba(15, 21, 47, 0.88) 58%, rgba(46, 18, 53, 0.76)),
+    url("../assets/home/home-biological-bg.png") center / cover;
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.encyclopedia-hero::after,
+.science-gameplay-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0 49%, rgba(98, 211, 200, 0.06) 50%, transparent 51%);
+  background-size: 10px 100%;
+  mix-blend-mode: screen;
+}
+
+.encyclopedia-kicker,
+.entry-category {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid rgba(98, 211, 200, 0.4);
+  border-radius: 999px;
+  padding: 0.38rem 0.72rem;
+  color: var(--v11-ui-accent-cyan-strong);
+  background: rgba(8, 13, 21, 0.74);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.encyclopedia-hero h1,
+.science-gameplay-hero h1 {
+  max-width: 760px;
+  margin: 1rem 0 0.8rem;
+  color: #fff;
+  font-size: clamp(2.8rem, 6vw, 6rem);
+  line-height: 0.92;
+  text-shadow: 0 0 28px rgba(98, 211, 200, 0.18);
+}
+
+.encyclopedia-hero p,
+.science-gameplay-hero > p,
+.science-gameplay-hero > div > p {
+  max-width: 730px;
+  margin: 0;
+  color: #dbeaf0;
+  font-size: clamp(1rem, 1.7vw, 1.22rem);
+  line-height: 1.75;
+}
+
+.encyclopedia-hero-actions,
+.science-gameplay-hero > div:last-child,
+.science-gameplay-hero > div > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.encyclopedia-scan-orbit {
+  position: relative;
+  display: grid;
+  place-content: center;
+  width: clamp(160px, 20vw, 260px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(98, 211, 200, 0.38);
+  border-radius: 50%;
+  color: white;
+  text-align: center;
+  box-shadow:
+    0 0 0 18px rgba(98, 211, 200, 0.03),
+    0 0 60px rgba(98, 211, 200, 0.16),
+    inset 0 0 35px rgba(98, 211, 200, 0.1);
+}
+
+.encyclopedia-scan-orbit::before,
+.encyclopedia-scan-orbit::after {
+  content: "";
+  position: absolute;
+  inset: 14%;
+  border: 1px dashed rgba(182, 156, 255, 0.48);
+  border-radius: 50%;
+  animation: archive-spin 18s linear infinite;
+}
+
+.encyclopedia-scan-orbit::after {
+  inset: 30%;
+  border-style: solid;
+  border-color: rgba(255, 159, 67, 0.42) transparent;
+  animation-duration: 8s;
+  animation-direction: reverse;
+}
+
+.encyclopedia-scan-orbit span {
+  font-size: clamp(3rem, 7vw, 6rem);
+  font-weight: 900;
+  line-height: 0.8;
+}
+
+.encyclopedia-scan-orbit small {
+  margin-top: 0.7rem;
+  color: var(--v11-ui-accent-cyan);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.family-command-strip {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.75fr) minmax(0, 1.25fr);
+  gap: 2rem;
+  margin-top: 1.4rem;
+  border: 1px solid var(--archive-line);
+  border-radius: 10px;
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+  background: linear-gradient(135deg, rgba(8, 13, 21, 0.94), rgba(22, 18, 44, 0.78));
+}
+
+.family-command-copy h2,
+.profile-matrix-header h2,
+.related-dossiers h2,
+.reasoning-ribbon-intro h2 {
+  margin: 0.4rem 0 0.7rem;
+  color: #fff;
+  font-size: clamp(1.5rem, 3vw, 2.35rem);
+}
+
+.family-command-copy p,
+.profile-matrix-header p {
+  margin: 0;
+  color: var(--v11-ui-text-muted);
+  line-height: 1.65;
+}
+
+.family-pulse-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.family-pulse-card,
+.encyclopedia-card {
+  --entry-accent: var(--v11-ui-accent-cyan);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--entry-accent) 35%, transparent);
+  color: var(--v11-ui-text);
+  background: linear-gradient(160deg, rgba(22, 31, 48, 0.96), rgba(8, 13, 21, 0.96));
+  text-align: left;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.family-pulse-card:hover,
+.encyclopedia-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--entry-accent);
+  box-shadow: 0 14px 40px color-mix(in srgb, var(--entry-accent) 14%, transparent);
+}
+
+.family-pulse-card {
+  display: grid;
+  justify-items: center;
+  min-height: 160px;
+  border-radius: 8px;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.family-pulse-card::after,
+.encyclopedia-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: var(--entry-accent);
+  box-shadow: 0 0 18px var(--entry-accent);
+}
+
+.family-pulse-card > span {
+  justify-self: start;
+  color: var(--entry-accent);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.family-pulse-card .specimen-static-image,
+.family-pulse-card .procedural-specimen {
+  width: 70px;
+  height: 70px;
+}
+
+.family-pulse-card strong {
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.encyclopedia-console {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: minmax(260px, 0.6fr) minmax(0, 1.4fr);
+  gap: 1rem;
+  align-items: end;
+  margin: 1.4rem 0 0;
+  border: 1px solid rgba(98, 211, 200, 0.22);
+  border-radius: 10px;
+  padding: 1rem;
+  background: rgba(8, 13, 21, 0.9);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(18px);
+}
+
+.encyclopedia-search {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.encyclopedia-search span {
+  color: var(--v11-ui-text-faint);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.encyclopedia-search input {
+  min-height: 44px;
+  border: 1px solid rgba(245, 251, 255, 0.16);
+  border-radius: 6px;
+  padding: 0.7rem 0.85rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.encyclopedia-search input::placeholder {
+  color: var(--v11-ui-text-faint);
+}
+
+.encyclopedia-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.encyclopedia-filters button {
+  min-height: 38px;
+  border: 1px solid rgba(245, 251, 255, 0.14);
+  border-radius: 999px;
+  padding: 0.45rem 0.75rem;
+  color: var(--v11-ui-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.encyclopedia-filters button[aria-pressed="true"] {
+  border-color: var(--v11-ui-accent-cyan);
+  color: var(--v11-ui-ink);
+  background: var(--v11-ui-accent-cyan);
+}
+
+.encyclopedia-results-count {
+  margin: 1rem 0 0.6rem;
+  color: var(--v11-ui-text-faint);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.encyclopedia-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.encyclopedia-card {
+  display: grid;
+  grid-template-rows: auto 160px 1fr auto;
+  min-height: 390px;
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.encyclopedia-card-category {
+  width: fit-content;
+  color: var(--entry-accent);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.encyclopedia-card-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin: 0.7rem -0.4rem;
+  border: 1px solid rgba(245, 251, 255, 0.08);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--entry-accent) 16%, transparent), transparent 60%),
+    rgba(0, 0, 0, 0.18);
+}
+
+.encyclopedia-card-visual::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border: 1px solid color-mix(in srgb, var(--entry-accent) 18%, transparent);
+  border-radius: 50%;
+}
+
+.encyclopedia-card-visual .animated-specimen-sprite {
+  width: 112px;
+}
+
+.encyclopedia-card-visual .specimen-static-image,
+.encyclopedia-card-visual .procedural-specimen {
+  width: 104px;
+  height: 104px;
+}
+
+.encyclopedia-card-copy h2 {
+  margin: 0.3rem 0 0.45rem;
+  color: #fff;
+  font-size: 1.28rem;
+}
+
+.encyclopedia-card-copy p {
+  margin: 0;
+  color: var(--v11-ui-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.encyclopedia-card-footer {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+  border-top: 1px solid rgba(245, 251, 255, 0.08);
+  padding-top: 0.75rem;
+}
+
+.encyclopedia-card-footer span {
+  color: var(--entry-accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.encyclopedia-card-footer strong {
+  color: #fff;
+  font-size: 0.78rem;
+}
+
+.encyclopedia-empty,
+.encyclopedia-not-found {
+  border: 1px dashed rgba(98, 211, 200, 0.35);
+  border-radius: 10px;
+  padding: 3rem;
+  color: var(--v11-ui-text-muted);
+  background: rgba(8, 13, 21, 0.7);
+  text-align: center;
+}
+
+.animated-specimen-sprite {
+  width: min(150px, 72%);
+  aspect-ratio: var(--specimen-aspect);
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.52));
+}
+
+.specimen-static-image {
+  display: block;
+  width: min(142px, 75%);
+  height: min(142px, 75%);
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.46));
+}
+
+.procedural-specimen {
+  --procedural-color: #62d3c8;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 140px;
+  height: 140px;
+  border: 4px solid color-mix(in srgb, var(--procedural-color) 80%, #101820);
+  color: #071217;
+  background: var(--procedural-color);
+  box-shadow:
+    0 0 0 5px rgba(7, 18, 23, 0.9),
+    0 0 28px color-mix(in srgb, var(--procedural-color) 42%, transparent);
+  image-rendering: pixelated;
+}
+
+.procedural-specimen span {
+  position: relative;
+  z-index: 2;
+  border: 2px solid rgba(7, 18, 23, 0.7);
+  border-radius: 999px;
+  padding: 0.18rem 0.36rem;
+  background: rgba(245, 251, 255, 0.5);
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+.procedural-specimen i,
+.procedural-specimen::before,
+.procedural-specimen::after {
+  content: "";
+  position: absolute;
+  border: 3px solid color-mix(in srgb, var(--procedural-color) 68%, #071217);
+  background: color-mix(in srgb, var(--procedural-color) 76%, white);
+}
+
+.procedural-specimen-coccus { border-radius: 50%; }
+.procedural-specimen-coccus::before { width: 34%; height: 34%; border-radius: 50%; transform: translate(-76%, -42%); }
+.procedural-specimen-coccus::after { width: 28%; height: 28%; border-radius: 50%; transform: translate(82%, 58%); }
+.procedural-specimen-virus { border-radius: 46% 54% 48% 52%; }
+.procedural-specimen-virus::before { inset: -15%; border: 0; background: repeating-conic-gradient(var(--procedural-color) 0 5deg, transparent 5deg 27deg); }
+.procedural-specimen-colony { border-radius: 45% 55% 58% 42% / 58% 42% 55% 45%; }
+.procedural-specimen-colony::before { width: 42%; height: 42%; border-radius: 50%; transform: translate(-58%, 50%); }
+.procedural-specimen-colony::after { width: 38%; height: 38%; border-radius: 50%; transform: translate(62%, -60%); }
+.procedural-specimen-spore { border-radius: 60% 40%; transform: rotate(14deg); }
+.procedural-specimen-parasite { width: 170px; height: 74px; border-radius: 70% 28% 68% 32%; transform: rotate(-10deg); }
+.procedural-specimen-parasite::before { width: 26px; height: 26px; right: -18px; border-radius: 50%; }
+.procedural-specimen-abnormal { border-radius: 38% 62% 44% 56% / 62% 39% 61% 38%; opacity: 0.68; }
+.procedural-specimen-abnormal::before { width: 42%; height: 52%; border-radius: 48%; transform: rotate(28deg); }
+.procedural-specimen-mixed { border-radius: 38% 62% 58% 42%; background: linear-gradient(135deg, var(--procedural-color), #b69cff 62%, #ff7f8f); }
+.procedural-specimen-mixed::before { width: 30%; height: 30%; border-radius: 50%; transform: translate(-78%, 60%); }
+.procedural-specimen-mixed::after { width: 24%; height: 42%; border-radius: 60% 35%; transform: translate(90%, -46%) rotate(30deg); }
+
+.encyclopedia-back {
+  margin-bottom: 1rem;
+  border: 0;
+  padding: 0.55rem 0;
+  color: var(--v11-ui-accent-cyan);
+  background: transparent;
+  font-weight: 900;
+}
+
+.entry-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2rem;
+  min-height: 310px;
+  border: 1px solid color-mix(in srgb, var(--entry-accent) 42%, transparent);
+  border-radius: 12px 12px 0 0;
+  padding: clamp(2rem, 5vw, 4.5rem);
+  background:
+    radial-gradient(circle at 80% 50%, color-mix(in srgb, var(--entry-accent) 20%, transparent), transparent 27rem),
+    linear-gradient(125deg, rgba(8, 13, 21, 0.98), rgba(22, 19, 45, 0.9));
+}
+
+.entry-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 0 68%, color-mix(in srgb, var(--entry-accent) 10%, transparent) 69% 70%, transparent 71%);
+  background-size: 12px 100%;
+}
+
+.entry-category {
+  border-color: color-mix(in srgb, var(--entry-accent) 65%, transparent);
+  color: var(--entry-accent);
+}
+
+.entry-hero h1 {
+  margin: 0.9rem 0 0.55rem;
+  color: #fff;
+  font-size: clamp(3rem, 7vw, 6.6rem);
+  line-height: 0.9;
+}
+
+.entry-tagline {
+  max-width: 780px;
+  margin: 0;
+  color: var(--v11-ui-text-panel);
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  line-height: 1.6;
+}
+
+.entry-field-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.4rem;
+}
+
+.entry-field-notes span {
+  border: 1px solid color-mix(in srgb, var(--entry-accent) 35%, transparent);
+  border-radius: 999px;
+  padding: 0.36rem 0.65rem;
+  color: #fff;
+  background: color-mix(in srgb, var(--entry-accent) 10%, transparent);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.entry-index-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(140px, 18vw, 230px);
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in srgb, var(--entry-accent) 45%, transparent);
+  border-radius: 50%;
+  box-shadow: inset 0 0 45px color-mix(in srgb, var(--entry-accent) 13%, transparent);
+}
+
+.entry-index-mark span {
+  color: var(--entry-accent);
+  font-size: clamp(2.8rem, 6vw, 5.5rem);
+  font-weight: 950;
+}
+
+.entry-index-mark i {
+  position: absolute;
+  inset: 12%;
+  border: 1px dashed color-mix(in srgb, var(--entry-accent) 55%, transparent);
+  border-radius: 50%;
+  animation: archive-spin 14s linear infinite;
+}
+
+.specimen-compare {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px minmax(0, 1fr);
+  border: 1px solid color-mix(in srgb, var(--entry-accent) 24%, transparent);
+  border-top: 0;
+  border-radius: 0 0 12px 12px;
+  background: rgba(8, 13, 21, 0.88);
+}
+
+.specimen-window {
+  display: grid;
+  grid-template-rows: auto minmax(300px, 1fr) auto;
+  min-width: 0;
+  margin: 0;
+  padding: clamp(1.2rem, 3vw, 2.3rem);
+}
+
+.specimen-window-header {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.specimen-window-header > span,
+.specimen-no-photo > span {
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid color-mix(in srgb, var(--entry-accent) 50%, transparent);
+  border-radius: 50%;
+  color: var(--entry-accent);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.specimen-window-header div {
+  display: grid;
+}
+
+.specimen-window-header small {
+  color: var(--v11-ui-text-faint);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.specimen-window-header strong {
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+.specimen-visual-stage,
+.specimen-real-frame {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  min-height: 300px;
+  margin: 1rem 0;
+  border: 1px solid color-mix(in srgb, var(--entry-accent) 26%, transparent);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--entry-accent) 16%, transparent), transparent 58%),
+    linear-gradient(rgba(98, 211, 200, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(98, 211, 200, 0.04) 1px, transparent 1px),
+    #071018;
+  background-size: auto, 18px 18px, 18px 18px, auto;
+}
+
+.specimen-visual-stage .animated-specimen-sprite {
+  width: min(230px, 64%);
+}
+
+.specimen-visual-stage .specimen-static-image,
+.specimen-visual-stage .procedural-specimen {
+  width: min(220px, 64%);
+  height: min(220px, 64%);
+}
+
+.specimen-reticle {
+  position: absolute;
+  width: min(270px, 80%);
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in srgb, var(--entry-accent) 22%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 0 0 22px color-mix(in srgb, var(--entry-accent) 2%, transparent);
+  animation: archive-pulse 3.2s ease-in-out infinite;
+}
+
+.specimen-window figcaption {
+  color: var(--v11-ui-text-faint);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.specimen-window figcaption a {
+  color: var(--entry-accent);
+}
+
+.specimen-real-frame img {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  object-fit: cover;
+}
+
+.specimen-scale-warning {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.7rem;
+  border: 1px solid rgba(255, 199, 107, 0.45);
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+  color: #fff0cf;
+  background: rgba(8, 13, 21, 0.88);
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.specimen-transfer {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.7rem;
+  color: var(--entry-accent);
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--entry-accent) 7%, transparent), transparent);
+}
+
+.specimen-transfer span {
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+}
+
+.specimen-transfer i {
+  width: 1px;
+  height: 90px;
+  background: linear-gradient(transparent, var(--entry-accent), transparent);
+}
+
+.specimen-no-photo {
+  display: grid;
+  align-content: center;
+  gap: 0.8rem;
+  margin: 1.2rem;
+  border: 1px dashed color-mix(in srgb, var(--entry-accent) 35%, transparent);
+  border-radius: 8px;
+  padding: 2rem;
+  background: color-mix(in srgb, var(--entry-accent) 5%, transparent);
+}
+
+.specimen-no-photo strong {
+  color: #fff;
+  font-size: 1.3rem;
+}
+
+.specimen-no-photo p {
+  margin: 0;
+  color: var(--v11-ui-text-muted);
+  line-height: 1.65;
+}
+
+.reasoning-ribbon {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.75fr) repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 1.25rem 0;
+  border: 1px solid color-mix(in srgb, var(--entry-accent) 28%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--entry-accent) 18%, transparent);
+}
+
+.reasoning-ribbon-intro,
+.reasoning-step {
+  min-width: 0;
+  padding: 1.35rem;
+  background: rgba(8, 13, 21, 0.96);
+}
+
+.reasoning-ribbon-intro {
+  border-radius: 9px 0 0 9px;
+}
+
+.reasoning-ribbon-intro h2 {
+  margin-bottom: 0;
+  font-size: 1.35rem;
+}
+
+.reasoning-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.8rem;
+}
+
+.reasoning-step:last-child {
+  border-radius: 0 9px 9px 0;
+}
+
+.reasoning-step > span {
+  color: var(--entry-accent);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.reasoning-step small {
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.reasoning-step p {
+  margin: 0.45rem 0 0;
+  color: var(--v11-ui-text-muted);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.entry-dossier-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.entry-dossier-panel {
+  position: relative;
+  overflow: hidden;
+  min-height: 300px;
+  border: 1px solid rgba(245, 251, 255, 0.1);
+  border-radius: 10px;
+  padding: clamp(1.4rem, 3vw, 2.4rem);
+  background: linear-gradient(145deg, rgba(14, 23, 36, 0.96), rgba(8, 13, 21, 0.96));
+}
+
+.entry-dossier-panel::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: var(--panel-accent, var(--entry-accent));
+}
+
+.entry-dossier-game { --panel-accent: #62d3c8; }
+.entry-dossier-biology { --panel-accent: #b69cff; }
+.entry-dossier-faithful { --panel-accent: #7ee28a; }
+.entry-dossier-simplified { --panel-accent: #ff9f43; }
+
+.dossier-letter {
+  position: absolute;
+  top: 0.8rem;
+  right: 1rem;
+  color: color-mix(in srgb, var(--panel-accent) 18%, transparent);
+  font-size: 5rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.entry-dossier-panel > small {
+  color: var(--panel-accent);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.entry-dossier-panel h2 {
+  position: relative;
+  margin: 0.55rem 0 1rem;
+  color: #fff;
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+}
+
+.entry-dossier-panel p,
+.entry-dossier-panel li {
+  color: var(--v11-ui-text-muted);
+  line-height: 1.7;
+}
+
+.entry-dossier-panel ul {
+  display: grid;
+  gap: 0.8rem;
+  margin: 0;
+  padding-left: 1.15rem;
+}
+
+.entry-dossier-panel li::marker {
+  color: var(--panel-accent);
+}
+
+.player-decision-card {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 1.2rem;
+  border-left: 3px solid var(--entry-accent);
+  padding: 0.8rem 1rem;
+  background: color-mix(in srgb, var(--entry-accent) 8%, transparent);
+}
+
+.player-decision-card span {
+  color: var(--entry-accent);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.player-decision-card strong {
+  color: #fff;
+  line-height: 1.55;
+}
+
+.profile-matrix,
+.related-dossiers {
+  margin-top: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--entry-accent) 22%, transparent);
+  border-radius: 10px;
+  padding: clamp(1.35rem, 3vw, 2.5rem);
+  background: rgba(8, 13, 21, 0.88);
+}
+
+.profile-matrix-header {
+  display: grid;
+  grid-template-columns: 1fr minmax(280px, 0.7fr);
+  gap: 2rem;
+  align-items: end;
+}
+
+.profile-matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 1.4rem;
+}
+
+.profile-matrix-grid article {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
+  border: 1px solid rgba(245, 251, 255, 0.09);
+  border-radius: 8px;
+  padding: 1rem;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.045), transparent);
+}
+
+.profile-matrix-grid article > span {
+  width: fit-content;
+  border: 1px solid color-mix(in srgb, var(--entry-accent) 42%, transparent);
+  border-radius: 4px;
+  padding: 0.2rem 0.35rem;
+  color: var(--entry-accent);
+  font-size: 0.65rem;
+  font-weight: 900;
+}
+
+.profile-matrix-grid h3 {
+  margin: 0;
+  color: #fff;
+}
+
+.profile-matrix-grid p {
+  margin: 0 0 0.4rem;
+  color: var(--v11-ui-text-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.profile-matrix-grid article div {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 0.5rem;
+  border-top: 1px solid rgba(245, 251, 255, 0.06);
+  padding-top: 0.45rem;
+}
+
+.profile-matrix-grid small {
+  color: var(--v11-ui-text-faint);
+}
+
+.profile-matrix-grid strong {
+  overflow: hidden;
+  color: var(--v11-ui-text-panel);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.related-dossiers {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.5fr) minmax(0, 1.5fr) auto;
+  gap: 1.2rem;
+  align-items: center;
+}
+
+.related-dossier-links {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.related-dossier-links button {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 0.6rem;
+  border: 1px solid rgba(245, 251, 255, 0.1);
+  border-radius: 7px;
+  padding: 0.85rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+  text-align: left;
+}
+
+.related-dossier-links small {
+  grid-column: 1 / -1;
+  color: var(--entry-accent);
+  font-size: 0.65rem;
+}
+
+.science-gameplay-hero {
+  grid-template-columns: 1fr;
+}
+
+.science-gameplay-hero > div:first-child {
+  display: contents;
+}
+
+.design-method {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  align-items: stretch;
+  gap: 0.8rem;
+  margin: 1.25rem 0;
+}
+
+.design-method > div {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid rgba(98, 211, 200, 0.2);
+  border-radius: 9px;
+  padding: 1.3rem;
+  background: rgba(8, 13, 21, 0.86);
+}
+
+.design-method > div span {
+  color: var(--v11-ui-accent-cyan);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.design-method > div small {
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.design-method > div strong {
+  color: var(--v11-ui-text-muted);
+  line-height: 1.5;
+}
+
+.design-method > i {
+  align-self: center;
+  color: var(--v11-ui-accent-cyan);
+  font-style: normal;
+  font-size: 1.5rem;
+}
+
+.comparison-stack {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.comparison-card {
+  overflow: hidden;
+  border: 1px solid rgba(245, 251, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(8, 13, 21, 0.88);
+}
+
+.comparison-card > header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(98, 211, 200, 0.16);
+  padding: 1rem 1.25rem;
+  background: linear-gradient(90deg, rgba(98, 211, 200, 0.09), transparent);
+}
+
+.comparison-card > header span {
+  color: var(--v11-ui-accent-cyan);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.comparison-card h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.25rem;
+}
+
+.comparison-card > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.comparison-card section {
+  padding: 1.25rem;
+}
+
+.comparison-card section + section {
+  border-left: 1px solid rgba(245, 251, 255, 0.08);
+}
+
+.comparison-card small {
+  color: var(--v11-ui-accent-cyan);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.comparison-card section:nth-child(2) small { color: var(--v11-ui-accent-violet); }
+.comparison-card section:nth-child(3) small { color: var(--v11-ui-warning); }
+
+.comparison-card p {
+  margin: 0.55rem 0 0;
+  color: var(--v11-ui-text-muted);
+  line-height: 1.65;
+}
+
+.science-limit-note {
+  margin-top: 1rem;
+  border: 1px solid rgba(255, 159, 67, 0.35);
+  border-radius: 9px;
+  padding: 1.4rem;
+  background: rgba(255, 159, 67, 0.07);
+}
+
+.science-limit-note strong { color: var(--v11-ui-warning); }
+.science-limit-note p { margin: 0.5rem 0 0; color: var(--v11-ui-text-muted); line-height: 1.6; }
+
+@keyframes archive-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes archive-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.96); }
+  50% { opacity: 1; transform: scale(1.03); }
+}
+
+@media (max-width: 1120px) {
+  .encyclopedia-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .family-pulse-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .reasoning-ribbon { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .reasoning-ribbon-intro { grid-column: 1 / -1; border-radius: 9px 9px 0 0; }
+  .reasoning-step:last-child { border-radius: 0 0 9px 0; }
+  .profile-matrix-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .related-dossiers { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 820px) {
+  .home-method-grid { grid-template-columns: 1fr; }
+  .home-public-actions > * { flex: 1 1 150px; }
+  .encyclopedia-page,
+  .encyclopedia-entry-page,
+  .science-gameplay-page { width: min(100% - 1rem, 1380px); padding-top: 0.75rem; }
+  .encyclopedia-page::before,
+  .encyclopedia-entry-page::before,
+  .science-gameplay-page::before { inset: 128px 0 0; }
+  .encyclopedia-hero { grid-template-columns: 1fr; min-height: auto; padding: 2rem 1.2rem; }
+  .encyclopedia-scan-orbit { width: 160px; justify-self: center; }
+  .family-command-strip { grid-template-columns: 1fr; }
+  .encyclopedia-console { position: static; grid-template-columns: 1fr; }
+  .encyclopedia-filters { justify-content: flex-start; }
+  .encyclopedia-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .entry-hero { grid-template-columns: 1fr; min-height: auto; padding: 2rem 1.2rem; }
+  .entry-index-mark { display: none; }
+  .specimen-compare { grid-template-columns: 1fr; }
+  .specimen-transfer { grid-auto-flow: column; min-height: 72px; }
+  .specimen-transfer span { writing-mode: initial; }
+  .specimen-transfer i { width: 90px; height: 1px; }
+  .entry-dossier-grid { grid-template-columns: 1fr; }
+  .reasoning-ribbon { grid-template-columns: 1fr; }
+  .reasoning-ribbon-intro,
+  .reasoning-step,
+  .reasoning-step:last-child { border-radius: 0; }
+  .reasoning-ribbon-intro { border-radius: 9px 9px 0 0; }
+  .reasoning-step:last-child { border-radius: 0 0 9px 9px; }
+  .profile-matrix-header { grid-template-columns: 1fr; gap: 0.6rem; }
+  .profile-matrix-grid { grid-template-columns: 1fr; }
+  .related-dossier-links { grid-template-columns: 1fr; }
+  .design-method { grid-template-columns: 1fr; }
+  .design-method > i { transform: rotate(90deg); justify-self: center; }
+  .comparison-card > div { grid-template-columns: 1fr; }
+  .comparison-card section + section { border-top: 1px solid rgba(245, 251, 255, 0.08); border-left: 0; }
+}
+
+@media (max-width: 540px) {
+  .family-pulse-grid,
+  .encyclopedia-card-grid { grid-template-columns: 1fr; }
+  .family-pulse-card { grid-template-columns: auto 72px 1fr; align-items: center; justify-items: start; min-height: 90px; text-align: left; }
+  .encyclopedia-card { grid-template-rows: auto 140px 1fr auto; min-height: 360px; }
+  .specimen-window { padding: 1rem; }
+  .specimen-visual-stage,
+  .specimen-real-frame,
+  .specimen-real-frame img { min-height: 240px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .encyclopedia-scan-orbit::before,
+  .encyclopedia-scan-orbit::after,
+  .entry-index-mark i,
+  .specimen-reticle {
+    animation: none;
+  }
+
+  .family-pulse-card,
+  .encyclopedia-card {
+    transition: none;
+  }
+}

@@ -2,7 +2,7 @@
 
 ## Source et préparation
 
-- Source : `D:\Mathieu's data\Vibe learning\Immunos\NK-ss2.png`
+- Source originale privée : chemin local retiré de la version publique.
 - Dimensions : `1448 × 1086`, PNG RGB sans canal alpha.
 - Transparence source : aucune ; damier gris réellement incorporé.
 - Traitement : `chroma-variance`, seuil `3`, composantes minimales `8`,

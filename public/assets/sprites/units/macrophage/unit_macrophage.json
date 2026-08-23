@@ -1,5 +1,5 @@
 {
-  "source": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-666e93ac-9388-49fc-8378-2258f166d2b6.png",
+  "source": "private-source-redacted/macrophage-board.png",
   "sourceSize": [
     1448,
     1086
@@ -985,16 +985,16 @@
     }
   ],
   "rowSources": {
-    "idle": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-666e93ac-9388-49fc-8378-2258f166d2b6.png",
-    "move": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-666e93ac-9388-49fc-8378-2258f166d2b6.png",
-    "attack": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-666e93ac-9388-49fc-8378-2258f166d2b6.png",
-    "phagocytosis": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-0414efb6-3947-479a-8687-b2239e589b4a.png",
-    "hurt": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-666e93ac-9388-49fc-8378-2258f166d2b6.png",
-    "death": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-666e93ac-9388-49fc-8378-2258f166d2b6.png"
+    "idle": "private-source-redacted/macrophage-board.png",
+    "move": "private-source-redacted/macrophage-board.png",
+    "attack": "private-source-redacted/macrophage-board.png",
+    "phagocytosis": "private-source-redacted/macrophage-phagocytosis-board.png",
+    "hurt": "private-source-redacted/macrophage-board.png",
+    "death": "private-source-redacted/macrophage-board.png"
   },
   "rowReplacements": {
     "phagocytosis": {
-      "source": "C:\\Users\\olivi\\AppData\\Local\\Temp\\codex-clipboard-0414efb6-3947-479a-8687-b2239e589b4a.png",
+      "source": "private-source-redacted/macrophage-phagocytosis-board.png",
       "sourceSize": [
         1448,
         1086

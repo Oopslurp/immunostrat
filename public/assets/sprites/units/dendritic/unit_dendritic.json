@@ -1,8 +1,8 @@
 {
   "entityType": "dendriticCell",
   "sourceImages": [
-    "D:\\Mathieu's data\\Vibe learning\\Immunos\\dentritique-ss.png",
-    "D:\\Mathieu's data\\Vibe learning\\Immunos\\dentritique-ss-2.png"
+    "private-source-redacted/dendritic-main-board.png",
+    "private-source-redacted/dendritic-carry-board.png"
   ],
   "outputImage": "public\\assets\\sprites\\units\\dendritic\\unit_dendritic.png",
   "frameSize": [

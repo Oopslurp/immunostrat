@@ -12,7 +12,7 @@ export function CreditsPanel({ onBack }: { onBack: () => void }) {
       <div className="credits-grid">
         <span><strong>Direction</strong>Conception et développement Immunostrat</span>
         <span><strong>Illustrations</strong>Assets biologiques originaux du projet</span>
-        <span><strong>Audio V11.5</strong>Synthèse procédurale locale originale</span>
+        <span><strong>Audio procédural</strong>Synthèse locale originale</span>
         <span><strong>Technologies</strong>React, Phaser, Vite</span>
       </div>
       <p className="credits-note">

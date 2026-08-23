@@ -8,6 +8,14 @@ Immunostrat distribue du code provenant des composants suivants :
 
 Ces composants sont distribués sous la licence MIT reproduite ci-dessous.
 
+## Images biologiques de l'encyclopédie
+
+L'encyclopédie utilise également des micrographies et photomicrographies du
+NIAMS et de la CDC Public Health Image Library. Ces fichiers ne sont pas placés
+sous la licence MIT d'Immunostrat. Le détail de chaque source, crédit et
+condition de réutilisation figure dans
+[docs/BIOLOGICAL_IMAGE_CREDITS.md](docs/BIOLOGICAL_IMAGE_CREDITS.md).
+
 ## Phaser
 
 The MIT License (MIT)

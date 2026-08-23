@@ -45,7 +45,7 @@ export function InfinitePage({
             <img src={infiniteIconInfinity} alt="" />
           </div>
           <div>
-            <span className="eyebrow">V11.5 · Mode infini</span>
+            <span className="eyebrow">V12 · Mode infini</span>
             <h1>Survie immunitaire</h1>
             <p>
               Affrontez des vagues évolutives. Adaptez vos défenses. Tenez le
