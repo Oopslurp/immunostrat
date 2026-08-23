@@ -186,7 +186,7 @@ export function BodyMapPage({
         <div className="body-command-title">
           <img src={iconStabilization} alt="" />
           <div>
-            <span className="eyebrow">V11.5 · Partie normale</span>
+            <span className="eyebrow">V12 · Partie normale</span>
             <h1>Stratégie globale</h1>
             <p>
               Stabilise l'organisme plusieurs tours. L'infection évolue quand tu

@@ -12,70 +12,101 @@ type AppShellProps = {
 export function AppShell({
   children,
   currentRoute,
-  bodyMapUnlocked = false,
   onNavigate,
   onOpenSettings,
 }: AppShellProps) {
   const isGameplay = currentRoute === routes.game;
+  const encyclopediaActive = currentRoute.startsWith("encyclopedia");
+  const playActive =
+    currentRoute === routes.campaign ||
+    currentRoute === routes.normal ||
+    currentRoute === routes.bodyMap ||
+    currentRoute === routes.infinite;
 
   return (
     <div className={`app-shell ${isGameplay ? "app-shell-game" : ""}`.trim()}>
-      {!isGameplay ? <header className="top-bar">
-        <div className="brand">
-          <span className="brand-title">Immunostrat</span>
-          <span className="brand-subtitle">Stratégie immunitaire 2D</span>
-        </div>
-        <nav className="top-nav" aria-label="Navigation principale">
-          <button
-            className={`nav-button ${
-              currentRoute === routes.home ? "nav-button-active" : ""
-            }`}
-            type="button"
-            onClick={() => onNavigate(routes.home)}
-          >
-            Accueil
-          </button>
-          <button
-            className={`nav-button ${
-              currentRoute === routes.campaign ? "nav-button-active" : ""
-            }`}
-            type="button"
-            onClick={() => onNavigate(routes.campaign)}
-          >
-            Campagne
-          </button>
-          <button
-            className={`nav-button ${
-            currentRoute === routes.normal || currentRoute === routes.bodyMap
-              ? "nav-button-active"
-              : ""
-            }`}
-            disabled={!bodyMapUnlocked}
-            title={
-              bodyMapUnlocked
-                ? "Ouvrir la partie normale"
-                : "Débloqué après la mission 7"
-            }
-            type="button"
-            onClick={() => onNavigate(routes.normal)}
-          >
-            Partie normale
-          </button>
-          <button
-            className={`nav-button ${
-              currentRoute === routes.infinite ? "nav-button-active" : ""
-            }`}
-            type="button"
-            onClick={() => onNavigate(routes.infinite)}
-          >
-            Mode infini
-          </button>
-          <button className="nav-button nav-button-settings" type="button" onClick={onOpenSettings}>
-            Réglages
-          </button>
-        </nav>
-        <span className="version-chip">V11.5</span>
-      </header> : null}
+      {!isGameplay ? (
+        <header className="top-bar">
+          <div className="brand">
+            <span className="brand-title">Immunostrat</span>
+            <span className="brand-subtitle">Stratégie immunitaire 2D</span>
+          </div>
+          <nav className="top-nav" aria-label="Navigation principale">
+            <button
+              aria-current={currentRoute === routes.home ? "page" : undefined}
+              className={`nav-button ${
+                currentRoute === routes.home ? "nav-button-active" : ""
+              }`}
+              onClick={() => onNavigate(routes.home)}
+              type="button"
+            >
+              Accueil
+            </button>
+            <button
+              aria-current={playActive ? "page" : undefined}
+              className={`nav-button ${playActive ? "nav-button-active" : ""}`}
+              onClick={() => onNavigate(routes.campaign)}
+              type="button"
+            >
+              Jouer
+            </button>
+            <button
+              aria-current={encyclopediaActive ? "page" : undefined}
+              className={`nav-button ${
+                encyclopediaActive ? "nav-button-active" : ""
+              }`}
+              onClick={() => onNavigate(routes.encyclopedia)}
+              type="button"
+            >
+              Encyclopédie
+            </button>
+            <button
+              aria-current={
+                currentRoute === routes.scienceVsGameplay ? "page" : undefined
+              }
+              className={`nav-button ${
+                currentRoute === routes.scienceVsGameplay
+                  ? "nav-button-active"
+                  : ""
+              }`}
+              onClick={() => onNavigate(routes.scienceVsGameplay)}
+              type="button"
+            >
+              Science vs Gameplay
+            </button>
+            <a
+              className="nav-button nav-link-external"
+              href="https://github.com/Oopslurp/immunostrat"
+              rel="noreferrer"
+              target="_blank"
+            >
+              GitHub ↗
+            </a>
+            <button
+              className="nav-button nav-button-settings"
+              onClick={onOpenSettings}
+              type="button"
+            >
+              Réglages
+            </button>
+            {import.meta.env.DEV ? (
+              <button
+                aria-current={
+                  currentRoute === routes.spriteLab ? "page" : undefined
+                }
+                className={`nav-button ${
+                  currentRoute === routes.spriteLab ? "nav-button-active" : ""
+                }`}
+                onClick={() => onNavigate(routes.spriteLab)}
+                type="button"
+              >
+                Laboratoire
+              </button>
+            ) : null}
+          </nav>
+          <span className="version-chip">V12</span>
+        </header>
+      ) : null}
       <main>{children}</main>
     </div>
   );

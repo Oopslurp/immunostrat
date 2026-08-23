@@ -46,7 +46,7 @@ export function NormalGamePage({
             <img src={normalIconBody} alt="" />
           </div>
           <div>
-            <span className="eyebrow">V11.5 · Partie normale</span>
+            <span className="eyebrow">V12 · Partie normale</span>
             <h1>Carte du corps</h1>
             <p>
               Stabilisez l'organisme avant propagation systémique. Choisissez

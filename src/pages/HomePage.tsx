@@ -1,10 +1,10 @@
-import { Button } from "../ui/Button";
-import { Panel } from "../ui/Panel";
 import campaignIcon from "../assets/home/home-icon-campaign.png";
 import bodyMapIcon from "../assets/home/home-icon-bodymap.png";
-import infiniteIcon from "../assets/home/home-icon-infinite.png";
 import immunityEmblem from "../assets/home/home-emblem-immunity.png";
 import heroChipIcon from "../assets/home/home-chip-cell.png";
+import infiniteIcon from "../assets/home/home-icon-infinite.png";
+import { Button } from "../ui/Button";
+import { Panel } from "../ui/Panel";
 
 type HomePageProps = {
   onPlay: () => void;
@@ -12,6 +12,8 @@ type HomePageProps = {
   onOpenInfinite: () => void;
   onOpenSettings: () => void;
   onOpenCredits: () => void;
+  onOpenEncyclopedia: () => void;
+  onOpenScience: () => void;
   bodyMapUnlocked: boolean;
 };
 
@@ -21,13 +23,16 @@ export function HomePage({
   onOpenInfinite,
   onOpenSettings,
   onOpenCredits,
+  onOpenEncyclopedia,
+  onOpenScience,
   bodyMapUnlocked,
 }: HomePageProps) {
   const modes = [
     {
       title: "Campagne",
       subtitle: "Apprendre les défenses",
-      description: "Progresse mission par mission, des macrophages aux réponses adaptatives.",
+      description:
+        "Progresse mission par mission, des macrophages aux réponses adaptatives.",
       icon: campaignIcon,
       actionLabel: "Lancer",
       onClick: onPlay,
@@ -36,7 +41,8 @@ export function HomePage({
     {
       title: "Partie normale",
       subtitle: "Stabiliser le corps",
-      description: "Choisis les régions à sauver, envoie des renforts, accepte parfois une perte.",
+      description:
+        "Choisis les régions à sauver, envoie des renforts, accepte parfois une perte.",
       icon: bodyMapIcon,
       actionLabel: bodyMapUnlocked ? "Nouvelle partie" : "Verrouillé",
       onClick: onStartNormalGame,
@@ -45,7 +51,8 @@ export function HomePage({
     {
       title: "Mode infini",
       subtitle: "Tenir face aux vagues",
-      description: "Survis le plus longtemps possible sur une grande carte biologique.",
+      description:
+        "Survis le plus longtemps possible sur une grande carte biologique.",
       icon: infiniteIcon,
       actionLabel: "Survivre",
       onClick: onOpenInfinite,
@@ -63,17 +70,33 @@ export function HomePage({
           Immunostrat
         </h1>
         <p className="hero-text">
-          Déployez vos cellules. Contenez l'infection. Sauvez l'organisme.
+          Coordonnez les défenses immunitaires pour contenir l'infection et
+          l'inflammation sans sacrifier les tissus.
         </p>
-        <div className="home-hero-status" aria-label="Systèmes immunitaires actifs">
-          <span>Campagne</span>
-          <span>Organisme global</span>
-          <span>Survie infinie</span>
+        <div className="home-hero-status" aria-label="État du projet">
+          <span>Version V12</span>
+          <span>20 dossiers biologiques</span>
+          <span>Choix de design expliqués</span>
+        </div>
+        <div className="home-public-actions" aria-label="Découvrir Immunostrat">
+          <Button onClick={onPlay} variant="primary">
+            Jouer
+          </Button>
+          <Button onClick={onOpenEncyclopedia}>Découvrir la science</Button>
+          <a
+            className="button home-github-link"
+            href="https://github.com/Oopslurp/immunostrat"
+            rel="noreferrer"
+            target="_blank"
+          >
+            GitHub ↗
+          </a>
         </div>
         <div className="home-utility-actions">
           <Button onClick={onOpenSettings}>Réglages</Button>
           <Button onClick={onOpenCredits}>Crédits</Button>
         </div>
+        <span className="home-mode-label">Choisir un mode</span>
         <div className="home-actions" aria-label="Modes de jeu">
           {modes.map((mode) => (
             <Button
@@ -98,29 +121,47 @@ export function HomePage({
           <img alt="" className="home-emblem" src={immunityEmblem} />
         </div>
         <div>
-          <span className="eyebrow">État de l'organisme</span>
-          <h2>Choisissez votre front</h2>
+          <span className="eyebrow">Démarche du projet</span>
+          <h2>Du vivant à la décision tactique</h2>
           <p>
-            Chaque mode reprend les mêmes règles de terrain : guider les cellules,
-            tenir les foyers infectieux et garder l'inflammation sous contrôle.
+            Chaque mécanique commence par une relation biologique, devient un
+            modèle lisible, puis une question posée au joueur.
           </p>
         </div>
-        <div className="stat-grid home-intel-grid">
-          {modes.map((mode) => (
-            <button
-              className="stat-item home-intel-card"
-              disabled={mode.disabled}
-              key={mode.title}
-              onClick={mode.onClick}
-              type="button"
-            >
-              <img alt="" src={mode.icon} />
-              <span>
-                <span className="stat-label">{mode.subtitle}</span>
-                <span className="stat-value">{mode.description}</span>
-              </span>
-            </button>
+        <div className="home-method-grid">
+          {[
+            [
+              "01",
+              "Comprendre",
+              "Identifier le phénomène et ses relations essentielles.",
+            ],
+            [
+              "02",
+              "Modéliser",
+              "Choisir les états, variables et délais à conserver.",
+            ],
+            [
+              "03",
+              "Rendre jouable",
+              "Transformer le modèle en risque, information et choix.",
+            ],
+          ].map(([index, title, description]) => (
+            <div className="home-method-card" key={index}>
+              <span>{index}</span>
+              <strong>{title}</strong>
+              <p>{description}</p>
+            </div>
           ))}
+        </div>
+        <div className="home-science-links">
+          <button onClick={onOpenEncyclopedia} type="button">
+            <span>Encyclopédie immersive</span>
+            <strong>Voir les cellules et toutes les familles de menaces →</strong>
+          </button>
+          <button onClick={onOpenScience} type="button">
+            <span>Science vs Gameplay</span>
+            <strong>Lire pourquoi les simplifications sont conscientes →</strong>
+          </button>
         </div>
       </Panel>
     </div>

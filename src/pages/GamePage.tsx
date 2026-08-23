@@ -583,7 +583,7 @@ export function GamePage({
               ? "Mode infini"
               : battleSource === "bodyMap"
                 ? "Carte du corps"
-                : "Campagne"}
+                : "Campagne V12"}
           </span>
           <h1>{mission.title}</h1>
         </div>

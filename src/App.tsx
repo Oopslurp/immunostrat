@@ -1,6 +1,13 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { AppShell } from "./app/AppShell";
-import { routes, type AppRoute } from "./app/routes";
+import {
+  appRouteFromHash,
+  appRouteToHash,
+  encyclopediaEntryRoute,
+  getEncyclopediaEntryId,
+  routes,
+  type AppRoute,
+} from "./app/routes";
 import { audioDirector } from "./audio/AudioDirector";
 import { useGlobalAudioInteractions } from "./audio/useAudioDirector";
 import {
@@ -42,13 +49,19 @@ import {
 } from "./game/infinite/infiniteProgress";
 import { BodyMapPage } from "./pages/BodyMapPage";
 import { CampaignPage } from "./pages/CampaignPage";
-import { GamePage } from "./pages/GamePage";
+import { EncyclopediaEntryPage } from "./pages/EncyclopediaEntryPage";
+import { EncyclopediaPage } from "./pages/EncyclopediaPage";
 import { HomePage } from "./pages/HomePage";
 import { InfinitePage } from "./pages/InfinitePage";
 import { NormalGamePage } from "./pages/NormalGamePage";
+import { ScienceVsGameplayPage } from "./pages/ScienceVsGameplayPage";
 import { CreditsPanel } from "./ui/CreditsPanel";
 import { Modal } from "./ui/Modal";
 import { SettingsPanel } from "./ui/SettingsPanel";
+
+const GamePage = lazy(() =>
+  import("./pages/GamePage").then((module) => ({ default: module.GamePage })),
+);
 
 const SpriteLabPage = lazy(() =>
   import("./pages/SpriteLabPage").then((module) => ({
@@ -62,7 +75,7 @@ export default function App() {
     import.meta.env.DEV &&
     new URLSearchParams(window.location.search).get("spriteLab") === "1"
       ? routes.spriteLab
-      : routes.home,
+      : appRouteFromHash(window.location.hash),
   );
   const [appModal, setAppModal] = useState<"settings" | "credits" | null>(null);
   const [progress, setProgress] = useState(() => loadCampaignProgress());
@@ -87,8 +100,32 @@ export default function App() {
     useState<MissionPreparation>({});
   const bodyMapUnlocked = isBodyMapUnlocked(progress);
 
+  const navigate = useCallback((nextRoute: AppRoute) => {
+    setRoute(nextRoute);
+    const nextHash = appRouteToHash(nextRoute);
+
+    if (window.location.hash !== nextHash) {
+      window.location.hash = nextHash;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!window.location.hash) {
+      window.history.replaceState(null, "", appRouteToHash(routes.home));
+    }
+
+    const syncRoute = () => setRoute(appRouteFromHash(window.location.hash));
+    window.addEventListener("hashchange", syncRoute);
+
+    return () => window.removeEventListener("hashchange", syncRoute);
+  }, []);
+
   useEffect(() => {
     audioDirector.setScene(route === routes.game ? "game" : "menu");
+  }, [route]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0 });
   }, [route]);
 
   const playMission = (missionId: MissionId, vaccinationId?: string | null) => {
@@ -99,7 +136,7 @@ export default function App() {
     });
     setBodyBattleRegionId(null);
     setIsInfiniteRun(false);
-    setRoute(routes.game);
+    navigate(routes.game);
   };
 
   const handleMissionComplete = (result: MissionResultSummary) => {
@@ -123,7 +160,7 @@ export default function App() {
     setIsInfiniteRun(false);
     setSelectedMissionId(missionId);
     setSelectedPreparation(preparation);
-    setRoute(routes.game);
+    navigate(routes.game);
   };
 
   const startNewBodyMapGame = (difficulty: BodyMapDifficulty) => {
@@ -138,7 +175,7 @@ export default function App() {
     );
     setBodyBattleRegionId(null);
     setIsInfiniteRun(false);
-    setRoute(routes.bodyMap);
+    navigate(routes.bodyMap);
   };
 
   const resetBodyMap = () => {
@@ -208,7 +245,7 @@ export default function App() {
     });
     setBodyBattleRegionId(null);
     setIsInfiniteRun(true);
-    setRoute(routes.game);
+    navigate(routes.game);
   };
 
   const handleInfiniteComplete = (result: MissionRunResultSummary) => {
@@ -224,7 +261,7 @@ export default function App() {
   };
 
   const backFromGame = () => {
-    setRoute(
+    navigate(
       isInfiniteRun
         ? routes.infinite
         : bodyBattleRegionId
@@ -237,33 +274,57 @@ export default function App() {
     : null;
   const canRestartCurrentBattle =
     !activeBodyBattleRegion || activeBodyBattleRegion.status !== "lost";
+  const encyclopediaEntryId = getEncyclopediaEntryId(route);
 
   return (
     <>
     <AppShell
       bodyMapUnlocked={bodyMapUnlocked}
       currentRoute={route}
-      onNavigate={setRoute}
+      onNavigate={navigate}
       onOpenSettings={() => setAppModal("settings")}
     >
       {route === routes.home ? (
         <HomePage
           bodyMapUnlocked={bodyMapUnlocked}
-          onOpenInfinite={() => setRoute(routes.infinite)}
           onOpenCredits={() => setAppModal("credits")}
+          onOpenEncyclopedia={() => navigate(routes.encyclopedia)}
+          onOpenInfinite={() => navigate(routes.infinite)}
+          onOpenScience={() => navigate(routes.scienceVsGameplay)}
           onOpenSettings={() => setAppModal("settings")}
-          onStartNormalGame={() => setRoute(routes.normal)}
-          onPlay={() => setRoute(routes.campaign)}
+          onStartNormalGame={() => navigate(routes.normal)}
+          onPlay={() => navigate(routes.campaign)}
+        />
+      ) : null}
+      {route === routes.encyclopedia ? (
+        <EncyclopediaPage
+          onOpenEntry={(entryId) => navigate(encyclopediaEntryRoute(entryId))}
+          onOpenScience={() => navigate(routes.scienceVsGameplay)}
+          onPlay={() => navigate(routes.campaign)}
+        />
+      ) : null}
+      {encyclopediaEntryId ? (
+        <EncyclopediaEntryPage
+          entryId={encyclopediaEntryId}
+          onBack={() => navigate(routes.encyclopedia)}
+          onOpenEntry={(entryId) => navigate(encyclopediaEntryRoute(entryId))}
+          onOpenScience={() => navigate(routes.scienceVsGameplay)}
+        />
+      ) : null}
+      {route === routes.scienceVsGameplay ? (
+        <ScienceVsGameplayPage
+          onOpenEncyclopedia={() => navigate(routes.encyclopedia)}
+          onPlay={() => navigate(routes.campaign)}
         />
       ) : null}
       {route === routes.normal ? (
         <NormalGamePage
           hasRunningMap={hasActiveBodyMapRun}
           progress={bodyMapProgress}
-          onBackHome={() => setRoute(routes.home)}
+          onBackHome={() => navigate(routes.home)}
           onContinue={() => {
             if (hasActiveBodyMapRun) {
-              setRoute(routes.bodyMap);
+              navigate(routes.bodyMap);
             }
           }}
           onResetResults={resetNormalResults}
@@ -285,7 +346,7 @@ export default function App() {
           onLaunchBattle={launchBodyBattle}
           onNewBodyMapGame={startNewBodyMapGame}
           onResetBodyMap={resetBodyMap}
-          onBackHome={() => setRoute(routes.home)}
+          onBackHome={() => navigate(routes.home)}
           onSelectRegion={setSelectedBodyRegionId}
           onUpdateState={updateBodyMapState}
         />
@@ -293,34 +354,36 @@ export default function App() {
       {route === routes.infinite ? (
         <InfinitePage
           progress={infiniteProgress}
-          onBackHome={() => setRoute(routes.home)}
+          onBackHome={() => navigate(routes.home)}
           onReset={() => setInfiniteProgress(resetInfiniteProgress())}
           onStart={startInfiniteRun}
         />
       ) : null}
       {route === routes.game ? (
-        <GamePage
-          battleSource={
-            isInfiniteRun ? "infinite" : bodyBattleRegionId ? "bodyMap" : "campaign"
-          }
-          missionId={selectedMissionId}
-          progress={progress}
-          onBackToCampaign={backFromGame}
-          onBodyBattleComplete={handleBodyBattleComplete}
-          onInfiniteComplete={handleInfiniteComplete}
-          onMissionComplete={
-            bodyBattleRegionId || isInfiniteRun
-              ? () => undefined
-              : handleMissionComplete
-          }
-          onPlayMission={playMission}
-          preparation={selectedPreparation}
-          canRestartBattle={canRestartCurrentBattle}
-        />
+        <Suspense fallback={<div className="page">Initialisation du terrain...</div>}>
+          <GamePage
+            battleSource={
+              isInfiniteRun ? "infinite" : bodyBattleRegionId ? "bodyMap" : "campaign"
+            }
+            missionId={selectedMissionId}
+            progress={progress}
+            onBackToCampaign={backFromGame}
+            onBodyBattleComplete={handleBodyBattleComplete}
+            onInfiniteComplete={handleInfiniteComplete}
+            onMissionComplete={
+              bodyBattleRegionId || isInfiniteRun
+                ? () => undefined
+                : handleMissionComplete
+            }
+            onPlayMission={playMission}
+            preparation={selectedPreparation}
+            canRestartBattle={canRestartCurrentBattle}
+          />
+        </Suspense>
       ) : null}
       {route === routes.spriteLab ? (
         <Suspense fallback={<div className="page">Chargement du laboratoire...</div>}>
-          <SpriteLabPage onBack={() => setRoute(routes.home)} />
+          <SpriteLabPage onBack={() => navigate(routes.home)} />
         </Suspense>
       ) : null}
     </AppShell>
