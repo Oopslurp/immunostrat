@@ -101,7 +101,10 @@ Pour les macrophages et neutrophiles, le sprite du jeu est placé face à une
 image microscopique. Les agents infectieux sont comparés à un exemple réel de
 leur famille. Les fiches sans image exacte refusent explicitement d'inventer une
 « vraie photo ». Toutes les sources figurent dans
-[docs/BIOLOGICAL_IMAGE_CREDITS.md](docs/BIOLOGICAL_IMAGE_CREDITS.md).
+[docs/BIOLOGICAL_IMAGE_CREDITS.md](docs/BIOLOGICAL_IMAGE_CREDITS.md). Les
+notions biologiques générales sont reliées dossier par dossier à des références
+NIH, NCBI, NIAID, NCI et CDC dans
+[docs/BIOLOGICAL_REFERENCES.md](docs/BIOLOGICAL_REFERENCES.md).
 
 ## Modes de jeu
 
